@@ -219,16 +219,16 @@
 @utility aurora-bg {
   position: relative;
   isolation: isolate;
-}
-@utility aurora-bg::before {
-  content: "";
-  position: absolute;
-  inset: -20%;
-  background: var(--gradient-hero);
-  filter: blur(60px);
-  z-index: -1;
-  opacity: 0.9;
-  pointer-events: none;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background: var(--gradient-hero);
+    filter: blur(60px);
+    z-index: -1;
+    opacity: 0.9;
+    pointer-events: none;
+  }
 }
 
 @utility grid-pattern {
