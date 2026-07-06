@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Disallow: /_authenticated/
+Disallow: /auth/
+Disallow: /api/
