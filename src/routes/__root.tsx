@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Skip the queues. Smart NoDues AI digitizes the entire No-Dues process — upload receipts, get AI-verified approvals from every department, and download your Admit Card in minutes.",
       },
       { name: "author", content: "Rayat Bahra University" },
-      { property: "og:title", content: "Smart NoDues AI — Digital No-Dues Clearance" },
+      { property: "og:title", content: "Smart NoDues AI — Digital No-Dues for Rayat Bahra University" },
       {
         property: "og:description",
         content:
@@ -94,12 +94,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Smart NoDues AI" },
+      { name: "twitter:title", content: "Smart NoDues AI — Digital No-Dues for Rayat Bahra University" },
       {
         name: "twitter:description",
         content: "Digital No-Dues clearance for Rayat Bahra University, powered by AI.",
       },
       { name: "theme-color", content: "#4b2fbf" },
+      { name: "description", content: "Skip the queues. Smart NoDues AI digitizes the entire No-Dues process — upload receipts, get AI-verified approvals from every department, and download your Admit Card in minutes." },
+      { property: "og:description", content: "Skip the queues. Smart NoDues AI digitizes the entire No-Dues process — upload receipts, get AI-verified approvals from every department, and download your Admit Card in minutes." },
+      { name: "twitter:description", content: "Skip the queues. Smart NoDues AI digitizes the entire No-Dues process — upload receipts, get AI-verified approvals from every department, and download your Admit Card in minutes." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d88d298-b81f-49b0-a381-6fb9c1c1c3bd/id-preview-8fbac997--3e8f399a-159e-4576-bad2-09d8d74dce91.lovable.app-1783330349638.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5d88d298-b81f-49b0-a381-6fb9c1c1c3bd/id-preview-8fbac997--3e8f399a-159e-4576-bad2-09d8d74dce91.lovable.app-1783330349638.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
