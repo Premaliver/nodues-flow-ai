@@ -22,23 +22,24 @@
                 <div id="errorMsg" class="error-msg"></div>
                 <div id="successMsg" class="success-msg"></div>
                 <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" class="form-input" required>
+                            <input type="text" id="first_name" name="first_name" class="form-input" autocomplete="given-name" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" class="form-input" required>
+                            <input type="text" id="last_name" name="last_name" class="form-input" autocomplete="family-name" required>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="email">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" autocomplete="email" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" required>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" required>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
@@ -74,9 +75,13 @@
             btn.disabled = true;
             btn.textContent = 'Creating account...';
             try {
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
                 const res = await fetch(this.action, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: JSON.stringify({
                         first_name: document.getElementById('first_name').value,
                         last_name: document.getElementById('last_name').value,

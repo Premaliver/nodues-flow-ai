@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class AuditLog(db.Model):
@@ -10,8 +10,8 @@ class AuditLog(db.Model):
 
     __tablename__ = "audit_logs"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.UUID, db.ForeignKey("users.id"), index=True)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(GUID, db.ForeignKey("users.id"), index=True)
     action = db.Column(
         db.Enum(
             "create", "update", "delete", "approve", "reject",
@@ -21,7 +21,7 @@ class AuditLog(db.Model):
         nullable=False,
     )
     resource_type = db.Column(db.String(100), nullable=False)
-    resource_id = db.Column(db.UUID)
+    resource_id = db.Column(GUID)
     details = db.Column(db.JSON)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.Text)

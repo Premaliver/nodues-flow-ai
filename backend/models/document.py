@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class Document(db.Model):
@@ -10,9 +10,9 @@ class Document(db.Model):
 
     __tablename__ = "documents"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     application_id = db.Column(
-        db.UUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
+        GUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
     document_type = db.Column(
@@ -32,10 +32,10 @@ class Document(db.Model):
         db.Enum("pending", "verified", "rejected", "duplicate", name="document_status"),
         nullable=False, default="pending",
     )
-    verified_by = db.Column(db.UUID, db.ForeignKey("users.id"))
+    verified_by = db.Column(GUID, db.ForeignKey("users.id"))
     verified_at = db.Column(db.DateTime(timezone=True))
     rejection_reason = db.Column(db.Text)
-    uploaded_by = db.Column(db.UUID, db.ForeignKey("users.id"), nullable=False)
+    uploaded_by = db.Column(GUID, db.ForeignKey("users.id"), nullable=False)
     created_at = db.Column(
         db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
     )
@@ -77,9 +77,9 @@ class DocumentVerification(db.Model):
 
     __tablename__ = "document_verifications"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     document_id = db.Column(
-        db.UUID, db.ForeignKey("documents.id", ondelete="CASCADE"),
+        GUID, db.ForeignKey("documents.id", ondelete="CASCADE"),
         unique=True, nullable=False,
     )
     is_verified = db.Column(db.Boolean, default=False)
@@ -87,10 +87,10 @@ class DocumentVerification(db.Model):
     extracted_data = db.Column(db.JSON)
     verification_details = db.Column(db.JSON)
     is_duplicate = db.Column(db.Boolean, default=False)
-    duplicate_of_document_id = db.Column(db.UUID, db.ForeignKey("documents.id"))
+    duplicate_of_document_id = db.Column(GUID, db.ForeignKey("documents.id"))
     ai_processed_at = db.Column(db.DateTime(timezone=True))
     human_verified_at = db.Column(db.DateTime(timezone=True))
-    human_verified_by = db.Column(db.UUID, db.ForeignKey("users.id"))
+    human_verified_by = db.Column(GUID, db.ForeignKey("users.id"))
     created_at = db.Column(
         db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
     )

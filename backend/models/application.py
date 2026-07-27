@@ -3,7 +3,7 @@
 import uuid
 import secrets
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 def generate_application_number() -> str:
@@ -18,13 +18,13 @@ class NoDuesApplication(db.Model):
 
     __tablename__ = "no_dues_applications"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     application_number = db.Column(db.String(50), unique=True, nullable=False, index=True, default=generate_application_number)
     student_id = db.Column(
-        db.UUID, db.ForeignKey("students.id", ondelete="CASCADE"),
+        GUID, db.ForeignKey("students.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
-    semester_id = db.Column(db.UUID, db.ForeignKey("semesters.id"), nullable=False)
+    semester_id = db.Column(GUID, db.ForeignKey("semesters.id"), nullable=False)
     status = db.Column(
         db.Enum(
             "draft", "submitted", "in_review", "approved", "rejected", "partially_approved",
@@ -112,12 +112,12 @@ class ApplicationDepartment(db.Model):
 
     __tablename__ = "application_departments"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     application_id = db.Column(
-        db.UUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
+        GUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
-    department_id = db.Column(db.UUID, db.ForeignKey("departments.id"), nullable=False)
+    department_id = db.Column(GUID, db.ForeignKey("departments.id"), nullable=False)
     status = db.Column(
         db.Enum(
             "pending", "in_review", "approved", "rejected", "skipped",
@@ -125,10 +125,10 @@ class ApplicationDepartment(db.Model):
         ),
         nullable=False, default="pending",
     )
-    assigned_to = db.Column(db.UUID, db.ForeignKey("users.id"))
+    assigned_to = db.Column(GUID, db.ForeignKey("users.id"))
     remarks = db.Column(db.Text)
     processed_at = db.Column(db.DateTime(timezone=True))
-    processed_by = db.Column(db.UUID, db.ForeignKey("users.id"))
+    processed_by = db.Column(GUID, db.ForeignKey("users.id"))
     display_order = db.Column(db.Integer, default=0)
     is_required = db.Column(db.Boolean, default=True)
     created_at = db.Column(

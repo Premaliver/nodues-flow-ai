@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class AdmitCard(db.Model):
@@ -10,13 +10,13 @@ class AdmitCard(db.Model):
 
     __tablename__ = "admit_cards"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     application_id = db.Column(
-        db.UUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
+        GUID, db.ForeignKey("no_dues_applications.id", ondelete="CASCADE"),
         unique=True, nullable=False,
     )
-    student_id = db.Column(db.UUID, db.ForeignKey("students.id"), nullable=False, index=True)
-    semester_id = db.Column(db.UUID, db.ForeignKey("semesters.id"), nullable=False)
+    student_id = db.Column(GUID, db.ForeignKey("students.id"), nullable=False, index=True)
+    semester_id = db.Column(GUID, db.ForeignKey("semesters.id"), nullable=False)
     card_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
     pdf_path = db.Column(db.Text, nullable=False)
     qr_code_data = db.Column(db.Text, nullable=False)
@@ -26,7 +26,7 @@ class AdmitCard(db.Model):
     is_downloaded = db.Column(db.Boolean, default=False)
     downloaded_at = db.Column(db.DateTime(timezone=True))
     download_count = db.Column(db.Integer, default=0)
-    generated_by = db.Column(db.UUID, db.ForeignKey("users.id"), nullable=False)
+    generated_by = db.Column(GUID, db.ForeignKey("users.id"), nullable=False)
     expires_at = db.Column(db.DateTime(timezone=True))
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(

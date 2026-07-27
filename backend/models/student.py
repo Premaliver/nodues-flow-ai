@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class Student(db.Model):
@@ -10,8 +10,8 @@ class Student(db.Model):
 
     __tablename__ = "students"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.UUID, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(GUID, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     roll_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
     enrollment_number = db.Column(db.String(50), unique=True, nullable=False)
     course_name = db.Column(db.String(200), nullable=False)

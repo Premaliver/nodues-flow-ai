@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class Semester(db.Model):
@@ -10,7 +10,7 @@ class Semester(db.Model):
 
     __tablename__ = "semesters"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     semester_number = db.Column(db.Integer, nullable=False)
     semester_name = db.Column(db.String(100), nullable=False)
     academic_year = db.Column(db.String(9), nullable=False)

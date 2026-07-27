@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class WorkflowConfig(db.Model):
@@ -10,7 +10,7 @@ class WorkflowConfig(db.Model):
 
     __tablename__ = "workflow_config"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     category = db.Column(
         db.Enum(
             "day_scholar", "hosteller", "transport_user", "scholarship",
@@ -20,7 +20,7 @@ class WorkflowConfig(db.Model):
         ),
         nullable=False,
     )
-    department_id = db.Column(db.UUID, db.ForeignKey("departments.id"), nullable=False)
+    department_id = db.Column(GUID, db.ForeignKey("departments.id"), nullable=False)
     step_order = db.Column(db.Integer, nullable=False)
     is_required = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)

@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class Notification(db.Model):
@@ -10,8 +10,8 @@ class Notification(db.Model):
 
     __tablename__ = "notifications"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.UUID, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(GUID, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     type = db.Column(
         db.Enum(
             "application_submitted", "department_approved", "department_rejected",
@@ -26,7 +26,7 @@ class Notification(db.Model):
     data = db.Column(db.JSON)
     is_read = db.Column(db.Boolean, default=False, index=True)
     read_at = db.Column(db.DateTime(timezone=True))
-    application_id = db.Column(db.UUID, db.ForeignKey("no_dues_applications.id"))
+    application_id = db.Column(GUID, db.ForeignKey("no_dues_applications.id"))
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships

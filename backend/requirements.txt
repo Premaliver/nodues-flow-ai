@@ -62,3 +62,6 @@ httpx==0.28.1
 # Utilities
 python-dateutil==2.9.0.post0
 
+# Production WSGI Server
+gunicorn==23.0.0
+

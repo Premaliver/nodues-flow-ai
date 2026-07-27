@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class SystemSetting(db.Model):
@@ -10,13 +10,13 @@ class SystemSetting(db.Model):
 
     __tablename__ = "system_settings"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     setting_key = db.Column(db.String(100), unique=True, nullable=False, index=True)
     setting_value = db.Column(db.Text, nullable=False)
     setting_type = db.Column(db.String(50), default="string")
     description = db.Column(db.Text)
     is_public = db.Column(db.Boolean, default=False)
-    updated_by = db.Column(db.UUID, db.ForeignKey("users.id"))
+    updated_by = db.Column(GUID, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime(timezone=True),

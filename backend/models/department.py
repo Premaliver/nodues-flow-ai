@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from . import db
+from . import db, GUID
 
 
 class Department(db.Model):
@@ -10,7 +10,7 @@ class Department(db.Model):
 
     __tablename__ = "departments"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
     code = db.Column(db.String(20), unique=True, nullable=False)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
@@ -52,9 +52,9 @@ class DepartmentStaff(db.Model):
 
     __tablename__ = "department_staff"
 
-    id = db.Column(db.UUID, primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.UUID, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    department_id = db.Column(db.UUID, db.ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(GUID, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    department_id = db.Column(GUID, db.ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
     designation = db.Column(db.String(200))
     is_head = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)

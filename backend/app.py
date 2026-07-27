@@ -293,6 +293,9 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(superadmin_bp, url_prefix="/superadmin")
     app.register_blueprint(api_bp, url_prefix="/api")
 
+    # Exempt auth routes from CSRF (they use JWT, not session cookies)
+    csrf.exempt(auth_bp)
+
     # Root route — serve landing page
     @app.route("/")
     def index():
