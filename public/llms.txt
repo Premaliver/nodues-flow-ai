@@ -1,7 +1,0 @@
-# Smart NoDues AI
-
-> AI-powered digital No-Dues clearance platform for Rayat Bahra University. Students upload their semester and examination fee receipts, the system extracts and verifies the data with AI, and the application is auto-routed through every required department for approval — culminating in a digitally signed admit card.
-
-## Pages
-
-- [Home](/): Landing page introducing Smart NoDues AI, features, workflow, department roles, and AI assistant.

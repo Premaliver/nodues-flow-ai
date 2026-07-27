@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ code }} - {{ title }} | Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="error-page" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; background: var(--bg-secondary);">
+        <div class="card" style="max-width: 500px; width: 100%; text-align: center; padding: 3rem 2rem;">
+            <div style="font-size: 5rem; font-weight: 800; font-family: var(--font-display); background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 1rem;">{{ code }}</div>
+            <h1 style="font-size: 1.5rem; margin-bottom: 0.75rem;">{{ title }}</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">{{ message }}</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="javascript:history.back()" class="btn btn-secondary">← Go Back</a>
+                <a href="/" class="btn btn-primary">🏠 Home</a>
+                <a href="/auth/login" class="btn btn-ghost">🔑 Login</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

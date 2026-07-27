@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholarship Dashboard - Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app" style="display: flex;">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
+                    <div><div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div><div style="font-size: 0.75rem; color: var(--text-muted);">Scholarship Portal</div></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/scholarship/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/scholarship/dashboard" class="sidebar-nav-item"><span class="nav-icon">📋</span> Applications</a>
+                <a href="/scholarship/dashboard" class="sidebar-nav-item"><span class="nav-icon">✅</span> Verified</a>
+            </nav>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+        </aside>
+        <div style="flex: 1; margin-left: 280px;">
+            <header class="top-nav" style="left: 280px;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <div class="top-nav-search"><span style="color: var(--text-muted);">🔍</span><input type="text" placeholder="Search applications..."></div>
+                </div>
+                <div class="top-nav-actions">
+                    <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </header>
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
+                <div style="margin-bottom: 2rem;">
+                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Scholarship Dashboard</h1>
+                    <p style="color: var(--text-muted);">Manage scholarship verifications.</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning);">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success);">✅</div><div class="stat-value" id="approvedCount">0</div><div class="stat-label">Approved</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger);">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>Pending Scholarship Verifications</h3></div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Scholarship Type</th><th>Submitted</th><th>Action</th></tr></thead>
+                                <tbody id="applicationsTableBody"><tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem;">
+            <h3 style="margin-bottom: 1rem;" id="modalTitle">Process Application</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;" id="modalAppInfo"></p>
+            <div class="form-group"><div style="display: flex; gap: 1rem;">
+                <button class="btn btn-success" onclick="processApplication('approved')">✅ Approve</button>
+                <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject</button>
+            </div></div>
+            <div class="form-group"><label class="form-label">Remarks</label><textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..."></textarea></div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+        </div>
+    </div>
+    <script>
+        let currentAppDeptId = null;
+        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+        async function loadDashboard() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
+                const res = await fetch('/scholarship/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('pendingCount').textContent = data.data.stats.pending || 0;
+                    document.getElementById('approvedCount').textContent = data.data.stats.approved || 0;
+                    document.getElementById('rejectedCount').textContent = data.data.stats.rejected || 0;
+                    const tbody = document.getElementById('applicationsTableBody');
+                    if (data.data.pending_applications && data.data.pending_applications.length > 0) {
+                        tbody.innerHTML = data.data.pending_applications.map(app => `<tr>
+                            <td><strong>${app.application_number || 'N/A'}</strong></td>
+                            <td>${app.student_name}</td><td>${app.roll_number}</td><td>${app.scholarship_type || 'N/A'}</td>
+                            <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
+                            <td><button class="btn btn-success btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
+                        </tr>`).join('');
+                    } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No pending verifications</td></tr>'; }
+                }
+            } catch (e) { console.error(e); }
+        }
+        function openModal(id, name, appNo) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
+        function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
+        async function processApplication(action) {
+            if (!currentAppDeptId) return;
+            try {
+                const token = localStorage.getItem('access_token');
+                const remarks = document.getElementById('modalRemarks').value;
+                const res = await fetch(`/scholarship/api/process/${currentAppDeptId}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action, remarks })
+                });
+                const data = await res.json();
+                alert(data.message); closeModal(); loadDashboard();
+            } catch (e) { alert('Error'); console.error(e); }
+        }
+        loadDashboard();
+    </script>
+</body>
+</html>

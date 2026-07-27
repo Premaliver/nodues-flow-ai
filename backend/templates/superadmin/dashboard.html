@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Sidebar */
+        .super-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-width);
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            z-index: 100; display: flex; flex-direction: column;
+            transition: transform 0.3s ease;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+        }
+        .super-sidebar-header {
+            padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .super-sidebar-brand {
+            display: flex; align-items: center; gap: 0.75rem;
+            color: white; text-decoration: none;
+        }
+        .super-sidebar-brand .brand-icon {
+            width: 40px; height: 40px; border-radius: var(--radius-md);
+            background: var(--accent-gradient);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.25rem;
+        }
+        .super-sidebar-brand .brand-text { font-weight: 700; font-size: 0.9rem; font-family: var(--font-display); }
+        .super-sidebar-brand .brand-sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+
+        .super-sidebar-nav {
+            flex: 1; padding: 1rem; overflow-y: auto;
+        }
+        .super-sidebar-label {
+            padding: 0.75rem 1rem 0.5rem;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.3);
+        }
+        .super-sidebar-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 1rem; border-radius: var(--radius-md);
+            color: rgba(255,255,255,0.6); font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease; text-decoration: none; margin-bottom: 2px;
+        }
+        .super-sidebar-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .super-sidebar-item.active {
+            background: rgba(99,102,241,0.2); color: #a5b4fc; font-weight: 600;
+            box-shadow: inset 3px 0 0 #6366f1;
+        }
+        .super-sidebar-item .icon { width: 20px; text-align: center; font-size: 1rem; }
+        .super-sidebar-item .badge-count {
+            margin-left: auto; background: var(--crimson); color: white;
+            font-size: 0.65rem; font-weight: 700; padding: 2px 7px;
+            border-radius: var(--radius-full);
+        }
+        .super-sidebar-footer {
+            padding: 1rem; border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Main area */
+        .super-main {
+            margin-left: var(--sidebar-width); min-height: 100vh;
+            background: var(--bg-secondary);
+        }
+        .super-topbar {
+            position: sticky; top: 0; z-index: 99;
+            height: 64px; background: var(--bg-glass);
+            backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        .super-topbar .page-title { font-size: 1.1rem; font-weight: 700; font-family: var(--font-display); }
+        .super-topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+        .super-content { padding: 1.5rem; }
+
+        /* Sections */
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Stat cards */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .super-stat {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg); padding: 1.25rem;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .super-stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
+        .super-stat .stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+        .super-stat .stat-icon { width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .super-stat .stat-value { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; line-height: 1; margin-bottom: 0.15rem; }
+        .super-stat .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+        .super-stat .stat-accent { position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 0 2px 2px 0; }
+
+        /* Glass card */
+        .glass-panel {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg); overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .glass-panel-header {
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .glass-panel-header h3 { font-size: 1rem; font-weight: 700; }
+        .glass-panel-body { padding: 1.5rem; }
+
+        /* Tables inside glass panel */
+        .glass-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .glass-table th {
+            text-align: left; padding: 0.65rem 1rem; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+            border-bottom: 1px solid var(--border-light); background: var(--bg-secondary);
+        }
+        .glass-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+        .glass-table tr:hover td { background: var(--bg-secondary); }
+        .glass-table tr:last-child td { border-bottom: none; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; padding: 2rem;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg-card); border-radius: var(--radius-xl);
+            width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto;
+            padding: 2rem; box-shadow: var(--shadow-elevated);
+            animation: scaleIn 0.25s ease;
+        }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-box h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .modal-box p.sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+        /* Temp password display */
+        .temp-password-box {
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1));
+            border: 2px dashed var(--indigo); border-radius: var(--radius-md);
+            padding: 1rem; text-align: center; margin: 1rem 0;
+        }
+        .temp-password-box .password { font-family: monospace; font-size: 1.25rem; font-weight: 700; letter-spacing: 2px; color: var(--indigo); }
+        .temp-password-box .note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+        /* Toast notification */
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            padding: 0.85rem 1.25rem; border-radius: var(--radius-md);
+            color: white; font-size: 0.85rem; font-weight: 500;
+            box-shadow: var(--shadow-lg); animation: slideInRight 0.3s ease;
+            display: flex; align-items: center; gap: 0.5rem; max-width: 400px;
+        }
+        .toast-success { background: var(--gradient-success); }
+        .toast-error { background: var(--gradient-danger); }
+        .toast-info { background: var(--gradient-info); }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Charts container */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+        /* Role badges in table */
+        .role-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.6rem; border-radius: var(--radius-full);
+            font-size: 0.7rem; font-weight: 600;
+        }
+
+        /* Form row */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        /* Filter bar */
+        .filter-bar { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .filter-bar .form-input, .filter-bar .form-select { width: auto; min-width: 160px; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Pagination */
+        .pagination { display: flex; gap: 0.5rem; justify-content: center; align-items: center; margin-top: 1rem; }
+        .pagination .page-btn {
+            padding: 0.4rem 0.75rem; border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm); background: var(--bg-card);
+            cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
+        }
+        .pagination .page-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+        .pagination .page-btn.active { background: var(--indigo); color: white; border-color: var(--indigo); }
+        .pagination .page-info { font-size: 0.8rem; color: var(--text-muted); }
+
+        @media (max-width: 768px) {
+            .super-sidebar { transform: translateX(-100%); }
+            .super-sidebar.open { transform: translateX(0); }
+            .super-main { margin-left: 0; }
+            .form-row { grid-template-columns: 1fr; }
+            .filter-bar .form-input, .filter-bar .form-select { width: 100%; }
+        }
+
+        /* Toggle sidebar btn on mobile */
+        .menu-toggle { display: none; cursor: pointer; padding: 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: transparent; font-size: 1.25rem; }
+        @media (max-width: 768px) { .menu-toggle { display: flex; } }
+    </style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Sidebar -->
+<aside class="super-sidebar" id="superSidebar">
+    <div class="super-sidebar-header">
+        <a href="/superadmin/dashboard" class="super-sidebar-brand">
+            <div class="brand-icon">S</div>
+            <div>
+                <div class="brand-text">Smart NoDues</div>
+                <div class="brand-sub">Super Admin Portal</div>
+            </div>
+        </a>
+    </div>
+
+    <nav class="super-sidebar-nav">
+        <div class="super-sidebar-label">Main</div>
+        <a class="super-sidebar-item active" data-section="overview" onclick="switchSection('overview')">
+            <span class="icon">📊</span> Overview
+        </a>
+        <a class="super-sidebar-item" data-section="staff" onclick="switchSection('staff')">
+            <span class="icon">👥</span> Staff Management
+        </a>
+        <a class="super-sidebar-item" data-section="students" onclick="switchSection('students')">
+            <span class="icon">🎓</span> Students
+        </a>
+        <a class="super-sidebar-item" data-section="applications" onclick="switchSection('applications')">
+            <span class="icon">📋</span> Applications
+        </a>
+
+        <div class="super-sidebar-label" style="margin-top: 1rem;">System</div>
+        <a class="super-sidebar-item" data-section="departments" onclick="switchSection('departments')">
+            <span class="icon">🏢</span> Departments
+        </a>
+        <a class="super-sidebar-item" data-section="semesters" onclick="switchSection('semesters')">
+            <span class="icon">📅</span> Semesters
+        </a>
+        <a class="super-sidebar-item" data-section="analytics" onclick="switchSection('analytics')">
+            <span class="icon">📈</span> Analytics
+        </a>
+        <a class="super-sidebar-item" data-section="audit" onclick="switchSection('audit')">
+            <span class="icon">📜</span> Audit Logs
+        </a>
+
+        <div class="super-sidebar-label" style="margin-top: 1rem;">Configuration</div>
+        <a class="super-sidebar-item" data-section="settings" onclick="switchSection('settings')">
+            <span class="icon">⚙️</span> System Settings
+        </a>
+        <a class="super-sidebar-item" data-section="profile" onclick="switchSection('profile')">
+            <span class="icon">👤</span> My Profile
+        </a>
+    </nav>
+
+    <div class="super-sidebar-footer">
+        <a href="/auth/logout" class="super-sidebar-item" style="margin:0;">
+            <span class="icon">🚪</span> Logout
+        </a>
+    </div>
+</aside>
+
+<!-- Main -->
+<div class="super-main">
+    <!-- Topbar -->
+    <header class="super-topbar">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button class="menu-toggle" onclick="document.getElementById('superSidebar').classList.toggle('open')">☰</button>
+            <span class="page-title" id="pageTitle">Overview</span>
+        </div>
+        <div class="super-topbar-actions">
+            <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="clockDisplay"></span>
+        </div>
+    </header>
+
+    <div class="super-content">
+        <!-- ========== SECTION: OVERVIEW ========== -->
+        <div class="section active" id="section-overview">
+            <div class="stat-grid" id="overviewStats"></div>
+            <div class="charts-grid">
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📈 Applications (30 Days)</h3></div><div class="glass-panel-body"><canvas id="chartDailyApps" height="200"></canvas></div></div>
+                <div class="glass-panel"><div class="glass-panel-header"><h3>👥 Role Distribution</h3></div><div class="glass-panel-body"><canvas id="chartRoleDist" height="200"></canvas></div></div>
+            </div>
+            <div class="charts-grid">
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📊 Application Status</h3></div><div class="glass-panel-body"><canvas id="chartStatusDist" height="200"></canvas></div></div>
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📅 Monthly Applications (12 Months)</h3></div><div class="glass-panel-body"><canvas id="chartMonthlyApps" height="200"></canvas></div></div>
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-header"><h3>🏢 Department Queues</h3></div>
+                <div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Department</th><th>Code</th><th>Pending</th></tr></thead><tbody id="deptQueueBody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-header"><h3>🕐 Recent Activity</h3></div>
+                <div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Action</th><th>Resource</th><th>Time</th></tr></thead><tbody id="activityBody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION: STAFF ========== -->
+        <div class="section" id="section-staff">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <div><h2 style="font-size:1.25rem;">👥 Staff Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create and manage department staff accounts</p></div>
+                <button class="btn btn-primary" onclick="openCreateStaffModal()">➕ New Staff</button>
+            </div>
+            <div class="filter-bar">
+                <select class="form-select" id="staffRoleFilter" onchange="loadStaff()">
+                    <option value="">All Roles</option>
+                    <option value="accounts">Accounts</option>
+                    <option value="hostel">Hostel</option>
+                    <option value="mess">Mess</option>
+                    <option value="transport">Transport</option>
+                    <option value="scholarship">Scholarship</option>
+                    <option value="hod">HOD</option>
+                    <option value="examination">Examination</option>
+                </select>
+                <select class="form-select" id="staffStatusFilter" onchange="loadStaff()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                </select>
+                <input class="form-input" type="text" id="staffSearch" placeholder="Search by name/email..." oninput="debounce(loadStaff,300)()" style="min-width:200px;">
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="staffTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div class="pagination" id="staffPagination"></div>
+        </div>
+
+        <!-- ========== SECTION: STUDENTS ========== -->
+        <div class="section" id="section-students">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">🎓 Students</h2><p style="color:var(--text-muted);font-size:0.85rem;">View and manage student accounts</p></div>
+            <div class="filter-bar">
+                <input class="form-input" type="text" id="studentSearch" placeholder="Search by name/email/roll..." oninput="debounce(loadStudents,300)()" style="min-width:250px;">
+                <select class="form-select" id="studentStatusFilter" onchange="loadStudents()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="graduated">Graduated</option>
+                </select>
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>Name</th><th>Email</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody id="studentTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div class="pagination" id="studentPagination"></div>
+        </div>
+
+        <!-- ========== SECTION: APPLICATIONS ========== -->
+        <div class="section" id="section-applications">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">📋 Applications</h2><p style="color:var(--text-muted);font-size:0.85rem;">Monitor all no-dues applications</p></div>
+            <div class="filter-bar">
+                <select class="form-select" id="appStatusFilter" onchange="loadApplications()">
+                    <option value="">All Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="in_review">In Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <input class="form-input" type="text" id="appSearch" placeholder="Search by student/roll..." oninput="debounce(loadApplications,300)()" style="min-width:200px;">
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>App #</th><th>Student</th><th>Roll</th><th>Semester</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="appTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div class="pagination" id="appPagination"></div>
+        </div>
+
+        <!-- ========== SECTION: DEPARTMENTS ========== -->
+        <div class="section" id="section-departments">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">🏢 Departments</h2><p style="color:var(--text-muted);font-size:0.85rem;">Manage clearance departments</p></div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Orders</th><th>Active</th><th>Actions</th></tr></thead><tbody id="deptTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION: SEMESTERS ========== -->
+        <div class="section" id="section-semesters">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <div><h2 style="font-size:1.25rem;">📅 Semesters</h2><p style="color:var(--text-muted);font-size:0.85rem;">Manage academic semesters</p></div>
+                <button class="btn btn-primary" onclick="openCreateSemesterModal()">➕ New Semester</button>
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>#</th><th>Name</th><th>Academic Year</th><th>Start</th><th>End</th><th>Current</th><th>Clearance</th><th>Actions</th></tr></thead><tbody id="semesterTableBody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION: ANALYTICS ========== -->
+        <div class="section" id="section-analytics">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">📈 Analytics</h2><p style="color:var(--text-muted);font-size:0.85rem;">Detailed system analytics</p></div>
+            <div style="margin-bottom:1rem;">
+                <select class="form-select" id="analyticsDays" onchange="loadAnalytics()" style="width:auto;">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+            </div>
+            <div class="charts-grid">
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📈 Daily Applications</h3></div><div class="glass-panel-body"><canvas id="chartAnalyticsApps" height="200"></canvas></div></div>
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📊 Daily Registrations</h3></div><div class="glass-panel-body"><canvas id="chartAnalyticsReg" height="200"></canvas></div></div>
+            </div>
+            <div class="charts-grid">
+                <div class="glass-panel"><div class="glass-panel-header"><h3>👥 Role Distribution</h3></div><div class="glass-panel-body"><canvas id="chartAnalyticsRoles" height="200"></canvas></div></div>
+                <div class="glass-panel"><div class="glass-panel-header"><h3>📋 Application Status</h3></div><div class="glass-panel-body"><canvas id="chartAnalyticsStatus" height="200"></canvas></div></div>
+            </div>
+        </div>
+
+        <!-- ========== SECTION: AUDIT ========== -->
+        <div class="section" id="section-audit">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">📜 Audit Logs</h2><p style="color:var(--text-muted);font-size:0.85rem;">Complete system activity trail</p></div>
+            <div class="filter-bar">
+                <select class="form-select" id="auditActionFilter" onchange="loadAuditLogs()">
+                    <option value="">All Actions</option>
+                    <option value="create">Create</option>
+                    <option value="update">Update</option>
+                    <option value="delete">Delete</option>
+                    <option value="login">Login</option>
+                    <option value="logout">Logout</option>
+                    <option value="approve">Approve</option>
+                    <option value="reject">Reject</option>
+                    <option value="upload">Upload</option>
+                </select>
+                <select class="form-select" id="auditResourceFilter" onchange="loadAuditLogs()">
+                    <option value="">All Resources</option>
+                    <option value="user">User</option>
+                    <option value="application">Application</option>
+                    <option value="auth">Auth</option>
+                    <option value="document">Document</option>
+                    <option value="semester">Semester</option>
+                </select>
+            </div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" style="padding:0;">
+                    <table class="glass-table"><thead><tr><th>Action</th><th>User</th><th>Resource</th><th>Details</th><th>Time</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div class="pagination" id="auditPagination"></div>
+        </div>
+
+        <!-- ========== SECTION: SETTINGS ========== -->
+        <div class="section" id="section-settings">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">⚙️ System Settings</h2><p style="color:var(--text-muted);font-size:0.85rem;">Configure global system settings</p></div>
+            <div class="glass-panel">
+                <div class="glass-panel-body" id="settingsBody"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="initDefaultSettings()" style="margin-top:0.5rem;">📥 Load Default Settings</button>
+        </div>
+
+        <!-- ========== SECTION: PROFILE ========== -->
+        <div class="section" id="section-profile">
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;">👤 My Profile</h2><p style="color:var(--text-muted);font-size:0.85rem;">Your account information</p></div>
+            <div class="glass-panel" style="max-width:500px;">
+                <div class="glass-panel-body">
+                    <div id="profileInfo" style="text-align:center;padding:1rem;"></div>
+                    <hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;">
+                    <a href="/auth/change-password" class="btn btn-outline" style="width:100%;">🔑 Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Create Staff ========== -->
+<div class="modal-overlay" id="createStaffModal">
+    <div class="modal-box">
+        <h2>👤 Create Staff Account</h2>
+        <p class="sub">A temporary password will be auto-generated.</p>
+        <div id="staffModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div>
+        <form id="createStaffForm" onsubmit="return createStaff(event)">
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">First Name</label><input class="form-input" name="first_name" required></div>
+                <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" name="last_name" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Email (Login ID)</label><input class="form-input" type="email" name="email" required></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Role</label>
+                    <select class="form-select" name="role" required>
+                        <option value="">Select Role</option>
+                        <option value="accounts">Accounts</option>
+                        <option value="hostel">Hostel</option>
+                        <option value="mess">Mess</option>
+                        <option value="transport">Transport</option>
+                        <option value="scholarship">Scholarship</option>
+                        <option value="hod">HOD</option>
+                        <option value="examination">Examination</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Phone</label><input class="form-input" name="phone"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Designation</label><input class="form-input" name="designation" placeholder="e.g. Senior Accountant"></div>
+            <div id="staffResultBox" style="display:none;" class="temp-password-box"></div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('createStaffModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="createStaffBtn">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========== MODAL: Create Semester ========== -->
+<div class="modal-overlay" id="createSemesterModal">
+    <div class="modal-box">
+        <h2>📅 Create Semester</h2>
+        <p class="sub">Add a new academic semester.</p>
+        <div id="semesterModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div>
+        <form id="createSemesterForm" onsubmit="return createSemester(event)">
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Semester Number</label><input class="form-input" type="number" name="semester_number" min="1" required></div>
+                <div class="form-group"><label class="form-label">Semester Name</label><input class="form-input" name="semester_name" required placeholder="e.g. Sixth Semester"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Academic Year</label><input class="form-input" name="academic_year" required placeholder="e.g. 2025-2026"></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" name="start_date" required></div>
+                <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" name="end_date" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label><input type="checkbox" name="is_current"> Set as Current Semester</label></div>
+                <div class="form-group"><label><input type="checkbox" name="is_clearance_open"> Open Clearance</label></div>
+            </div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('createSemesterModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Semester</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========== MODAL: Application Detail ========== -->
+<div class="modal-overlay" id="appDetailModal">
+    <div class="modal-box">
+        <h2>📋 Application Detail</h2>
+        <div id="appDetailBody"></div>
+        <button class="btn btn-ghost" onclick="closeModal('appDetailModal')" style="margin-top:1rem;">Close</button>
+    </div>
+</div>
+
+<!-- ========== MODAL: Confirm Action ========== -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="max-width:400px;">
+        <h2 id="confirmTitle">Confirm</h2>
+        <p id="confirmMessage" style="color:var(--text-muted);margin-bottom:1.5rem;"></p>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="btn btn-danger" id="confirmBtn" onclick="executeConfirm()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ──────────────────────────────────────────────
+    // Utility functions
+    // ──────────────────────────────────────────────
+    let confirmCallback = null;
+    let debounceTimer = null;
+    function debounce(fn, delay) { return function(...args) { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => fn(...args), delay); }; }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const curr = html.getAttribute('data-theme');
+        html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark');
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️') + ' ' + message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+
+    function confirmAction(title, message, callback) {
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        confirmCallback = callback;
+        openModal('confirmModal');
+    }
+
+    function executeConfirm() {
+        if (confirmCallback) confirmCallback();
+        confirmCallback = null;
+        closeModal('confirmModal');
+    }
+
+    function getToken() { return localStorage.getItem('access_token'); }
+
+    // ──────────────────────────────────────────────
+    // Section switching
+    // ──────────────────────────────────────────────
+    const sectionLabels = {
+        overview: '📊 Overview', staff: '👥 Staff Management', students: '🎓 Students',
+        applications: '📋 Applications', departments: '🏢 Departments', semesters: '📅 Semesters',
+        analytics: '📈 Analytics', audit: '📜 Audit Logs', settings: '⚙️ System Settings',
+        profile: '👤 My Profile',
+    };
+
+    function switchSection(name) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('section-' + name).classList.add('active');
+        document.querySelectorAll('.super-sidebar-item').forEach(i => i.classList.remove('active'));
+        document.querySelector(`.super-sidebar-item[data-section="${name}"]`)?.classList.add('active');
+        document.getElementById('pageTitle').textContent = sectionLabels[name] || name;
+        // Close sidebar on mobile
+        document.getElementById('superSidebar').classList.remove('open');
+
+        // Load data per section
+        const loaders = {
+            overview: loadOverview, staff: loadStaff, students: loadStudents,
+            applications: loadApplications, departments: loadDepartments,
+            semesters: loadSemesters, analytics: loadAnalytics,
+            audit: loadAuditLogs, settings: loadSettings, profile: loadProfile,
+        };
+        if (loaders[name]) loaders[name]();
+    }
+
+    // ──────────────────────────────────────────────
+    // OVERVIEW
+    // ──────────────────────────────────────────────
+    let chartDailyApps = null, chartRoleDist = null, chartStatusDist = null, chartMonthlyApps = null;
+
+    async function loadOverview() {
+        try {
+            const res = await fetch('/superadmin/api/dashboard', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const d = data.data;
+            // Stats
+            document.getElementById('overviewStats').innerHTML = `
+                <div class="super-stat"><div class="stat-top"><div class="stat-label">Total Users</div><div class="stat-icon" style="background:var(--gradient-primary);color:white;">👥</div></div><div class="stat-value">${d.users.total}</div><div class="stat-label">${d.users.active} active</div><div class="stat-accent" style="background:var(--gradient-primary);"></div></div>
+                <div class="super-stat"><div class="stat-top"><div class="stat-label">Students</div><div class="stat-icon" style="background:var(--gradient-info);color:white;">🎓</div></div><div class="stat-value">${d.users.students}</div><div class="stat-label">${d.users.staff} staff members</div><div class="stat-accent" style="background:var(--gradient-info);"></div></div>
+                <div class="super-stat"><div class="stat-top"><div class="stat-label">Applications</div><div class="stat-icon" style="background:var(--gradient-warning);color:white;">📋</div></div><div class="stat-value">${d.applications.total}</div><div class="stat-label">${d.applications.pending} pending</div><div class="stat-accent" style="background:var(--gradient-warning);"></div></div>
+                <div class="super-stat"><div class="stat-top"><div class="stat-label">Approved</div><div class="stat-icon" style="background:var(--gradient-success);color:white;">✅</div></div><div class="stat-value">${d.applications.approved}</div><div class="stat-label">${d.applications.rejected} rejected</div><div class="stat-accent" style="background:var(--gradient-success);"></div></div>
+                <div class="super-stat"><div class="stat-top"><div class="stat-label">Today</div><div class="stat-icon" style="background:var(--gradient-purple);color:white;">📅</div></div><div class="stat-value">${d.today.new_applications}</div><div class="stat-label">${d.today.admit_cards_issued} admit cards</div><div class="stat-accent" style="background:var(--gradient-purple);"></div></div>
+            `;
+            // Department queues
+            const deptBody = document.getElementById('deptQueueBody');
+            if (d.department_queues && d.department_queues.length) {
+                deptBody.innerHTML = d.department_queues.map(dq => `<tr><td><strong>${dq.name}</strong></td><td>${dq.code}</td><td><span class="badge badge-${dq.pending > 0 ? 'warning' : 'success'}">${dq.pending}</span></td></tr>`).join('');
+            } else { deptBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No data</td></tr>'; }
+            // Activity
+            const actBody = document.getElementById('activityBody');
+            if (d.recent_activity && d.recent_activity.length) {
+                actBody.innerHTML = d.recent_activity.map(log => `<tr><td><span class="badge badge-info">${log.action}</span></td><td>${log.resource_type}</td><td style="color:var(--text-muted);font-size:0.8rem;">${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td></tr>`).join('');
+            } else { actBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No activity</td></tr>'; }
+            // Load analytics charts
+            loadAnalyticsCharts();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadAnalyticsCharts() {
+        try {
+            const res = await fetch('/superadmin/api/analytics?days=30', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const a = data.data;
+            // Daily apps chart
+            if (chartDailyApps) chartDailyApps.destroy();
+            chartDailyApps = new Chart(document.getElementById('chartDailyApps'), {
+                type: 'line', data: {
+                    labels: a.daily_applications.map(d => d.date),
+                    datasets: [{ label: 'Applications', data: a.daily_applications.map(d => d.count), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } } }
+            });
+            // Role distribution
+            if (chartRoleDist) chartRoleDist.destroy();
+            chartRoleDist = new Chart(document.getElementById('chartRoleDist'), {
+                type: 'doughnut', data: {
+                    labels: a.role_distribution.map(d => d.role),
+                    datasets: [{ data: a.role_distribution.map(d => d.count), backgroundColor: ['#6366f1','#10b981','#f59e0b','#06b6d4','#3b82f6','#8b5cf6','#1e293b','#ef4444'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+            // Status distribution
+            if (chartStatusDist) chartStatusDist.destroy();
+            chartStatusDist = new Chart(document.getElementById('chartStatusDist'), {
+                type: 'bar', data: {
+                    labels: a.application_status.map(d => d.status),
+                    datasets: [{ label: 'Count', data: a.application_status.map(d => d.count), backgroundColor: ['#94a3b8','#f59e0b','#3b82f6','#10b981','#ef4444'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } } } }
+            });
+            // Monthly
+            if (chartMonthlyApps) chartMonthlyApps.destroy();
+            chartMonthlyApps = new Chart(document.getElementById('chartMonthlyApps'), {
+                type: 'bar', data: {
+                    labels: a.monthly_applications.map(d => d.month),
+                    datasets: [{ label: 'Apps', data: a.monthly_applications.map(d => d.count), backgroundColor: 'rgba(139,92,246,0.6)', borderColor: '#8b5cf6', borderWidth: 1 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } } } }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // ──────────────────────────────────────────────
+    // STAFF
+    // ──────────────────────────────────────────────
+    let staffPage = 1;
+
+    async function loadStaff() {
+        const role = document.getElementById('staffRoleFilter').value;
+        const status = document.getElementById('staffStatusFilter').value;
+        const search = document.getElementById('staffSearch').value;
+        try {
+            const res = await fetch(`/superadmin/api/users/staff?page=${staffPage}&per_page=15&role=${role}&status=${status}&search=${encodeURIComponent(search)}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data.items || [];
+            const tbody = document.getElementById('staffTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(u => `
+                    <tr>
+                        <td><strong>${u.full_name || u.first_name + ' ' + u.last_name}</strong></td>
+                        <td>${u.email}</td>
+                        <td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--indigo);">${u.role}</span></td>
+                        <td>${u.department ? u.department.name : '-'}</td>
+                        <td><span class="badge badge-${u.status === 'active' ? 'success' : u.status === 'inactive' ? 'pending' : 'danger'}">${u.status}</span></td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="resetStaffPassword('${u.id}')" title="Reset Password">🔑</button>
+                            <button class="btn btn-sm btn-outline" onclick="toggleStaffStatus('${u.id}','${u.status}')" title="Toggle Status">${u.status === 'active' ? '⏸️' : '▶️'}</button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDeleteStaff('${u.id}','${u.full_name || u.email}')" title="Delete">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No staff found</td></tr>'; }
+            // Pagination
+            const totalPages = data.data.pages || 1;
+            document.getElementById('staffPagination').innerHTML = paginateHtml(staffPage, totalPages, p => { staffPage = p; loadStaff(); });
+        } catch (e) { console.error(e); }
+    }
+
+    function openCreateStaffModal() {
+        document.getElementById('createStaffForm').reset();
+        document.getElementById('staffResultBox').style.display = 'none';
+        document.getElementById('staffModalError').style.display = 'none';
+        document.getElementById('createStaffBtn').textContent = 'Create Account';
+        document.getElementById('createStaffBtn').disabled = false;
+        openModal('createStaffModal');
+    }
+
+    async function createStaff(event) {
+        event.preventDefault();
+        const form = document.getElementById('createStaffForm');
+        const data = Object.fromEntries(new FormData(form));
+        const btn = document.getElementById('createStaffBtn');
+        const errEl = document.getElementById('staffModalError');
+        const resultBox = document.getElementById('staffResultBox');
+        errEl.style.display = 'none';
+        resultBox.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        try {
+            const res = await fetch('/superadmin/api/users/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify(data),
+            });
+            const resp = await res.json();
+            if (resp.success) {
+                resultBox.innerHTML = `<div class="password">🔑 Temporary Password: <strong>${resp.data.temporary_password}</strong></div><div class="note">User: ${resp.data.user.email} | Share this securely with the staff member.</div>`;
+                resultBox.style.display = 'block';
+                showToast(resp.message);
+                loadStaff();
+                btn.textContent = '✅ Created';
+            } else {
+                errEl.textContent = resp.message;
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+        }
+        return false;
+    }
+
+    async function resetStaffPassword(userId) {
+        if (!confirm('Reset password for this user? A new temporary password will be generated.')) return;
+        try {
+            const res = await fetch(`/superadmin/api/users/${userId}/reset-password`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Password reset! New: ${data.data.temporary_password}`);
+            } else { showToast(data.message, 'error'); }
+        } catch (e) { showToast('Error', 'error'); }
+    }
+
+    async function toggleStaffStatus(userId, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        confirmAction('Change Status', `Set this user to "${newStatus}"?`, async () => {
+            try {
+                const res = await fetch(`/superadmin/api/users/${userId}/status`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                    body: JSON.stringify({ status: newStatus }),
+                });
+                const data = await res.json();
+                if (data.success) { showToast(data.message); loadStaff(); }
+                else { showToast(data.message, 'error'); }
+            } catch (e) { showToast('Error', 'error'); }
+        });
+    }
+
+    function confirmDeleteStaff(userId, name) {
+        confirmAction('Delete Staff', `Permanently delete "${name}"? This action cannot be undone.`, async () => {
+            try {
+                const res = await fetch(`/superadmin/api/users/${userId}`, {
+                    method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const data = await res.json();
+                if (data.success) { showToast(data.message); loadStaff(); }
+                else { showToast(data.message, 'error'); }
+            } catch (e) { showToast('Error', 'error'); }
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // STUDENTS
+    // ──────────────────────────────────────────────
+    let studentPage = 1;
+
+    async function loadStudents() {
+        const search = document.getElementById('studentSearch').value;
+        const status = document.getElementById('studentStatusFilter').value;
+        try {
+            const res = await fetch(`/superadmin/api/users/students?page=${studentPage}&per_page=15&search=${encodeURIComponent(search)}&status=${status}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data.items || [];
+            const tbody = document.getElementById('studentTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(u => `
+                    <tr>
+                        <td><strong>${u.full_name || u.first_name + ' ' + u.last_name}</strong></td>
+                        <td>${u.email}</td>
+                        <td>${u.student ? u.student.roll_number : '-'}</td>
+                        <td>${u.student ? u.student.course_name || '-' : '-'}</td>
+                        <td>${u.student ? 'Sem ' + (u.student.current_semester || '?') : '-'}</td>
+                        <td><span class="badge badge-${u.status === 'active' ? 'success' : 'danger'}">${u.status}</span></td>
+                        <td><button class="btn btn-sm btn-outline" onclick="toggleStaffStatus('${u.id}','${u.status}')">${u.status === 'active' ? '⏸️' : '▶️'}</button></td>
+                    </tr>
+                `).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No students found</td></tr>'; }
+            document.getElementById('studentPagination').innerHTML = paginateHtml(studentPage, data.data.pages || 1, p => { studentPage = p; loadStudents(); });
+        } catch (e) { console.error(e); }
+    }
+
+    // ──────────────────────────────────────────────
+    // APPLICATIONS
+    // ──────────────────────────────────────────────
+    let appPage = 1;
+
+    async function loadApplications() {
+        const status = document.getElementById('appStatusFilter').value;
+        const search = document.getElementById('appSearch').value;
+        try {
+            const res = await fetch(`/superadmin/api/applications?page=${appPage}&per_page=15&status=${status}&search=${encodeURIComponent(search)}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data.items || [];
+            const tbody = document.getElementById('appTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(a => {
+                    const student = a.student || {};
+                    return `<tr>
+                        <td><strong>${a.application_number || a.id?.slice(0,8) || 'N/A'}</strong></td>
+                        <td>${student.student_name || student.roll_number || 'N/A'}</td>
+                        <td>${student.roll_number || '-'}</td>
+                        <td>${a.total_steps ? 'Sem ' + a.total_steps : '-'}</td>
+                        <td><span class="badge badge-${a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'danger' : a.status === 'draft' ? 'pending' : 'warning'}">${a.status}</span></td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">${a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : a.created_at ? new Date(a.created_at).toLocaleDateString() : '-'}</td>
+                        <td><button class="btn btn-sm btn-outline" onclick="viewAppDetail('${a.id}')">👁️ View</button></td>
+                    </tr>`;
+                }).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No applications found</td></tr>'; }
+            document.getElementById('appPagination').innerHTML = paginateHtml(appPage, data.data.pages || 1, p => { appPage = p; loadApplications(); });
+        } catch (e) { console.error(e); }
+    }
+
+    async function viewAppDetail(appId) {
+        try {
+            const res = await fetch(`/superadmin/api/applications/${appId}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) { showToast(data.message, 'error'); return; }
+            const d = data.data;
+            const app = d.application || {};
+            const student = d.student || {};
+            const approvals = d.department_approvals || [];
+            document.getElementById('appDetailBody').innerHTML = `
+                <p><strong>Application #:</strong> ${app.application_number || app.id}</p>
+                <p><strong>Student:</strong> ${student.student_name || student.roll_number || 'N/A'} (${student.roll_number || ''})</p>
+                <p><strong>Status:</strong> <span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}">${app.status}</span></p>
+                <p><strong>Submitted:</strong> ${app.submitted_at ? new Date(app.submitted_at).toLocaleString() : 'Not submitted'}</p>
+                <hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;">
+                <h4 style="margin-bottom:0.5rem;">Department Approvals</h4>
+                ${approvals.length ? approvals.map(ad => `<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border-light);"><span>${ad.department_name || 'Department'}</span><span class="badge badge-${ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending'}">${ad.status}</span></div>`).join('') : '<p style="color:var(--text-muted);">No approvals yet</p>'}
+                <hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;">
+                <h4 style="margin-bottom:0.5rem;">Documents (${(d.documents || []).length})</h4>
+                ${(d.documents || []).length ? d.documents.map(doc => `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.85rem;"><span>📄 ${doc.file_name || 'Document'}</span><span class="badge badge-${doc.status === 'verified' ? 'success' : 'pending'}">${doc.status}</span></div>`).join('') : '<p style="color:var(--text-muted);">No documents</p>'}
+            `;
+            openModal('appDetailModal');
+        } catch (e) { showToast('Error loading details', 'error'); }
+    }
+
+    // ──────────────────────────────────────────────
+    // DEPARTMENTS
+    // ──────────────────────────────────────────────
+    async function loadDepartments() {
+        try {
+            const res = await fetch('/superadmin/api/departments', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data || [];
+            const tbody = document.getElementById('deptTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(d => `
+                    <tr>
+                        <td><strong>${d.code}</strong></td>
+                        <td>${d.name}</td>
+                        <td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--indigo);">${d.role}</span></td>
+                        <td>${d.display_order}</td>
+                        <td><span class="badge badge-${d.is_active ? 'success' : 'danger'}">${d.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td><button class="btn btn-sm btn-outline" onclick="toggleDeptStatus('${d.id}',${d.is_active})">${d.is_active ? '⏸️' : '▶️'}</button></td>
+                    </tr>
+                `).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No departments</td></tr>'; }
+        } catch (e) { console.error(e); }
+    }
+
+    async function toggleDeptStatus(deptId, current) {
+        try {
+            const res = await fetch(`/superadmin/api/departments/${deptId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify({ is_active: !current }),
+            });
+            const data = await res.json();
+            if (data.success) { showToast(data.message); loadDepartments(); }
+            else { showToast(data.message, 'error'); }
+        } catch (e) { showToast('Error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────────
+    // SEMESTERS
+    // ──────────────────────────────────────────────
+    async function loadSemesters() {
+        try {
+            const res = await fetch('/superadmin/api/semesters', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data || [];
+            const tbody = document.getElementById('semesterTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(s => `
+                    <tr>
+                        <td>${s.semester_number}</td>
+                        <td><strong>${s.semester_name}</strong></td>
+                        <td>${s.academic_year}</td>
+                        <td style="font-size:0.8rem;">${s.start_date || '-'}</td>
+                        <td style="font-size:0.8rem;">${s.end_date || '-'}</td>
+                        <td>${s.is_current ? '✅' : '-'}</td>
+                        <td>${s.is_clearance_open ? '✅' : '❌'}</td>
+                        <td><button class="btn btn-sm btn-outline" onclick="deleteSemester('${s.id}')">🗑️</button></td>
+                    </tr>
+                `).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No semesters</td></tr>'; }
+        } catch (e) { console.error(e); }
+    }
+
+    function openCreateSemesterModal() {
+        document.getElementById('createSemesterForm').reset();
+        document.getElementById('semesterModalError').style.display = 'none';
+        openModal('createSemesterModal');
+    }
+
+    async function createSemester(event) {
+        event.preventDefault();
+        const form = document.getElementById('createSemesterForm');
+        const data = Object.fromEntries(new FormData(form));
+        data.is_current = !!data.is_current;
+        data.is_clearance_open = !!data.is_clearance_open;
+        const errEl = document.getElementById('semesterModalError');
+        errEl.style.display = 'none';
+        try {
+            const res = await fetch('/superadmin/api/semesters', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify(data),
+            });
+            const resp = await res.json();
+            if (resp.success) { showToast(resp.message); loadSemesters(); closeModal('createSemesterModal'); }
+            else { errEl.textContent = resp.message; errEl.style.display = 'block'; }
+        } catch (e) { errEl.textContent = 'Error'; errEl.style.display = 'block'; }
+        return false;
+    }
+
+    async function deleteSemester(id) {
+        if (!confirm('Delete this semester?')) return;
+        try {
+            const res = await fetch(`/superadmin/api/semesters/${id}`, {
+                method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const data = await res.json();
+            if (data.success) { showToast(data.message); loadSemesters(); }
+            else { showToast(data.message, 'error'); }
+        } catch (e) { showToast('Error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────────
+    // ANALYTICS
+    // ──────────────────────────────────────────────
+    let chartAnalyticsApps = null, chartAnalyticsReg = null, chartAnalyticsRoles = null, chartAnalyticsStatus = null;
+
+    async function loadAnalytics() {
+        const days = document.getElementById('analyticsDays').value;
+        try {
+            const res = await fetch(`/superadmin/api/analytics?days=${days}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const a = data.data;
+            if (chartAnalyticsApps) chartAnalyticsApps.destroy();
+            chartAnalyticsApps = new Chart(document.getElementById('chartAnalyticsApps'), {
+                type: 'line', data: { labels: a.daily_applications.map(d => d.date), datasets: [{ label: 'Applications', data: a.daily_applications.map(d => d.count), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+            if (chartAnalyticsReg) chartAnalyticsReg.destroy();
+            chartAnalyticsReg = new Chart(document.getElementById('chartAnalyticsReg'), {
+                type: 'line', data: { labels: a.daily_registrations.map(d => d.date), datasets: [{ label: 'Registrations', data: a.daily_registrations.map(d => d.count), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+            if (chartAnalyticsRoles) chartAnalyticsRoles.destroy();
+            chartAnalyticsRoles = new Chart(document.getElementById('chartAnalyticsRoles'), {
+                type: 'doughnut', data: { labels: a.role_distribution.map(d => d.role), datasets: [{ data: a.role_distribution.map(d => d.count), backgroundColor: ['#6366f1','#10b981','#f59e0b','#06b6d4','#3b82f6','#8b5cf6','#1e293b','#ef4444'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+            if (chartAnalyticsStatus) chartAnalyticsStatus.destroy();
+            chartAnalyticsStatus = new Chart(document.getElementById('chartAnalyticsStatus'), {
+                type: 'bar', data: { labels: a.application_status.map(d => d.status), datasets: [{ label: 'Count', data: a.application_status.map(d => d.count), backgroundColor: ['#94a3b8','#f59e0b','#3b82f6','#10b981','#ef4444'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // ──────────────────────────────────────────────
+    // AUDIT
+    // ──────────────────────────────────────────────
+    let auditPage = 1;
+
+    async function loadAuditLogs() {
+        const action = document.getElementById('auditActionFilter').value;
+        const resource = document.getElementById('auditResourceFilter').value;
+        try {
+            const res = await fetch(`/superadmin/api/audit-logs?page=${auditPage}&per_page=20&action=${action}&resource_type=${resource}`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const items = data.data.items || [];
+            const tbody = document.getElementById('auditTableBody');
+            if (items.length) {
+                tbody.innerHTML = items.map(log => `
+                    <tr>
+                        <td><span class="badge badge-info">${log.action}</span></td>
+                        <td>${log.user_name || log.user_email || log.user_id?.slice(0,8) || 'System'}</td>
+                        <td>${log.resource_type}${log.resource_id ? ' #' + log.resource_id.slice(0,8) : ''}</td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">${log.details ? JSON.stringify(log.details).slice(0,60) : '-'}</td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
+                    </tr>
+                `).join('');
+            } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No logs found</td></tr>'; }
+            document.getElementById('auditPagination').innerHTML = paginateHtml(auditPage, data.data.pages || 1, p => { auditPage = p; loadAuditLogs(); });
+        } catch (e) { console.error(e); }
+    }
+
+    // ──────────────────────────────────────────────
+    // SETTINGS
+    // ──────────────────────────────────────────────
+    async function loadSettings() {
+        try {
+            const res = await fetch('/superadmin/api/settings', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const settings = data.data || {};
+            const keys = Object.keys(settings);
+            const body = document.getElementById('settingsBody');
+            if (keys.length) {
+                body.innerHTML = keys.map(key => {
+                    const s = settings[key];
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-light);">
+                        <div><strong style="font-size:0.9rem;">${key.replace(/_/g,' ')}</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">${s.description || ''}</span></div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            ${s.type === 'bool' ? `<input type="checkbox" ${s.value === 'true' ? 'checked' : ''} onchange="updateSetting('${key}',this.checked?'true':'false')">` : `<input class="form-input" style="width:120px;" value="${s.value}" onchange="updateSetting('${key}',this.value)">`}
+                            <span style="font-size:0.7rem;color:var(--text-muted);">${s.type}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else { body.innerHTML = '<p style="color:var(--text-muted);text-align:center;">No settings configured. Click "Load Default Settings" below.</p>'; }
+        } catch (e) { console.error(e); }
+    }
+
+    async function updateSetting(key, value) {
+        try {
+            const res = await fetch(`/superadmin/api/settings/${key}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify({ value }),
+            });
+            const data = await res.json();
+            if (data.success) showToast(`Setting "${key}" updated`);
+            else showToast(data.message, 'error');
+        } catch (e) { showToast('Error', 'error'); }
+    }
+
+    async function initDefaultSettings() {
+        try {
+            const res = await fetch('/superadmin/api/settings/init', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const data = await res.json();
+            if (data.success) { showToast(data.message); loadSettings(); }
+            else { showToast(data.message, 'error'); }
+        } catch (e) { showToast('Error', 'error'); }
+    }
+
+    // ──────────────────────────────────────────────
+    // PROFILE
+    // ──────────────────────────────────────────────
+    async function loadProfile() {
+        try {
+            const res = await fetch('/auth/profile', { headers: { 'Authorization': `Bearer ${getToken()}` } });
+            const data = await res.json();
+            if (!data.success) return;
+            const user = data.data || {};
+            document.getElementById('profileInfo').innerHTML = `
+                <div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:800;margin:0 auto 1rem;">${(user.first_name || 'A')[0]}${(user.last_name || 'D')[0]}</div>
+                <h3 style="font-size:1.1rem;">${user.full_name || user.first_name + ' ' + user.last_name}</h3>
+                <p style="color:var(--text-muted);">${user.email}</p>
+                <p><span class="badge badge-purple">${user.role}</span> <span class="badge badge-${user.status === 'active' ? 'success' : 'danger'}">${user.status}</span></p>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Member since ${user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</p>
+            `;
+        } catch (e) { console.error(e); }
+    }
+
+    // ──────────────────────────────────────────────
+    // PAGINATION HELPER
+    // ──────────────────────────────────────────────
+    function paginateHtml(current, total, onClick) {
+        if (total <= 1) return '';
+        let html = `<button class="page-btn" onclick="(${onClick})(${current - 1})" ${current <= 1 ? 'disabled' : ''}>◀</button>`;
+        const start = Math.max(1, current - 2);
+        const end = Math.min(total, current + 2);
+        for (let i = start; i <= end; i++) {
+            html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="(${onClick})(${i})">${i}</button>`;
+        }
+        html += `<button class="page-btn" onclick="(${onClick})(${current + 1})" ${current >= total ? 'disabled' : ''}>▶</button>`;
+        html += `<span class="page-info">Page ${current} of ${total}</span>`;
+        return html;
+    }
+
+    // ──────────────────────────────────────────────
+    // CLOCK
+    // ──────────────────────────────────────────────
+    function updateClock() {
+        document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+
+    // ──────────────────────────────────────────────
+    // INIT
+    // ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        // Ensure token exists
+        if (!getToken()) { window.location.href = '/auth/login'; return; }
+        loadOverview();
+        updateClock();
+    });
+</script>
+</body>
+</html>
+

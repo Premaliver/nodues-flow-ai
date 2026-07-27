@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app" style="display: flex;">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
+                    <div><div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div><div style="font-size: 0.75rem; color: var(--text-muted);">Student Portal</div></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/student/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="#" class="sidebar-nav-item" onclick="createApplication()"><span class="nav-icon">📝</span> New Application</a>
+                <a href="#" class="sidebar-nav-item"><span class="nav-icon">📁</span> My Applications</a>
+                <a href="#" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
+                <a href="#" class="sidebar-nav-item"><span class="nav-icon">🔔</span> Notifications</a>
+                <a href="#" class="sidebar-nav-item"><span class="nav-icon">👤</span> Profile</a>
+            </nav>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+        </aside>
+        <div style="flex: 1; margin-left: 280px;">
+            <header class="top-nav" style="left: 280px;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <div class="top-nav-search"><span style="color: var(--text-muted);">🔍</span><input type="text" placeholder="Search applications..."></div>
+                </div>
+                <div class="top-nav-actions">
+                    <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </header>
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
+                <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;" id="welcomeHeading">Student Dashboard</h1>
+                        <p style="color: var(--text-muted);" id="studentInfo">Welcome to your no-dues clearance portal.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="createApplication()">➕ New Application</button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary);">📋</div><div class="stat-value" id="totalApps">0</div><div class="stat-label">Total Applications</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success);">✅</div><div class="stat-value" id="approvedApps">0</div><div class="stat-label">Approved</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning);">⏳</div><div class="stat-value" id="pendingApps">0</div><div class="stat-label">Pending</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger);">❌</div><div class="stat-value" id="rejectedApps">0</div><div class="stat-label">Rejected</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-info);">🔔</div><div class="stat-value" id="unreadNotif">0</div><div class="stat-label">Unread Notifications</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>My Applications</h3></div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>App #</th><th>Semester</th><th>Status</th><th>Progress</th><th>Submitted</th><th>Action</th></tr></thead>
+                                <tbody id="applicationsTableBody"><tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Active Application Progress -->
+                <div class="card" style="margin-top: 1rem;" id="activeAppCard">
+                    <div class="card-header"><h3>Active Application Progress</h3></div>
+                    <div class="card-body" id="activeAppBody">
+                        <p style="color: var(--text-muted);">No active application.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+        async function loadDashboard() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
+                const res = await fetch('/student/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success) {
+                    const d = data.data;
+                    if (d.student) { document.getElementById('studentInfo').textContent = `${d.student.student_name || 'Student'} - ${d.student.roll_number || ''} (Sem ${d.student.current_semester || 'N/A'})`; }
+                    document.getElementById('totalApps').textContent = d.application_count || 0;
+                    document.getElementById('approvedApps').textContent = d.approved_count || 0;
+                    document.getElementById('pendingApps').textContent = d.pending_count || 0;
+                    document.getElementById('rejectedApps').textContent = d.rejected_count || 0;
+                    document.getElementById('unreadNotif').textContent = d.unread_notification_count || 0;
+                    document.getElementById('notifBadge').setAttribute('data-count', d.unread_notification_count || 0);
+                    const tbody = document.getElementById('applicationsTableBody');
+                    if (d.applications && d.applications.length > 0) {
+                        tbody.innerHTML = d.applications.map(app => `
+                            <tr>
+                                <td><strong>${app.application_number || 'N/A'}</strong></td>
+                                <td>Sem ${app.total_steps || '?'}</td>
+                                <td><span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : app.status === 'draft' ? 'pending' : 'warning'}">${app.status}</span></td>
+                                <td><div class="progress-bar" style="width: 100px;"><div class="progress-bar-fill" style="width: ${app.progress_percentage || 0}%"></div></div> <span style="font-size: 0.8rem;">${app.progress_percentage || 0}%</span></td>
+                                <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted'}</td>
+                                <td>${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">Submit</button>` : `<span class="badge badge-info">${app.status}</span>`}</td>
+                            </tr>
+                        `).join('');
+                    } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No applications yet. Click "New Application" to start.</td></tr>'; }
+                    // Active application
+                    if (d.active_application) {
+                        const app = d.active_application;
+                        let approvalsHtml = '';
+                        if (d.department_approvals) {
+                            approvalsHtml = d.department_approvals.map(ad => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light);">
+                                    <span>${ad.department_name || 'Department'}</span>
+                                    <span class="badge badge-${ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending'}">${ad.status}</span>
+                                </div>
+                            `).join('');
+                        }
+                        document.getElementById('activeAppBody').innerHTML = `
+                            <p><strong>Application #${app.application_number}</strong> - ${app.status}</p>
+                            <div class="progress-bar" style="margin: 1rem 0;"><div class="progress-bar-fill" style="width: ${app.progress_percentage || 0}%"></div></div>
+                            <p style="font-size: 0.875rem; color: var(--text-muted);">${app.progress_percentage || 0}% Complete</p>
+                            <div style="margin-top: 1rem;">${approvalsHtml}</div>
+                            ${app.status === 'draft' ? `<button class="btn btn-primary" style="margin-top: 1rem;" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
+                        `;
+                    }
+                }
+            } catch (e) { console.error('Dashboard load error:', e); }
+        }
+        async function createApplication() {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch('/student/api/apply', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                alert(data.message || 'Application created!');
+                loadDashboard();
+            } catch (e) { alert('Error creating application'); console.error(e); }
+        }
+        async function submitApplication(appId) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/student/api/submit/${appId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                alert(data.message || 'Application submitted!');
+                loadDashboard();
+            } catch (e) { alert('Error submitting'); console.error(e); }
+        }
+        loadDashboard();
+    </script>
+</body>
+</html>

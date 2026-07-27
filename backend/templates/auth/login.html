@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Smart NoDues AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .role-select-wrap { position: relative; }
+        .role-select-wrap select {
+            width: 100%; padding: 0.75rem 1rem; padding-right: 2.5rem;
+            border: 2px solid var(--border-light); border-radius: var(--radius-md);
+            background: var(--bg-primary); color: var(--text-primary);
+            font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500;
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            cursor: pointer; transition: all var(--transition-fast);
+            outline: none;
+        }
+        .role-select-wrap select:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .role-select-wrap::after {
+            content: '▾'; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+            font-size: 0.8rem; color: var(--text-muted); pointer-events: none;
+        }
+        .role-select-wrap select optgroup { font-weight: 600; color: var(--text-secondary); }
+        .error-msg { color: var(--crimson); font-size: 0.8125rem; text-align: center; margin-bottom: 1rem; display: none; }
+    </style>
+</head>
+<body>
+    <div class="aurora-bg" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="width: 100%; max-width: 440px;">
+            <div class="card shadow-elevated" style="padding: 2.5rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Welcome Back</h1>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Select your role and sign in</p>
+                </div>
+                <div id="errorMsg" class="error-msg"></div>
+                <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label class="form-label" for="roleSelect">Login As</label>
+                        <div class="role-select-wrap">
+                            <select id="roleSelect" name="role" required>
+                                <option value="">— Select your role —</option>
+                                <optgroup label="Student">
+                                    <option value="student">🎓 Student</option>
+                                </optgroup>
+                                <optgroup label="Department Staff">
+                                    <option value="accounts">💰 Accounts</option>
+                                    <option value="hostel">🏠 Hostel</option>
+                                    <option value="mess">🍽️ Mess</option>
+                                    <option value="transport">🚌 Transport</option>
+                                    <option value="scholarship">📜 Scholarship</option>
+                                    <option value="hod">📚 HOD</option>
+                                    <option value="examination">📝 Examination</option>
+                                </optgroup>
+                                <optgroup label="Administration">
+                                    <option value="super_admin">⚙️ Super Admin</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="emailField">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" required>
+                    </div>
+                    <div class="form-group" id="usernameField" style="display: none;">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-input" placeholder="Enter Super Admin username" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="remember" name="remember" style="width: 16px; height: 16px;">
+                        <label for="remember" style="font-size: 0.875rem; color: var(--text-secondary);">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">Sign In</button>
+                </form>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">
+                        Don't have an account?
+                        <a href="{{ url_for('auth.register') }}" style="font-weight: 600;">Register here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+        // Toggle between email and username field based on role selection
+        document.getElementById('roleSelect').addEventListener('change', function() {
+            const isSuperAdmin = this.value === 'super_admin';
+            document.getElementById('emailField').style.display = isSuperAdmin ? 'none' : 'block';
+            document.getElementById('usernameField').style.display = isSuperAdmin ? 'block' : 'none';
+            // Toggle required attributes
+            document.getElementById('email').required = !isSuperAdmin;
+            document.getElementById('username').required = isSuperAdmin;
+            if (!isSuperAdmin) document.getElementById('username').value = '';
+            if (isSuperAdmin) document.getElementById('email').value = '';
+            if (this.value) {
+                document.getElementById('errorMsg').style.display = 'none';
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const role = document.getElementById('roleSelect').value;
+            if (!role) {
+                const err = document.getElementById('errorMsg');
+                err.textContent = '⚠️ Please select your role before signing in.';
+                err.style.display = 'block';
+                return;
+            }
+            const err = document.getElementById('errorMsg');
+            err.style.display = 'none';
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            try {
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                const isSuperAdmin = role === 'super_admin';
+                const payload = {
+                    password: document.getElementById('password').value,
+                    role: role,
+                    remember: document.getElementById('remember').checked
+                };
+                if (isSuperAdmin) {
+                    payload.username = document.getElementById('username').value;
+                } else {
+                    payload.email = document.getElementById('email').value;
+                }
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('access_token', data.data.access_token);
+                    localStorage.setItem('refresh_token', data.data.refresh_token);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    window.location.href = data.data.dashboard_url;
+                } else {
+                    err.textContent = '⚠️ ' + (data.message || 'Login failed');
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                }
+            } catch (error) {
+                err.textContent = '⚠️ Network error. Please try again.';
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

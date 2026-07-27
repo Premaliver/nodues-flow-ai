@@ -1,0 +1,761 @@
+"""Super Admin routes — system management and analytics."""
+
+import string as str_mod
+import random
+from datetime import datetime, timezone, timedelta
+
+from flask import request, jsonify, render_template, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_login import login_required, current_user
+
+from . import superadmin_bp
+from models import db
+from models.user import User
+from models.student import Student
+from models.department import Department, DepartmentStaff
+from models.semester import Semester
+from models.application import NoDuesApplication, ApplicationDepartment
+from models.document import Document
+from models.notification import Notification
+from models.audit_log import AuditLog
+from models.admit_card import AdmitCard
+from models.system_setting import SystemSetting
+from utils.decorators import admin_only, validate_json
+from utils.helpers import paginate_query, get_client_ip, get_user_agent
+from app import bcrypt
+
+
+# ──────────────────────────────────────
+# Helper: Generate random temp password
+# ──────────────────────────────────────
+def _generate_temp_password(length: int = 10) -> str:
+    chars = str_mod.ascii_letters + str_mod.digits + "!@#$%&"
+    return "".join(random.choice(chars) for _ in range(length))
+
+
+# ──────────────────────────────────────
+# PAGE: Dashboard
+# ──────────────────────────────────────
+@superadmin_bp.route("/dashboard")
+@login_required
+@admin_only
+def dashboard():
+    return render_template("superadmin/dashboard.html")
+
+
+# ──────────────────────────────────────
+# API: Dashboard Data (overview stats)
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/dashboard")
+@jwt_required()
+def dashboard_data():
+    """Get comprehensive system analytics for the dashboard overview."""
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    total_users = User.query.filter(User.deleted_at.is_(None)).count()
+    active_users = User.query.filter_by(status="active").filter(User.deleted_at.is_(None)).count()
+    total_students = Student.query.count()
+    total_staff = User.query.filter(
+        User.role != "student", User.role != "super_admin",
+        User.deleted_at.is_(None),
+    ).count()
+
+    total_applications = NoDuesApplication.query.filter(NoDuesApplication.deleted_at.is_(None)).count()
+    pending_apps = NoDuesApplication.query.filter(
+        NoDuesApplication.status.in_(["draft", "submitted", "in_review"]),
+        NoDuesApplication.deleted_at.is_(None),
+    ).count()
+    approved_apps = NoDuesApplication.query.filter_by(status="approved").filter(
+        NoDuesApplication.deleted_at.is_(None),
+    ).count()
+    rejected_apps = NoDuesApplication.query.filter_by(status="rejected").filter(
+        NoDuesApplication.deleted_at.is_(None),
+    ).count()
+
+    today_apps = NoDuesApplication.query.filter(
+        NoDuesApplication.created_at >= today_start,
+        NoDuesApplication.deleted_at.is_(None),
+    ).count()
+    today_admit_cards = AdmitCard.query.filter(
+        AdmitCard.created_at >= today_start,
+    ).count()
+
+    departments = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+    dept_stats = []
+    for dept in departments:
+        pending = ApplicationDepartment.query.filter_by(
+            department_id=dept.id, status="pending",
+        ).count()
+        dept_stats.append({
+            "id": str(dept.id),
+            "name": dept.name,
+            "code": dept.code,
+            "pending": pending,
+        })
+
+    recent_audits = (
+        AuditLog.query
+        .order_by(AuditLog.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "users": {
+                "total": total_users,
+                "active": active_users,
+                "students": total_students,
+                "staff": total_staff,
+            },
+            "applications": {
+                "total": total_applications,
+                "pending": pending_apps,
+                "approved": approved_apps,
+                "rejected": rejected_apps,
+            },
+            "today": {
+                "new_applications": today_apps,
+                "admit_cards_issued": today_admit_cards,
+            },
+            "department_queues": dept_stats,
+            "recent_activity": [
+                {
+                    "id": str(log.id),
+                    "user_id": str(log.user_id) if log.user_id else None,
+                    "action": log.action,
+                    "resource_type": log.resource_type,
+                    "details": log.details,
+                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                }
+                for log in recent_audits
+            ],
+        },
+    })
+
+
+# ──────────────────────────────────────
+# API: Manage Staff Users (CRUD)
+# ──────────────────────────────────────
+SUPERVISOR_ROLES = [
+    "accounts", "hostel", "mess", "transport",
+    "scholarship", "hod", "examination",
+]
+
+
+@superadmin_bp.route("/api/users/staff", methods=["GET"])
+@jwt_required()
+@admin_only
+def list_staff():
+    """List all staff users (non-student, non-admin) with pagination."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    role_filter = request.args.get("role")
+    status_filter = request.args.get("status")
+    search = request.args.get("search", "").strip().lower()
+
+    query = User.query.filter(
+        User.role.in_(SUPERVISOR_ROLES),
+        User.deleted_at.is_(None),
+    )
+    if role_filter:
+        query = query.filter_by(role=role_filter)
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    if search:
+        query = query.filter(
+            db.or_(
+                User.email.ilike(f"%{search}%"),
+                User.first_name.ilike(f"%{search}%"),
+                User.last_name.ilike(f"%{search}%"),
+            )
+        )
+    query = query.order_by(User.created_at.desc())
+
+    result = paginate_query(query, page=page, per_page=per_page)
+    # Add department info to each user
+    for item in result["items"]:
+        staff_link = DepartmentStaff.query.filter_by(user_id=item["id"], is_active=True).first()
+        if staff_link and staff_link.department:
+            item["department"] = staff_link.department.to_dict()
+    return jsonify({"success": True, "data": result})
+
+
+@superadmin_bp.route("/api/users/staff", methods=["POST"])
+@jwt_required()
+@admin_only
+@validate_json("email", "first_name", "last_name", "role")
+def create_staff():
+    """Create a new staff user with auto-generated temp password."""
+    data = request.validated_data
+    email = data.get("email", "").strip().lower()
+    role = data.get("role", "").strip().lower()
+
+    if role not in SUPERVISOR_ROLES:
+        return jsonify({"success": False, "message": f"Invalid role. Must be one of: {', '.join(SUPERVISOR_ROLES)}"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"success": False, "message": "A user with this email already exists"}), 409
+
+    temp_password = _generate_temp_password()
+
+    user = User(
+        email=email,
+        role=role,
+        first_name=data.get("first_name", "").strip(),
+        last_name=data.get("last_name", "").strip(),
+        phone=data.get("phone", "").strip(),
+        is_email_verified=True,
+        status="active",
+    )
+    user.set_password(temp_password)
+    db.session.add(user)
+    db.session.flush()
+
+    # Link to department by role
+    dept = Department.query.filter_by(role=role, is_active=True).first()
+    if dept:
+        staff_link = DepartmentStaff(
+            user_id=user.id,
+            department_id=dept.id,
+            is_active=True,
+            designation=data.get("designation", ""),
+        )
+        db.session.add(staff_link)
+
+    # Audit log
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="create",
+        resource_type="user",
+        resource_id=user.id,
+        details={"created_user": email, "role": role},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": f"Staff account created successfully for {email}",
+        "data": {
+            "user": user.to_dict(),
+            "temporary_password": temp_password,
+            "department": dept.to_dict() if dept else None,
+        },
+    }), 201
+
+
+@superadmin_bp.route("/api/users/<user_id>/reset-password", methods=["POST"])
+@jwt_required()
+@admin_only
+def reset_staff_password(user_id):
+    """Reset a staff user's password (generates new temp password)."""
+    user = User.query.filter_by(id=user_id).filter(User.deleted_at.is_(None)).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+    if user.role not in SUPERVISOR_ROLES:
+        return jsonify({"success": False, "message": "Can only reset passwords for staff users"}), 400
+
+    temp_password = _generate_temp_password()
+    user.set_password(temp_password)
+
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="update",
+        resource_type="user",
+        resource_id=user.id,
+        details={"action": "password_reset"},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": f"Password reset for {user.email}",
+        "data": {"temporary_password": temp_password},
+    })
+
+
+@superadmin_bp.route("/api/users/<user_id>/status", methods=["PUT"])
+@jwt_required()
+@admin_only
+@validate_json("status")
+def update_user_status(user_id):
+    """Activate or deactivate a user."""
+    user = User.query.filter_by(id=user_id).filter(User.deleted_at.is_(None)).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    new_status = request.validated_data["status"]
+    if new_status not in ("active", "inactive", "suspended"):
+        return jsonify({"success": False, "message": "Invalid status"}), 400
+
+    old_status = user.status
+    user.status = new_status
+
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="update",
+        resource_type="user",
+        resource_id=user.id,
+        details={"action": "status_change", "from": old_status, "to": new_status},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": f"User status updated to {new_status}", "data": user.to_dict()})
+
+
+@superadmin_bp.route("/api/users/<user_id>", methods=["DELETE"])
+@jwt_required()
+@admin_only
+def delete_user(user_id):
+    """Soft delete a user."""
+    user = User.query.filter_by(id=user_id).filter(User.deleted_at.is_(None)).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+    if user.role == "super_admin":
+        return jsonify({"success": False, "message": "Cannot delete super admin"}), 400
+
+    user.deleted_at = datetime.now(timezone.utc)
+    user.status = "inactive"
+
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="delete",
+        resource_type="user",
+        resource_id=user.id,
+        details={"deleted_user": user.email},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "User deleted successfully"})
+
+
+# ──────────────────────────────────────
+# API: Students (list / search)
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/users/students", methods=["GET"])
+@jwt_required()
+@admin_only
+def list_students():
+    """List all student users with pagination."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    search = request.args.get("search", "").strip().lower()
+    status_filter = request.args.get("status")
+
+    query = User.query.filter_by(role="student").filter(User.deleted_at.is_(None))
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    if search:
+        query = query.filter(
+            db.or_(
+                User.email.ilike(f"%{search}%"),
+                User.first_name.ilike(f"%{search}%"),
+                User.last_name.ilike(f"%{search}%"),
+            )
+        )
+    query = query.order_by(User.created_at.desc())
+    result = paginate_query(query, page=page, per_page=per_page)
+
+    # Attach student profile to each user
+    for item in result["items"]:
+        u = User.query.get(item["id"])
+        if u and u.student_profile:
+            item["student"] = u.student_profile.to_dict()
+
+    return jsonify({"success": True, "data": result})
+
+
+# ──────────────────────────────────────
+# API: All Users (for search / general)
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/users")
+@jwt_required()
+@admin_only
+def list_all_users():
+    page = request.args.get("page", 1, type=int)
+    role_filter = request.args.get("role")
+    status_filter = request.args.get("status")
+
+    query = User.query.filter(User.deleted_at.is_(None))
+    if role_filter:
+        query = query.filter_by(role=role_filter)
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    query = query.order_by(User.created_at.desc())
+
+    return jsonify({"success": True, "data": paginate_query(query, page=page, per_page=20)})
+
+
+# ──────────────────────────────────────
+# API: Applications Monitoring
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/applications")
+@jwt_required()
+@admin_only
+def list_all_applications():
+    """List all applications with filters."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    status_filter = request.args.get("status")
+    dept_filter = request.args.get("department_id")
+    search = request.args.get("search", "").strip().lower()
+
+    query = NoDuesApplication.query.filter(NoDuesApplication.deleted_at.is_(None))
+
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    if dept_filter:
+        query = query.join(ApplicationDepartment).filter(
+            ApplicationDepartment.department_id == dept_filter,
+        )
+    if search:
+        query = query.join(Student).join(User).filter(
+            db.or_(
+                User.email.ilike(f"%{search}%"),
+                Student.roll_number.ilike(f"%{search}%"),
+                Student.enrollment_number.ilike(f"%{search}%"),
+                User.first_name.ilike(f"%{search}%"),
+                User.last_name.ilike(f"%{search}%"),
+            )
+        )
+
+    query = query.order_by(NoDuesApplication.created_at.desc())
+    result = paginate_query(query, page=page, per_page=per_page)
+
+    # Enrich with student info
+    for item in result["items"]:
+        app_obj = NoDuesApplication.query.get(item["id"])
+        if app_obj and app_obj.student:
+            item["student"] = app_obj.student.to_dict()
+
+    return jsonify({"success": True, "data": result})
+
+
+@superadmin_bp.route("/api/applications/<app_id>")
+@jwt_required()
+@admin_only
+def get_application_detail(app_id):
+    """Get full detail of a specific application."""
+    app_obj = NoDuesApplication.query.filter_by(id=app_id).filter(
+        NoDuesApplication.deleted_at.is_(None),
+    ).first()
+    if not app_obj:
+        return jsonify({"success": False, "message": "Application not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "application": app_obj.to_dict(),
+            "student": app_obj.student.to_dict() if app_obj.student else None,
+            "department_approvals": [ad.to_dict() for ad in app_obj.department_approvals],
+            "documents": [doc.to_dict() for doc in app_obj.documents],
+            "admit_card": app_obj.admit_card.to_dict() if app_obj.admit_card else None,
+        },
+    })
+
+
+# ──────────────────────────────────────
+# API: Audit Logs
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/audit-logs")
+@jwt_required()
+@admin_only
+def get_audit_logs():
+    """Get paginated audit logs."""
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 30, type=int)
+    action_filter = request.args.get("action")
+    resource_filter = request.args.get("resource_type")
+
+    query = AuditLog.query
+    if action_filter:
+        query = query.filter_by(action=action_filter)
+    if resource_filter:
+        query = query.filter_by(resource_type=resource_filter)
+    query = query.order_by(AuditLog.created_at.desc())
+
+    result = paginate_query(query, page=page, per_page=per_page)
+    # Attach user email
+    for item in result["items"]:
+        if item.get("user_id"):
+            u = User.query.get(item["user_id"])
+            item["user_email"] = u.email if u else None
+            item["user_name"] = u.full_name if u else None
+
+    return jsonify({"success": True, "data": result})
+
+
+# ──────────────────────────────────────
+# API: Semester Management
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/semesters", methods=["GET"])
+@jwt_required()
+@admin_only
+def list_semesters():
+    """List all semesters."""
+    semesters = Semester.query.order_by(Semester.start_date.desc()).all()
+    return jsonify({"success": True, "data": [s.to_dict() for s in semesters]})
+
+
+@superadmin_bp.route("/api/semesters", methods=["POST"])
+@jwt_required()
+@admin_only
+@validate_json("semester_number", "semester_name", "academic_year", "start_date", "end_date")
+def create_semester():
+    """Create a new semester."""
+    data = request.validated_data
+
+    # If this is set as current, unset others
+    if data.get("is_current"):
+        Semester.query.filter_by(is_current=True).update({"is_current": False})
+
+    semester = Semester(
+        semester_number=int(data["semester_number"]),
+        semester_name=data["semester_name"],
+        academic_year=data["academic_year"],
+        start_date=datetime.fromisoformat(data["start_date"]).date(),
+        end_date=datetime.fromisoformat(data["end_date"]).date(),
+        is_current=bool(data.get("is_current", False)),
+        is_clearance_open=bool(data.get("is_clearance_open", False)),
+    )
+    db.session.add(semester)
+
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="create",
+        resource_type="semester",
+        details={"semester": data["semester_name"], "year": data["academic_year"]},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Semester created", "data": semester.to_dict()}), 201
+
+
+@superadmin_bp.route("/api/semesters/<semester_id>", methods=["PUT"])
+@jwt_required()
+@admin_only
+@validate_json()
+def update_semester(semester_id):
+    """Update a semester."""
+    semester = Semester.query.get(semester_id)
+    if not semester:
+        return jsonify({"success": False, "message": "Semester not found"}), 404
+
+    data = request.validated_data
+
+    if data.get("is_current"):
+        Semester.query.filter_by(is_current=True).update({"is_current": False})
+
+    for field in ("semester_number", "semester_name", "academic_year", "is_current", "is_clearance_open", "is_fee_submission_open"):
+        if field in data:
+            setattr(semester, field, data[field])
+    if "start_date" in data:
+        semester.start_date = datetime.fromisoformat(data["start_date"]).date()
+    if "end_date" in data:
+        semester.end_date = datetime.fromisoformat(data["end_date"]).date()
+
+    db.session.commit()
+    return jsonify({"success": True, "message": "Semester updated", "data": semester.to_dict()})
+
+
+@superadmin_bp.route("/api/semesters/<semester_id>", methods=["DELETE"])
+@jwt_required()
+@admin_only
+def delete_semester(semester_id):
+    semester = Semester.query.get(semester_id)
+    if not semester:
+        return jsonify({"success": False, "message": "Semester not found"}), 404
+    db.session.delete(semester)
+    db.session.commit()
+    return jsonify({"success": True, "message": "Semester deleted"})
+
+
+# ──────────────────────────────────────
+# API: Departments
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/departments", methods=["GET"])
+@jwt_required()
+@admin_only
+def list_departments():
+    """List all departments."""
+    depts = Department.query.order_by(Department.display_order).all()
+    return jsonify({"success": True, "data": [d.to_dict() for d in depts]})
+
+
+@superadmin_bp.route("/api/departments/<dept_id>", methods=["PUT"])
+@jwt_required()
+@admin_only
+@validate_json()
+def update_department(dept_id):
+    dept = Department.query.get(dept_id)
+    if not dept:
+        return jsonify({"success": False, "message": "Department not found"}), 404
+    data = request.validated_data
+    for field in ("name", "description", "is_active", "display_order"):
+        if field in data:
+            setattr(dept, field, data[field])
+    db.session.commit()
+    return jsonify({"success": True, "message": "Department updated", "data": dept.to_dict()})
+
+
+# ──────────────────────────────────────
+# API: System Settings
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/settings", methods=["GET"])
+@jwt_required()
+@admin_only
+def get_settings():
+    settings = SystemSetting.query.all()
+    return jsonify({
+        "success": True,
+        "data": {
+            s.setting_key: {
+                "value": s.setting_value,
+                "type": s.setting_type,
+                "description": s.description,
+            }
+            for s in settings
+        },
+    })
+
+
+@superadmin_bp.route("/api/settings/<key>", methods=["PUT"])
+@jwt_required()
+@admin_only
+@validate_json("value")
+def update_setting(key):
+    setting = SystemSetting.query.filter_by(setting_key=key).first()
+    if not setting:
+        return jsonify({"success": False, "message": "Setting not found"}), 404
+    setting.setting_value = request.validated_data["value"]
+    db.session.commit()
+    return jsonify({"success": True, "message": "Setting updated"})
+
+
+@superadmin_bp.route("/api/settings/init", methods=["POST"])
+@jwt_required()
+@admin_only
+def init_default_settings():
+    """Create default system settings if they don't exist."""
+    defaults = [
+        ("clearance_open", "true", "bool", "Is the no-dues clearance currently open?", True),
+        ("max_applications_per_semester", "3", "int", "Maximum applications a student can submit per semester", True),
+        ("auto_approve_days", "7", "int", "Days after which pending approvals auto-expire", False),
+        ("enable_notifications", "true", "bool", "Enable email/push notifications", True),
+        ("maintenance_mode", "false", "bool", "Put the system in maintenance mode (only admin can access)", False),
+    ]
+    created = []
+    for key, value, stype, desc, public in defaults:
+        if not SystemSetting.query.filter_by(setting_key=key).first():
+            s = SystemSetting(
+                setting_key=key,
+                setting_value=value,
+                setting_type=stype,
+                description=desc,
+                is_public=public,
+            )
+            db.session.add(s)
+            created.append(key)
+    db.session.commit()
+    return jsonify({"success": True, "message": f"Created {len(created)} default settings", "data": created})
+
+
+# ──────────────────────────────────────
+# API: Advanced Analytics
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/analytics")
+@jwt_required()
+@admin_only
+def get_analytics():
+    """Get detailed analytics for charts."""
+    days = request.args.get("days", 30, type=int)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+
+    daily_apps = (
+        db.session.query(
+            db.func.date(NoDuesApplication.created_at).label("date"),
+            db.func.count().label("count"),
+        )
+        .filter(NoDuesApplication.created_at >= since)
+        .group_by(db.func.date(NoDuesApplication.created_at))
+        .order_by(db.func.date(NoDuesApplication.created_at))
+        .all()
+    )
+
+    daily_registrations = (
+        db.session.query(
+            db.func.date(User.created_at).label("date"),
+            db.func.count().label("count"),
+        )
+        .filter(User.created_at >= since)
+        .group_by(db.func.date(User.created_at))
+        .order_by(db.func.date(User.created_at))
+        .all()
+    )
+
+    role_dist = (
+        db.session.query(User.role, db.func.count().label("count"))
+        .filter(User.deleted_at.is_(None))
+        .group_by(User.role)
+        .all()
+    )
+
+    status_dist = (
+        db.session.query(
+            NoDuesApplication.status, db.func.count().label("count")
+        )
+        .filter(NoDuesApplication.deleted_at.is_(None))
+        .group_by(NoDuesApplication.status)
+        .all()
+    )
+
+    # Monthly trend (last 12 months)
+    twelve_months_ago = now - timedelta(days=365)
+    monthly_apps = (
+        db.session.query(
+            db.func.strftime("%Y-%m", NoDuesApplication.created_at).label("month"),
+            db.func.count().label("count"),
+        )
+        .filter(NoDuesApplication.created_at >= twelve_months_ago)
+        .group_by(db.func.strftime("%Y-%m", NoDuesApplication.created_at))
+        .order_by(db.func.strftime("%Y-%m", NoDuesApplication.created_at))
+        .all()
+    )
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "daily_applications": [
+                {"date": str(row.date), "count": row.count} for row in daily_apps
+            ],
+            "daily_registrations": [
+                {"date": str(row.date), "count": row.count} for row in daily_registrations
+            ],
+            "monthly_applications": [
+                {"month": row.month, "count": row.count} for row in monthly_apps
+            ],
+            "role_distribution": [
+                {"role": row.role, "count": row.count} for row in role_dist
+            ],
+            "application_status": [
+                {"status": row.status, "count": row.count} for row in status_dist
+            ],
+        },
+    })

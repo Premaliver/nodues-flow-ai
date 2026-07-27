@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart NoDues AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .error-msg { color: var(--crimson); font-size: 0.8125rem; text-align: center; margin-bottom: 1rem; display: none; }
+        .success-msg { color: var(--emerald); font-size: 0.8125rem; text-align: center; margin-bottom: 1rem; display: none; }
+    </style>
+</head>
+<body>
+    <div class="aurora-bg" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="width: 100%; max-width: 520px;">
+            <div class="card shadow-elevated" style="padding: 2.5rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Create Account</h1>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Register as a student</p>
+                </div>
+                <div id="errorMsg" class="error-msg"></div>
+                <div id="successMsg" class="success-msg"></div>
+                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" for="roll_number">Roll Number</label>
+                            <input type="text" id="roll_number" name="roll_number" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="enrollment_number">Enrollment Number</label>
+                            <input type="text" id="enrollment_number" name="enrollment_number" class="form-input" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                        Create Account
+                    </button>
+                </form>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">
+                        Already have an account?
+                        <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const err = document.getElementById('errorMsg');
+            const success = document.getElementById('successMsg');
+            err.style.display = 'none';
+            success.style.display = 'none';
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            try {
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: document.getElementById('first_name').value,
+                        last_name: document.getElementById('last_name').value,
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value,
+                        roll_number: document.getElementById('roll_number').value,
+                        enrollment_number: document.getElementById('enrollment_number').value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    success.textContent = '✅ Account created! Redirecting to login...';
+                    success.style.display = 'block';
+                    setTimeout(() => window.location.href = '/auth/login', 1500);
+                } else {
+                    err.textContent = '⚠️ ' + (data.message || 'Registration failed');
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                }
+            } catch (error) {
+                err.textContent = '⚠️ Network error. Please try again.';
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

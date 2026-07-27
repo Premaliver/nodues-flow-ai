@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart NoDues AI - No-Dues Management System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .hero-section { min-height: 100vh; display: flex; align-items: center; padding: 6rem 2rem 4rem; }
+        .hero-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+        .hero-title { font-size: 3.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 1.5rem; }
+        .hero-subtitle { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 2rem; max-width: 480px; }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    </style>
+</head>
+<body>
+    <header style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 2rem; background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light);">
+        <nav class="nav-container">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
+                <span style="font-weight: 700; font-size: 1.125rem; font-family: var(--font-display);">Smart NoDues</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="/auth/login" class="btn btn-ghost btn-sm">Sign In</a>
+                <a href="/auth/register" class="btn btn-primary btn-sm">Get Started</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="aurora-bg hero-section">
+            <div class="hero-grid">
+                <div>
+                    <h1 class="hero-title">
+                        No-Dues Clearance
+                        <span class="gradient-text">Made Simple</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        AI-powered no-dues management system for Rayat Bahra University.
+                        Streamline your clearance process with real-time tracking and digital admit cards.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <a href="/auth/register" class="btn btn-primary btn-lg">Get Started</a>
+                        <a href="/auth/login" class="btn btn-secondary btn-lg">Sign In</a>
+                    </div>
+                </div>
+                <div style="position: relative;">
+                    <div class="glass" style="border-radius: var(--radius-xl); padding: 2rem; position: relative;">
+                        <div class="feature-grid">
+                            <div class="stat-card" style="text-align: center;">
+                                <div class="stat-value gradient-text">7</div>
+                                <div class="stat-label">Departments</div>
+                            </div>
+                            <div class="stat-card" style="text-align: center;">
+                                <div class="stat-value gradient-text">1</div>
+                                <div class="stat-label">Application</div>
+                            </div>
+                            <div class="stat-card" style="text-align: center;">
+                                <div class="stat-value gradient-text">AI</div>
+                                <div class="stat-label">Verification</div>
+                            </div>
+                            <div class="stat-card" style="text-align: center;">
+                                <div class="stat-value gradient-text">QR</div>
+                                <div class="stat-label">Admit Card</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+

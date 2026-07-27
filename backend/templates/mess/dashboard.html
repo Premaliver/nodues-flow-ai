@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mess Dashboard - Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="background: var(--bg-secondary);">
+<div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.25rem;">🍽️ Mess Dashboard</h1>
+            <p style="color: var(--text-muted);">Mess dues clearances</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            <a href="/auth/logout" class="btn btn-ghost btn-sm">🚪 Logout</a>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="stat-card"><div class="stat-value" id="messPending">0</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-value" id="messApproved">0</div><div class="stat-label">Approved</div></div>
+        <div class="stat-card"><div class="stat-value" id="messRejected">0</div><div class="stat-label">Rejected</div></div>
+    </div>
+
+    <div class="card"><div class="card-header"><h3>Pending Mess Applications</h3></div><div class="card-body">
+        <div class="table-container"><table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Submitted</th><th>Action</th></tr></thead>
+        <tbody id="messAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
+    </div></div>
+</div>
+
+<div id="messModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div class="card" style="width:100%;max-width:400px;padding:2rem;">
+        <h3 style="margin-bottom:1rem;" id="messModalTitle">Process Application</h3>
+        <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+            <button class="btn btn-success" onclick="processMess('approved')">✅ Approve</button>
+            <button class="btn btn-danger" onclick="processMess('rejected')">❌ Reject</button>
+        </div>
+        <div class="form-group"><label class="form-label">Remarks</label><textarea id="messRemarks" class="form-textarea"></textarea></div>
+        <button class="btn btn-ghost" onclick="document.getElementById('messModal').style.display='none'">Cancel</button>
+    </div>
+</div>
+
+<script>
+
