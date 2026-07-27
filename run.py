@@ -34,17 +34,15 @@ app = create_app(config_name)
 
 
 if __name__ == "__main__":
-    host = os.environ.get("HOST", "127.0.0.1")
+    # Production: Render sets PORT env var, bind to 0.0.0.0 for port detection
+    host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", 5000))
     debug = config_name == "development"
 
-    # Determine the browser-friendly URL
-    browser_url = f"http://127.0.0.1:{port}"
-    if host == "0.0.0.0":
-        browser_url = f"http://127.0.0.1:{port}"
+    browser_url = f"http://0.0.0.0:{port}"
 
     print(f"[*] Smart NoDues AI starting on {host}:{port} ({config_name})")
-    print(f"[*] Open in browser: {browser_url}")
+    print(f"[*] Open in browser: http://127.0.0.1:{port}")
     print(f"[*] University: {app.config['UNIVERSITY_NAME']}")
     print(f"[*] Support: {app.config['SUPPORT_EMAIL']}")
 
