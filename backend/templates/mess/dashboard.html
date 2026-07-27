@@ -45,4 +45,50 @@
 </div>
 
 <script>
+let messAppDeptId = null;
+function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');}
 
+async function loadMessDashboard() {
+    try {
+        const token = localStorage.getItem('access_token');
+        if (!token) { window.location.href = '/auth/login'; return; }
+        const res = await fetch('/mess/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        const d = await res.json();
+        if (d.success) {
+            document.getElementById('messPending').textContent = d.data.stats.pending || 0;
+            document.getElementById('messApproved').textContent = d.data.stats.approved || 0;
+            document.getElementById('messRejected').textContent = d.data.stats.rejected || 0;
+            const tbody = document.getElementById('messAppsBody');
+            if (d.data.pending_applications && d.data.pending_applications.length > 0) {
+                tbody.innerHTML = d.data.pending_applications.map(app => `<tr>
+                    <td><strong>${app.application_number||'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
+                    <td>${app.course_name||'-'}</td>
+                    <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
+                    <td><button class="btn btn-success btn-sm" onclick="openMessModal('${app.application_id}','${app.student_name}')">Process</button></td>
+                </tr>`).join('');
+            } else tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending mess applications</td></tr>';
+        }
+    } catch(e){console.error(e);}
+}
+
+function openMessModal(id, name) { messAppDeptId = id; document.getElementById('messModalTitle').textContent = 'Process: '+name; document.getElementById('messModal').style.display = 'flex'; }
+
+async function processMess(action) {
+    if (!messAppDeptId) return;
+    try {
+        const token = localStorage.getItem('access_token');
+        const remarks = document.getElementById('messRemarks').value;
+        const res = await fetch(`/mess/api/process/${messAppDeptId}`, { method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+            body: JSON.stringify({action,remarks}) });
+        const d = await res.json();
+        alert(d.message);
+        document.getElementById('messModal').style.display='none';
+        document.getElementById('messRemarks').value='';
+        loadMessDashboard();
+    } catch(e){alert('Error'); console.error(e);}
+}
+loadMessDashboard();
+</script>
+</body>
+</html>
