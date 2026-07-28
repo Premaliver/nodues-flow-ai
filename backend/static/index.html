@@ -3,74 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart NoDues AI - No-Dues Management System</title>
+    <title>Smart NoDues AI — No-Dues Clearance System</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .hero-section { min-height: 100vh; display: flex; align-items: center; padding: 6rem 2rem 4rem; }
+        .hero-section { min-height: 100vh; display: flex; align-items: center; padding: 6rem 2rem 4rem; position: relative; overflow: hidden; }
         .hero-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-        .hero-title { font-size: 3.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 1.5rem; }
-        .hero-subtitle { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 2rem; max-width: 480px; }
+        .hero-title { font-size: 4rem; font-weight: 400; line-height: 1.1; margin-bottom: 1.5rem; font-family: 'DM Serif Display', serif; }
+        .hero-subtitle { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 2.5rem; max-width: 480px; line-height: 1.7; }
         .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
         .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        /* Animations */
+        @keyframes heroReveal {
+            from { opacity: 0; transform: translateY(30px); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .reveal-hero { opacity: 0; animation: heroReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .reveal-hero-1 { animation-delay: 0.2s; }
+        .reveal-hero-2 { animation-delay: 0.4s; }
+        .reveal-hero-3 { animation-delay: 0.6s; }
+        .reveal-hero-4 { animation-delay: 0.8s; }
+        .reveal-hero-5 { animation-delay: 1.0s; }
+
+        /* Hero demo card */
+        .hero-demo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-2xl);
+            padding: 2rem;
+            box-shadow: var(--shadow-xl);
+            transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
+            transition: transform var(--transition-slow);
+        }
+        .hero-demo-card:hover {
+            transform: perspective(1000px) rotateY(-1deg) rotateX(1deg) translateY(-4px);
+        }
+        .hero-demo-card .demo-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .hero-demo-card .demo-step:last-child { border-bottom: none; }
+        .hero-demo-card .demo-step .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* Features section */
+        .features-section { padding: 6rem 2rem; position: relative; }
+        .features-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .feature-card { padding: 2rem; border-radius: var(--radius-2xl); background: var(--bg-card); border: 1px solid var(--border-light); transition: all var(--transition-base); }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); }
+        .feature-card .icon { width: 48px; height: 48px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1.25rem; }
+
+        /* Stats counter */
+        .stats-section { padding: 4rem 2rem; position: relative; }
+        .stats-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+        .stat-item { text-align: center; }
+        .stat-item .number { font-family: 'DM Serif Display', serif; font-size: 2.5rem; color: var(--accent); margin-bottom: 0.25rem; }
+        .stat-item .label { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Footer */
+        .footer { padding: 2rem; text-align: center; border-top: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.8rem; }
+
+        @media (max-width: 768px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .hero-title { font-size: 2.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
-    <header style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 2rem; background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light);">
+    <!-- Floating Shapes Background -->
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-1"></div>
+        <div class="floating-shape floating-shape-2"></div>
+        <div class="floating-shape floating-shape-3"></div>
+        <div class="floating-shape floating-shape-4"></div>
+        <div class="floating-shape floating-shape-5"></div>
+    </div>
+
+    <div class="paper-sheets">
+        <div class="paper-sheet paper-sheet-1"></div>
+        <div class="paper-sheet paper-sheet-2"></div>
+        <div class="paper-sheet paper-sheet-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <header style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0.75rem 2rem; background: var(--bg-glass); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-bottom: 1px solid var(--border-light);">
         <nav class="nav-container">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
-                <span style="font-weight: 700; font-size: 1.125rem; font-family: var(--font-display);">Smart NoDues</span>
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem; font-family: 'DM Serif Display', serif;">S</div>
+                <span style="font-weight: 600; font-size: 1rem; letter-spacing: -0.02em;">Smart NoDues</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <a href="/auth/login" class="btn btn-ghost btn-sm">Sign In</a>
-                <a href="/auth/register" class="btn btn-primary btn-sm">Get Started</a>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <a href="/auth/login" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1.25rem;">Sign In</a>
+                <a href="/auth/register" class="btn btn-primary btn-sm" style="padding: 0.5rem 1.25rem;">Get Started</a>
             </div>
         </nav>
     </header>
 
     <main>
+        <!-- Hero Section -->
         <section class="aurora-bg hero-section">
             <div class="hero-grid">
                 <div>
-                    <h1 class="hero-title">
+                    <p class="reveal-hero reveal-hero-1" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: var(--radius-full); background: var(--gradient-card); font-size: 0.8rem; color: var(--accent); font-weight: 500; margin-bottom: 1.5rem;">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--emerald);"></span>
+                        No-Dues Management System
+                    </p>
+                    <h1 class="hero-title reveal-hero reveal-hero-2">
                         No-Dues Clearance
                         <span class="gradient-text">Made Simple</span>
                     </h1>
-                    <p class="hero-subtitle">
-                        AI-powered no-dues management system for Rayat Bahra University.
-                        Streamline your clearance process with real-time tracking and digital admit cards.
+                    <p class="hero-subtitle reveal-hero reveal-hero-3">
+                        AI-powered no-dues management system for Rayat Bahra University. 
+                        Streamline your clearance process with real-time tracking across all departments.
                     </p>
-                    <div style="display: flex; gap: 1rem;">
-                        <a href="/auth/register" class="btn btn-primary btn-lg">Get Started</a>
-                        <a href="/auth/login" class="btn btn-secondary btn-lg">Sign In</a>
+                    <div class="reveal-hero reveal-hero-4" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <a href="/auth/register" class="btn btn-primary btn-lg" style="padding: 1rem 2rem; font-size: 1rem;">
+                            Get Started
+                            <span style="font-size: 1.1rem;">→</span>
+                        </a>
+                        <a href="/auth/login" class="btn btn-secondary btn-lg" style="padding: 1rem 2rem; font-size: 1rem;">
+                            Sign In
+                        </a>
                     </div>
                 </div>
-                <div style="position: relative;">
-                    <div class="glass" style="border-radius: var(--radius-xl); padding: 2rem; position: relative;">
-                        <div class="feature-grid">
-                            <div class="stat-card" style="text-align: center;">
-                                <div class="stat-value gradient-text">7</div>
-                                <div class="stat-label">Departments</div>
-                            </div>
-                            <div class="stat-card" style="text-align: center;">
-                                <div class="stat-value gradient-text">1</div>
-                                <div class="stat-label">Application</div>
-                            </div>
-                            <div class="stat-card" style="text-align: center;">
-                                <div class="stat-value gradient-text">AI</div>
-                                <div class="stat-label">Verification</div>
-                            </div>
-                            <div class="stat-card" style="text-align: center;">
-                                <div class="stat-value gradient-text">QR</div>
-                                <div class="stat-label">Admit Card</div>
-                            </div>
+                <div class="reveal-hero reveal-hero-5">
+                    <div class="hero-demo-card">
+                        <div style="margin-bottom: 1.5rem;">
+                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; margin-bottom: 0.25rem;">Quick Clearance Flow</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Track your application status in real-time</p>
+                        </div>
+                        <div class="demo-step">
+                            <div class="step-dot" style="background: var(--gradient-primary);">1</div>
+                            <div><strong style="font-size: 0.9rem;">Submit Application</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">Fill your no-dues form</span></div>
+                        </div>
+                        <div class="demo-step">
+                            <div class="step-dot" style="background: var(--gradient-success);">2</div>
+                            <div><strong style="font-size: 0.9rem;">Department Approvals</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">7 departments verify</span></div>
+                        </div>
+                        <div class="demo-step">
+                            <div class="step-dot" style="background: var(--gradient-warning);">3</div>
+                            <div><strong style="font-size: 0.9rem;">HOD Clearance</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">Academic clearance</span></div>
+                        </div>
+                        <div class="demo-step">
+                            <div class="step-dot" style="background: var(--accent);">4</div>
+                            <div><strong style="font-size: 0.9rem;">Admit Card</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">Download with QR code</span></div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item reveal" style="transition-delay: 0.1s;">
+                    <div class="number" data-target="7">0</div>
+                    <div class="label">Departments Integrated</div>
+                </div>
+                <div class="stat-item reveal" style="transition-delay: 0.2s;">
+                    <div class="number" data-target="1">0</div>
+                    <div class="label">Single Application</div>
+                </div>
+                <div class="stat-item reveal" style="transition-delay: 0.3s;">
+                    <div class="number" data-target="100">0</div>
+                    <div class="label">% Digital Process</div>
+                </div>
+                <div class="stat-item reveal" style="transition-delay: 0.4s;">
+                    <div class="number" data-target="24">0</div>
+                    <div class="label">Hour Turnaround</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div style="text-align: center; max-width: 600px; margin: 0 auto 3rem;">
+                <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.5rem; font-weight: 400; margin-bottom: 1rem;">Everything You Need</h2>
+                <p style="color: var(--text-muted); font-size: 1rem;">Complete no-dues clearance management for universities</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card reveal" style="transition-delay: 0.1s;">
+                    <div class="icon" style="background: var(--gradient-card);">🎓</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Student Portal</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Submit applications, track progress across all departments, download admit cards with QR codes.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.2s;">
+                    <div class="icon" style="background: var(--gradient-card);">🏢</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Department Workflow</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Accounts, Hostel, Mess, Transport, Scholarship, HOD, Examination — all in one system.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.3s;">
+                    <div class="icon" style="background: var(--gradient-card);">📊</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Real-time Analytics</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Comprehensive dashboards with charts, statistics, and audit logs for administrators.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.4s;">
+                    <div class="icon" style="background: var(--gradient-card);">🔐</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Digital Signatures</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Secure digital signing and stamping for verified clearance approvals.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.5s;">
+                    <div class="icon" style="background: var(--gradient-card);">📱</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Admit Cards</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Generate QR-coded admit cards after all departments clear the application.</p>
+                </div>
+                <div class="feature-card reveal" style="transition-delay: 0.6s;">
+                    <div class="icon" style="background: var(--gradient-card);">⚡</div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">AI-Powered</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6;">Smart verification and processing to streamline the clearance workflow.</p>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.75rem; font-family: 'DM Serif Display', serif;">S</div>
+                <span style="font-weight: 500;">Smart NoDues AI</span>
+            </div>
+            <p>&copy; 2025 Rayat Bahra University. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Animated counter
+        function animateCounters() {
+            document.querySelectorAll('.stat-item .number[data-target]').forEach(el => {
+                const target = parseInt(el.getAttribute('data-target'));
+                const suffix = el.textContent.trim() === '0' ? '' : '';
+                let current = 0;
+                const increment = target / 60;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        el.textContent = target + (target === 100 ? '%' : target === 24 ? '/7' : '');
+                        clearInterval(timer);
+                    } else {
+                        el.textContent = Math.floor(current);
+                    }
+                }, 25);
+            });
+        }
+
+        // Scroll Reveal Observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    if (entry.target.classList.contains('stat-item')) {
+                        animateCounters();
+                    }
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -100px 0px' });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+            // Animate stats visible on load
+            setTimeout(animateCounters, 1000);
+        });
+    </script>
 </body>
 </html>
-

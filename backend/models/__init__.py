@@ -53,4 +53,5 @@ from .audit_log import AuditLog
 from .admit_card import AdmitCard
 from .workflow import WorkflowConfig
 from .system_setting import SystemSetting
+from .course import Course, DigitalSignature
 

@@ -1,7 +1,8 @@
-"""Student dashboard routes."""
+"""Student dashboard routes — enhanced application workflow."""
 
 import os
 import uuid
+import hashlib
 from datetime import datetime, timezone
 
 from flask import request, jsonify, render_template, current_app
@@ -12,6 +13,7 @@ from . import student_bp
 from models import db
 from models.user import User
 from models.student import Student
+from models.course import Course, DigitalSignature
 from models.department import Department
 from models.semester import Semester
 from models.application import NoDuesApplication, ApplicationDepartment
@@ -33,6 +35,63 @@ from utils.helpers import (
 def dashboard():
     """Render student dashboard page."""
     return render_template("student/dashboard.html")
+
+
+@student_bp.route("/apply")
+@login_required
+@student_only
+def apply_page():
+    """Render student application form page."""
+    return render_template("student/apply.html")
+
+
+@student_bp.route("/api/profile")
+@jwt_required()
+def get_profile():
+    """Get student profile with full details."""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    data = user.to_dict()
+    if user.role == "student" and user.student_profile:
+        data.update(user.student_profile.to_dict())
+
+    return jsonify({"success": True, "data": data})
+
+
+@student_bp.route("/api/departments")
+@jwt_required()
+def get_departments():
+    """Get all active departments for selection."""
+    depts = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+    return jsonify({
+        "success": True,
+        "data": [d.to_dict() for d in depts]
+    })
+
+
+@student_bp.route("/api/courses")
+@jwt_required()
+def get_courses():
+    """Get all active courses."""
+    courses = Course.query.filter_by(is_active=True).all()
+    return jsonify({
+        "success": True,
+        "data": [c.to_dict() for c in courses]
+    })
+
+
+@student_bp.route("/api/courses/by-department/<dept_id>")
+@jwt_required()
+def get_courses_by_department(dept_id):
+    """Get courses filtered by department."""
+    courses = Course.query.filter_by(department_id=dept_id, is_active=True).all()
+    return jsonify({
+        "success": True,
+        "data": [c.to_dict() for c in courses]
+    })
 
 
 @student_bp.route("/api/dashboard")
@@ -57,11 +116,15 @@ def dashboard_data():
         user_id=user_id, is_read=False
     ).order_by(Notification.created_at.desc()).limit(5).all()
 
+    # Get admit cards
+    admit_cards = AdmitCard.query.filter_by(student_id=student.id).all()
+
     # Build response
     data = {
         "student": student.to_dict(),
         "current_semester": current_semester.to_dict() if current_semester else None,
         "applications": [app.to_dict() for app in applications],
+        "admit_cards": [ac.to_dict() for ac in admit_cards],
         "application_count": len(applications),
         "pending_count": sum(1 for a in applications if a.status == "submitted"),
         "approved_count": sum(1 for a in applications if a.status == "approved"),
@@ -83,8 +146,9 @@ def dashboard_data():
 
 @student_bp.route("/api/apply", methods=["POST"])
 @jwt_required()
+@validate_json("selected_departments", "hod_department")
 def create_application():
-    """Create a new no-dues application."""
+    """Create a new no-dues application with selected departments, documents, and signature."""
     user_id = get_jwt_identity()
     student = Student.query.filter_by(user_id=user_id).first()
     if not student:
@@ -109,38 +173,134 @@ def create_application():
             "data": {"application": existing.to_dict()},
         }), 409
 
-    # Determine workflow based on student category
-    workflow_steps = WorkflowConfig.query.filter_by(
-        category=student.category, is_active=True
-    ).order_by(WorkflowConfig.step_order).all()
+    data = request.validated_data
+    selected_depts = data.get("selected_departments", [])
+    hod_dept_role = data.get("hod_department", "")
+    signature_data = data.get("signature", "")
 
-    if not workflow_steps:
-        return jsonify({
-            "success": False,
-            "message": "No workflow configured for your category. Contact administration.",
-        }), 400
+    # Validate selections
+    if not selected_depts:
+        return jsonify({"success": False, "message": "Please select at least one department"}), 400
 
-    # Create application
+    if not hod_dept_role:
+        return jsonify({"success": False, "message": "Please select your HOD department"}), 400
+
+    # Find HOD department
+    hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
+    if not hod_dept:
+        return jsonify({"success": False, "message": "HOD department not configured"}), 400
+
+    # Determine workflow steps based on selected departments
+    all_workflow_depts = ["accounts", "hostel", "mess", "transport", "scholarship", "hod", "examination"]
+    active_workflow = []
+    step_order = 1
+
+    # Always include accounts first (verification department)
+    accounts_dept = Department.query.filter_by(role="accounts").first()
+    if accounts_dept and accounts_dept.is_active:
+        active_workflow.append({
+            "department": accounts_dept,
+            "step_order": step_order,
+            "is_required": True,
+        })
+        step_order += 1
+
+    # Add selected departments
+    for dept_role in selected_depts:
+        dept = Department.query.filter_by(role=dept_role, is_active=True).first()
+        if dept:
+            active_workflow.append({
+                "department": dept,
+                "step_order": step_order,
+                "is_required": True,
+            })
+            step_order += 1
+
+    # Add HOD
+    if hod_dept:
+        active_workflow.append({
+            "department": hod_dept,
+            "step_order": step_order,
+            "is_required": True,
+        })
+        step_order += 1
+
+    # Add examination last
+    exam_dept = Department.query.filter_by(role="examination").first()
+    if exam_dept and exam_dept.is_active:
+        active_workflow.append({
+            "department": exam_dept,
+            "step_order": step_order,
+            "is_required": True,
+        })
+
+    # Compute category based on selected departments
+    category = "day_scholar"
+    if "hostel" in selected_depts and "transport" in selected_depts and "scholarship" in selected_depts:
+        category = "hosteller_scholarship_transport"
+    elif "hostel" in selected_depts and "transport" in selected_depts:
+        category = "hosteller_transport"
+    elif "hostel" in selected_depts and "scholarship" in selected_depts:
+        category = "scholarship_hosteller"
+    elif "transport" in selected_depts and "scholarship" in selected_depts:
+        category = "scholarship_transport"
+    elif "hostel" in selected_depts:
+        category = "hosteller"
+    elif "transport" in selected_depts:
+        category = "transport_user"
+    elif "scholarship" in selected_depts:
+        category = "scholarship"
+
+    # Compute signature hash
+    sig_hash = hashlib.sha256(signature_data.encode("utf-8")).hexdigest() if signature_data else ""
+
+    # Create application with all new fields
     application = NoDuesApplication(
         student_id=student.id,
         semester_id=semester.id,
-        category=student.category,
-        total_steps=len([w for w in workflow_steps if w.is_required]),
+        category=category,
+        hod_department_id=hod_dept.id,
+        selected_departments=selected_depts,
+        digital_signature=signature_data,
+        signature_hash=sig_hash,
+        total_steps=len(active_workflow),
         status="draft",
     )
     db.session.add(application)
     db.session.flush()
 
-    # Create department approval entries
-    for step in workflow_steps:
+    # Save digital signature record
+    if signature_data:
+        digi_sig = DigitalSignature(
+            user_id=user_id,
+            signature_data=signature_data,
+            signature_hash=sig_hash,
+            ip_address=get_client_ip(),
+        )
+        db.session.add(digi_sig)
+
+    # Create department approval entries for each step
+    for step in active_workflow:
         dept_approval = ApplicationDepartment(
             application_id=application.id,
-            department_id=step.department_id,
-            display_order=step.step_order,
-            is_required=step.is_required,
+            department_id=step["department"].id,
+            display_order=step["step_order"],
+            is_required=step["is_required"],
             status="pending",
         )
         db.session.add(dept_approval)
+
+    # Create notification for accounts department
+    accounts_staff = User.query.filter_by(role="accounts").all()
+    for staff in accounts_staff:
+        notif = Notification(
+            user_id=staff.id,
+            type="application_submitted",
+            title=f"New application from {student.student_name}",
+            message=f"Application #{application.application_number} is pending accounts clearance.",
+            application_id=application.id,
+        )
+        db.session.add(notif)
 
     # Create audit log
     audit = AuditLog(
@@ -148,6 +308,11 @@ def create_application():
         action="create",
         resource_type="application",
         resource_id=application.id,
+        details={
+            "selected_departments": selected_depts,
+            "hod_department": hod_dept_role,
+            "category": category,
+        },
         ip_address=get_client_ip(),
         user_agent=get_user_agent(),
     )

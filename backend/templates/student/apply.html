@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Application - Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .form-section { margin-bottom: 2.5rem; }
+        .form-section-title { font-size: 1rem; font-family: var(--font-display); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+        .checkbox-card { 
+            display: flex; align-items: center; gap: 0.75rem; 
+            padding: 1rem; border: 1.5px solid var(--border-light); 
+            border-radius: var(--radius-lg); cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .checkbox-card:hover { border-color: var(--accent); background: rgba(99,102,241,0.03); }
+        .checkbox-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+        .checkbox-card input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+        .signature-pad { 
+            border: 1.5px dashed var(--border-medium); border-radius: var(--radius-lg);
+            width: 100%; height: 200px; cursor: crosshair;
+            background: var(--bg-secondary);
+            position: relative; overflow: hidden;
+        }
+        .signature-pad canvas { width: 100%; height: 100%; display: block; }
+        .file-upload-zone {
+            border: 1.5px dashed var(--border-medium); border-radius: var(--radius-lg);
+            padding: 2rem; text-align: center; cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .file-upload-zone:hover { border-color: var(--accent); background: rgba(99,102,241,0.03); }
+        .file-upload-zone.has-file { border-color: var(--emerald); background: rgba(16,185,129,0.05); }
+        .uploaded-file { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-top: 0.5rem; }
+        .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .step-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; border: 2px solid var(--border-light); color: var(--text-muted); }
+        .step-dot.active { border-color: var(--accent); background: var(--accent); color: white; }
+        .step-dot.completed { border-color: var(--emerald); background: var(--emerald); color: white; }
+        .step-line { flex: 1; height: 2px; background: var(--border-light); align-self: center; }
+        .step-line.active { background: var(--accent); }
+        .step-line.completed { background: var(--emerald); }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-1"></div>
+        <div class="floating-shape floating-shape-2"></div>
+        <div class="floating-shape floating-shape-3"></div>
+    </div>
+
+    <div id="app" style="display: flex;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
+                    <div><div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div><div style="font-size: 0.75rem; color: var(--text-muted);">Student Portal</div></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/student/apply" class="sidebar-nav-item active"><span class="nav-icon">📝</span> New Application</a>
+                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📁</span> My Applications</a>
+                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
+                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">👤</span> Profile</a>
+            </nav>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+        </aside>
+
+        <div style="flex: 1; margin-left: 280px;">
+            <header class="top-nav" style="left: 280px;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <span style="font-weight: 600; font-size: 0.95rem;">New No-Dues Application</span>
+                </div>
+                <div class="top-nav-actions">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </header>
+
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 2rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
+                <div style="max-width: 900px; margin: 0 auto;">
+                    <!-- Header -->
+                    <div class="reveal visible" style="margin-bottom: 2rem;">
+                        <h1 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;">New No-Dues Application</h1>
+                        <p style="color: var(--text-muted);">Fill in all required details and submit for clearance.</p>
+                    </div>
+
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step-dot active" id="step1Dot">1</div>
+                        <div class="step-line" id="step1Line"></div>
+                        <div class="step-dot" id="step2Dot">2</div>
+                        <div class="step-line" id="step2Line"></div>
+                        <div class="step-dot" id="step3Dot">3</div>
+                        <div class="step-line" id="step3Line"></div>
+                        <div class="step-dot" id="step4Dot">4</div>
+                    </div>
+
+                    <!-- Error/Success Messages -->
+                    <div id="errorMsg" style="display: none; background: rgba(239,68,68,0.1); color: var(--crimson); padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.875rem;"></div>
+                    <div id="successMsg" style="display: none; background: rgba(16,185,129,0.1); color: var(--emerald); padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.875rem;"></div>
+
+                    <form id="applicationForm" novalidate>
+                        <!-- STEP 1: Personal Information -->
+                        <div class="card" id="step1" style="padding: 2rem;">
+                            <div class="form-section">
+                                <h3 class="form-section-title">📋 Personal Information</h3>
+                                <div id="personalInfo">
+                                    <div class="skeleton" style="height: 200px; border-radius: var(--radius-lg);"></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3 class="form-section-title">🎯 Select Your HOD Department</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Select your academic department. The HOD of this department will process your final clearance.</p>
+                                <div class="form-group">
+                                    <select class="form-select" id="hodDepartment" required>
+                                        <option value="">— Select your department —</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button type="button" class="btn btn-primary" onclick="goToStep(2)">Continue →</button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: Department Selection -->
+                        <div class="card" id="step2" style="padding: 2rem; display: none;">
+                            <div class="form-section">
+                                <h3 class="form-section-title">🏛️ Select Departments for Clearance</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Tick the departments you need clearance from. Hostel, Mess, Transport, and Scholarship are facility-based.</p>
+                                <div class="checkbox-grid" id="deptCheckboxes">
+                                    <div class="checkbox-card" data-dept="hostel">
+                                        <input type="checkbox" value="hostel" id="dept-hostel">
+                                        <label for="dept-hostel" style="cursor: pointer; flex:1;">
+                                            <strong>🏠 Hostel</strong>
+                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel accommodation clearance</span>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-card" data-dept="mess">
+                                        <input type="checkbox" value="mess" id="dept-mess">
+                                        <label for="dept-mess" style="cursor: pointer; flex:1;">
+                                            <strong>🍽️ Mess</strong>
+                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues clearance</span>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-card" data-dept="transport">
+                                        <input type="checkbox" value="transport" id="dept-transport">
+                                        <label for="dept-transport" style="cursor: pointer; flex:1;">
+                                            <strong>🚌 Transport</strong>
+                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Transport fee clearance</span>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-card" data-dept="scholarship">
+                                        <input type="checkbox" value="scholarship" id="dept-scholarship">
+                                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
+                                            <strong>📜 Scholarship</strong>
+                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship verification</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-ghost" onclick="goToStep(1)">← Back</button>
+                                <button type="button" class="btn btn-primary" onclick="goToStep(3)">Continue →</button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: Document Upload & Signature -->
+                        <div class="card" id="step3" style="padding: 2rem; display: none;">
+                            <div class="form-section">
+                                <h3 class="form-section-title">📎 Required Documents</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Upload the following documents (PDF, JPG, PNG).</p>
+                                
+                                <!-- Exam Fee Receipt -->
+                                <div class="form-group">
+                                    <label class="form-label">📄 Examination Fee Receipt *</label>
+                                    <div class="file-upload-zone" id="examFeeZone" onclick="document.getElementById('examFeeInput').click()">
+                                        <div id="examFeePlaceholder">
+                                            <span style="font-size: 2rem;">📄</span>
+                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Exam Fee Receipt</p>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
+                                        </div>
+                                        <div id="examFeeFile" class="uploaded-file" style="display: none;"></div>
+                                        <input type="file" id="examFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'examFee')">
+                                    </div>
+                                </div>
+
+                                <!-- Next Sem Fee Receipt -->
+                                <div class="form-group">
+                                    <label class="form-label">📄 Next Semester Fee Receipt *</label>
+                                    <div class="file-upload-zone" id="nextSemFeeZone" onclick="document.getElementById('nextSemFeeInput').click()">
+                                        <div id="nextSemFeePlaceholder">
+                                            <span style="font-size: 2rem;">📄</span>
+                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Next Semester Fee Receipt</p>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
+                                        </div>
+                                        <div id="nextSemFeeFile" class="uploaded-file" style="display: none;"></div>
+                                        <input type="file" id="nextSemFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'nextSemFee')">
+                                    </div>
+                                </div>
+
+                                <!-- Application Form -->
+                                <div class="form-group">
+                                    <label class="form-label">📄 Application Form (Signed) *</label>
+                                    <div class="file-upload-zone" id="appFormZone" onclick="document.getElementById('appFormInput').click()">
+                                        <div id="appFormPlaceholder">
+                                            <span style="font-size: 2rem;">📄</span>
+                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Signed Application Form</p>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
+                                        </div>
+                                        <div id="appFormFile" class="uploaded-file" style="display: none;"></div>
+                                        <input type="file" id="appFormInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'appForm')">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="form-section-title">✍️ Digital Signature</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Sign below using your mouse or touch.</p>
+                                <div class="signature-pad" id="signaturePad">
+                                    <canvas id="sigCanvas"></canvas>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                                    <button type="button" class="btn btn-ghost btn-sm" onclick="clearSignature()">🗑️ Clear</button>
+                                    <span id="sigStatus" style="font-size: 0.8rem; color: var(--text-muted); align-self: center;">Not signed yet</span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Back</button>
+                                <button type="button" class="btn btn-primary" onclick="goToStep(4)">Review & Submit →</button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 4: Review & Submit -->
+                        <div class="card" id="step4" style="padding: 2rem; display: none;">
+                            <div class="form-section">
+                                <h3 class="form-section-title">✅ Review Your Application</h3>
+                                <div id="reviewContent" style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                                    <div class="skeleton" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-ghost" onclick="goToStep(3)">← Back</button>
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    📤 Submit Application
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ───────────────────────────────
+        // GLOBALS
+        // ───────────────────────────────
+        let studentData = null;
+        let uploadedFiles = { examFee: null, nextSemFee: null, appForm: null };
+        let signatureData = null;
+        let sigCanvas = null;
+        let sigCtx = null;
+        let isDrawing = false;
+
+        // ───────────────────────────────
+        // TOGGLE THEME
+        // ───────────────────────────────
+        function toggleTheme() {
+            const html = document.documentElement;
+            const curr = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark');
+        }
+
+        // ───────────────────────────────
+        // STEP NAVIGATION
+        // ───────────────────────────────
+        let currentStep = 1;
+
+        function goToStep(step) {
+            [1,2,3,4].forEach(s => {
+                document.getElementById(`step${s}`).style.display = s === step ? 'block' : 'none';
+                const dot = document.getElementById(`step${s}Dot`);
+                dot.className = 'step-dot';
+                if (s < step) dot.classList.add('completed');
+                if (s === step) dot.classList.add('active');
+                const line = document.getElementById(`step${s}Line`);
+                if (line) {
+                    line.className = 'step-line';
+                    if (s < step) line.classList.add('completed');
+                }
+            });
+            currentStep = step;
+            if (step === 4) renderReview();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ───────────────────────────────
+        // INIT: Load Departments & Profile
+        // ───────────────────────────────
+        async function init() {
+            const token = localStorage.getItem('access_token');
+            if (!token) { window.location.href = '/auth/login'; return; }
+
+            try {
+                // Load departments for HOD selection
+                const deptRes = await fetch('/student/api/departments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const deptData = await deptRes.json();
+                if (deptData.success) {
+                    const select = document.getElementById('hodDepartment');
+                    deptData.data.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.role;
+                        opt.textContent = d.name;
+                        select.appendChild(opt);
+                    });
+                }
+
+                // Load student profile
+                const profileRes = await fetch('/student/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const profileData = await profileRes.json();
+                if (profileData.success) {
+                    studentData = profileData.data;
+                    renderPersonalInfo();
+                }
+            } catch(e) {
+                console.error('Init error:', e);
+            }
+        }
+
+        function renderPersonalInfo() {
+            const s = studentData;
+            document.getElementById('personalInfo').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input class="form-input" value="${s.student_name || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Roll Number</label>
+                        <input class="form-input" value="${s.roll_number || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Enrollment Number</label>
+                        <input class="form-input" value="${s.enrollment_number || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Course</label>
+                        <input class="form-input" value="${s.course_name || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Branch</label>
+                        <input class="form-input" value="${s.branch || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Semester</label>
+                        <input class="form-input" value="${s.current_semester || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Father's Name</label>
+                        <input class="form-input" value="${s.father_name || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input class="form-input" value="${s.phone || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input class="form-input" value="${s.email || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <input class="form-input" value="${s.category || 'day_scholar'}" readonly style="background:var(--bg-secondary); text-transform:capitalize;">
+                    </div>
+                </div>
+            `;
+        }
+
+        // ───────────────────────────────
+        // CHECKBOX SELECTION TOGGLE
+        // ───────────────────────────────
+        document.querySelectorAll('.checkbox-card input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', function() {
+                this.closest('.checkbox-card').classList.toggle('selected', this.checked);
+            });
+        });
+
+        // ───────────────────────────────
+        // FILE UPLOAD HANDLER
+        // ───────────────────────────────
+        function handleFileUpload(input, type) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                uploadedFiles[type] = file;
+                const zone = document.getElementById(`${type}Zone`);
+                const placeholder = document.getElementById(`${type}Placeholder`);
+                const fileDiv = document.getElementById(`${type}File`);
+                placeholder.style.display = 'none';
+                fileDiv.style.display = 'flex';
+                fileDiv.innerHTML = `
+                    <span>📄</span>
+                    <span style="flex:1; font-size: 0.85rem;">${file.name}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">${(file.size / 1024).toFixed(1)} KB</span>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="removeFile('${type}')">✕</button>
+                `;
+                zone.classList.add('has-file');
+            }
+        }
+
+        function removeFile(type) {
+            uploadedFiles[type] = null;
+            const zone = document.getElementById(`${type}Zone`);
+            const placeholder = document.getElementById(`${type}Placeholder`);
+            const fileDiv = document.getElementById(`${type}File`);
+            placeholder.style.display = 'block';
+            fileDiv.style.display = 'none';
+            zone.classList.remove('has-file');
+        }
+
+        // ───────────────────────────────
+        // SIGNATURE PAD
+        // ───────────────────────────────
+        function initSignaturePad() {
+            const canvas = document.getElementById('sigCanvas');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            sigCanvas = canvas;
+            sigCtx = canvas.getContext('2d');
+            sigCtx.strokeStyle = '#1a1a1a';
+            sigCtx.lineWidth = 2;
+            sigCtx.lineCap = 'round';
+            sigCtx.lineJoin = 'round';
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+            canvas.addEventListener('touchstart', startDrawTouch);
+            canvas.addEventListener('touchmove', drawTouch);
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            sigCtx.beginPath();
+            sigCtx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            sigCtx.lineTo(e.offsetX, e.offsetY);
+            sigCtx.stroke();
+        }
+
+        function startDrawTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = sigCanvas.getBoundingClientRect();
+            isDrawing = true;
+            sigCtx.beginPath();
+            sigCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        }
+
+        function drawTouch(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const touch = e.touches[0];
+            const rect = sigCanvas.getBoundingClientRect();
+            sigCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            sigCtx.stroke();
+        }
+
+        function stopDraw() {
+            if (isDrawing) {
+                isDrawing = false;
+                signatureData = sigCanvas.toDataURL('image/png');
+                document.getElementById('sigStatus').textContent = '✓ Signed';
+                document.getElementById('sigStatus').style.color = 'var(--emerald)';
+            }
+        }
+
+        function clearSignature() {
+            sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+            signatureData = null;
+            document.getElementById('sigStatus').textContent = 'Not signed yet';
+            document.getElementById('sigStatus').style.color = 'var(--text-muted)';
+        }
+
+        // ───────────────────────────────
+        // REVIEW & SUBMIT
+        // ───────────────────────────────
+        function renderReview() {
+            const selectedDepts = [];
+            document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
+                selectedDepts.push(cb.value);
+            });
+            const hodDept = document.getElementById('hodDepartment').selectedOptions[0]?.text || 'Not selected';
+
+            document.getElementById('reviewContent').innerHTML = `
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display:flex; justify-content:space-between;"><strong>Student:</strong> <span>${studentData.student_name}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Roll No:</strong> <span>${studentData.roll_number}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Course:</strong> <span>${studentData.course_name}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>HOD Department:</strong> <span>${hodDept}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Selected Departments:</strong> <span>${selectedDepts.length ? selectedDepts.join(', ') : 'None selected'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Exam Fee Receipt:</strong> <span>${uploadedFiles.examFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Next Sem Fee Receipt:</strong> <span>${uploadedFiles.nextSemFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Application Form:</strong> <span>${uploadedFiles.appForm ? '✅ Uploaded' : '❌ Missing'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Digital Signature:</strong> <span>${signatureData ? '✅ Signed' : '❌ Not signed'}</span></div>
+                </div>
+            `;
+        }
+
+        // ───────────────────────────────
+        // FORM SUBMIT
+        // ───────────────────────────────
+        document.getElementById('applicationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const err = document.getElementById('errorMsg');
+            const suc = document.getElementById('successMsg');
+            err.style.display = 'none';
+            suc.style.display = 'none';
+
+            // Validate
+            const hodDept = document.getElementById('hodDepartment').value;
+            if (!hodDept) { showError('Please select your HOD department.'); return; }
+            if (!uploadedFiles.examFee) { showError('Please upload Examination Fee Receipt.'); return; }
+            if (!uploadedFiles.nextSemFee) { showError('Please upload Next Semester Fee Receipt.'); return; }
+            if (!uploadedFiles.appForm) { showError('Please upload Signed Application Form.'); return; }
+            if (!signatureData) { showError('Please provide your digital signature.'); return; }
+
+            const selectedDepts = [];
+            document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => selectedDepts.push(cb.value));
+            if (selectedDepts.length === 0) { showError('Please select at least one department for clearance.'); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Submitting...';
+
+            try {
+                const token = localStorage.getItem('access_token');
+
+                // 1. Create application
+                const appRes = await fetch('/student/api/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        hod_department: hodDept,
+                        selected_departments: selectedDepts,
+                        signature: signatureData,
+                    })
+                });
+                const appData = await appRes.json();
+                if (!appData.success) { showError(appData.message); btn.disabled = false; btn.innerHTML = '📤 Submit Application'; return; }
+
+                const appId = appData.data.application.id;
+
+                // 2. Upload documents
+                const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt', appForm: 'application_form' };
+                for (const [key, docType] of Object.entries(docTypes)) {
+                    if (uploadedFiles[key]) {
+                        const formData = new FormData();
+                        formData.append('file', uploadedFiles[key]);
+                        formData.append('document_type', docType);
+                        await fetch(`/student/api/upload-document/${appId}`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                    }
+                }
+
+                // 3. Submit application
+                await fetch(`/student/api/submit/${appId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                suc.innerHTML = '✅ Application submitted successfully! Redirecting to dashboard...';
+                suc.style.display = 'block';
+                setTimeout(() => window.location.href = '/student/dashboard', 2000);
+
+            } catch(e) {
+                showError('Network error. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '📤 Submit Application';
+                console.error(e);
+            }
+        });
+
+        function showError(msg) {
+            const err = document.getElementById('errorMsg');
+            err.textContent = '⚠️ ' + msg;
+            err.style.display = 'block';
+        }
+
+        // ───────────────────────────────
+        // INIT
+        // ───────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setTimeout(initSignaturePad, 500);
+        });
+    </script>
+</body>
+</html>
+

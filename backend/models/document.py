@@ -17,7 +17,8 @@ class Document(db.Model):
     )
     document_type = db.Column(
         db.Enum(
-            "semester_fee_receipt", "exam_fee_receipt", "library_clearance",
+            "semester_fee_receipt", "exam_fee_receipt", "next_sem_fee_receipt",
+            "application_form", "library_clearance",
             "lab_clearance", "scholarship_document", "identity_proof", "other",
             name="document_type",
         ),

@@ -3,92 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mess Dashboard - Smart NoDues AI</title>
+    <title>Mess Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body style="background: var(--bg-secondary);">
-<div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <div>
-            <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.25rem;">🍽️ Mess Dashboard</h1>
-            <p style="color: var(--text-muted);">Mess dues clearances</p>
-        </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-            <a href="/auth/logout" class="btn btn-ghost btn-sm">🚪 Logout</a>
-        </div>
+<body>
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-3"></div>
+        <div class="floating-shape floating-shape-5"></div>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="stat-card"><div class="stat-value" id="messPending">0</div><div class="stat-label">Pending</div></div>
-        <div class="stat-card"><div class="stat-value" id="messApproved">0</div><div class="stat-label">Approved</div></div>
-        <div class="stat-card"><div class="stat-value" id="messRejected">0</div><div class="stat-label">Rejected</div></div>
-    </div>
-
-    <div class="card"><div class="card-header"><h3>Pending Mess Applications</h3></div><div class="card-body">
-        <div class="table-container"><table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Submitted</th><th>Action</th></tr></thead>
-        <tbody id="messAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
-    </div></div>
-</div>
-
-<div id="messModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-    <div class="card" style="width:100%;max-width:400px;padding:2rem;">
-        <h3 style="margin-bottom:1rem;" id="messModalTitle">Process Application</h3>
-        <div style="display:flex;gap:1rem;margin-bottom:1rem;">
-            <button class="btn btn-success" onclick="processMess('approved')">✅ Approve</button>
-            <button class="btn btn-danger" onclick="processMess('rejected')">❌ Reject</button>
+    <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.25rem;">🍽️ Mess Dashboard</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Mess dues clearances</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <a href="/auth/logout" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem;">🚪 Logout</a>
+            </div>
         </div>
-        <div class="form-group"><label class="form-label">Remarks</label><textarea id="messRemarks" class="form-textarea"></textarea></div>
-        <button class="btn btn-ghost" onclick="document.getElementById('messModal').style.display='none'">Cancel</button>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="stat-card"><div class="stat-value" id="messPending">0</div><div class="stat-label">Pending</div></div>
+            <div class="stat-card"><div class="stat-value" id="messApproved">0</div><div class="stat-label">Approved</div></div>
+            <div class="stat-card"><div class="stat-value" id="messRejected">0</div><div class="stat-label">Rejected</div></div>
+        </div>
+        <div class="card">
+            <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Pending Mess Applications</h3></div>
+            <div class="card-body">
+                <div class="table-container"><table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Submitted</th><th>Action</th></tr></thead>
+                <tbody id="messAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
+            </div>
+        </div>
     </div>
-</div>
-
-<script>
-let messAppDeptId = null;
-function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');}
-
-async function loadMessDashboard() {
-    try {
-        const token = localStorage.getItem('access_token');
-        if (!token) { window.location.href = '/auth/login'; return; }
-        const res = await fetch('/mess/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const d = await res.json();
-        if (d.success) {
-            document.getElementById('messPending').textContent = d.data.stats.pending || 0;
-            document.getElementById('messApproved').textContent = d.data.stats.approved || 0;
-            document.getElementById('messRejected').textContent = d.data.stats.rejected || 0;
-            const tbody = document.getElementById('messAppsBody');
-            if (d.data.pending_applications && d.data.pending_applications.length > 0) {
-                tbody.innerHTML = d.data.pending_applications.map(app => `<tr>
-                    <td><strong>${app.application_number||'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
-                    <td>${app.course_name||'-'}</td>
-                    <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                    <td><button class="btn btn-success btn-sm" onclick="openMessModal('${app.application_id}','${app.student_name}')">Process</button></td>
-                </tr>`).join('');
-            } else tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending mess applications</td></tr>';
+    <div id="messModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;">
+        <div class="card" style="width:100%;max-width:400px;padding:2rem;box-shadow:var(--shadow-xl);">
+            <h3 style="font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;margin-bottom:1rem;" id="messModalTitle">Process Application</h3>
+            <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+                <button class="btn btn-success" onclick="processMess('approved')">✅ Approve</button>
+                <button class="btn btn-danger" onclick="processMess('rejected')">❌ Reject</button>
+            </div>
+            <div class="form-group"><label class="form-label">Remarks</label><textarea id="messRemarks" class="form-textarea" style="min-height:80px;"></textarea></div>
+            <button class="btn btn-ghost" onclick="document.getElementById('messModal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+    <script>
+        let messAppDeptId = null;
+        function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');}
+        async function loadMessDashboard() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
+                const res = await fetch('/mess/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await res.json();
+                if (d.success) {
+                    document.getElementById('messPending').textContent = d.data.stats.pending || 0;
+                    document.getElementById('messApproved').textContent = d.data.stats.approved || 0;
+                    document.getElementById('messRejected').textContent = d.data.stats.rejected || 0;
+                    const tbody = document.getElementById('messAppsBody');
+                    if (d.data.pending_applications && d.data.pending_applications.length > 0) {
+                        tbody.innerHTML = d.data.pending_applications.map(app => `<tr>
+                            <td><strong>${app.application_number||'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
+                            <td>${app.course_name||'-'}</td>
+                            <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openMessModal('${app.application_id}','${app.student_name}')">Process</button></td>
+                        </tr>`).join('');
+                    } else tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending mess applications</td></tr>';
+                }
+            } catch(e){console.error(e);}
         }
-    } catch(e){console.error(e);}
-}
-
-function openMessModal(id, name) { messAppDeptId = id; document.getElementById('messModalTitle').textContent = 'Process: '+name; document.getElementById('messModal').style.display = 'flex'; }
-
-async function processMess(action) {
-    if (!messAppDeptId) return;
-    try {
-        const token = localStorage.getItem('access_token');
-        const remarks = document.getElementById('messRemarks').value;
-        const res = await fetch(`/mess/api/process/${messAppDeptId}`, { method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-            body: JSON.stringify({action,remarks}) });
-        const d = await res.json();
-        alert(d.message);
-        document.getElementById('messModal').style.display='none';
-        document.getElementById('messRemarks').value='';
+        function openMessModal(id, name) { messAppDeptId = id; document.getElementById('messModalTitle').textContent = 'Process: '+name; document.getElementById('messModal').style.display = 'flex'; }
+        async function processMess(action) {
+            if (!messAppDeptId) return;
+            try {
+                const token = localStorage.getItem('access_token');
+                const remarks = document.getElementById('messRemarks').value;
+                const res = await fetch(`/mess/api/process/${messAppDeptId}`, { method:'POST',
+                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                    body: JSON.stringify({action,remarks}) });
+                const d = await res.json();
+                alert(d.message);
+                document.getElementById('messModal').style.display='none';
+                document.getElementById('messRemarks').value='';
+                loadMessDashboard();
+            } catch(e){alert('Error'); console.error(e);}
+        }
         loadMessDashboard();
-    } catch(e){alert('Error'); console.error(e);}
-}
-loadMessDashboard();
-</script>
-</body>
-</html>
+    </script>
+</body></html>

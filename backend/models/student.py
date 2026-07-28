@@ -14,8 +14,10 @@ class Student(db.Model):
     user_id = db.Column(GUID, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     roll_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
     enrollment_number = db.Column(db.String(50), unique=True, nullable=False)
+    course_id = db.Column(GUID, db.ForeignKey("courses.id"), nullable=True)
     course_name = db.Column(db.String(200), nullable=False)
     branch = db.Column(db.String(200), nullable=False)
+    academic_department_id = db.Column(GUID, db.ForeignKey("departments.id"), nullable=True)
     current_semester = db.Column(db.Integer, nullable=False)
     batch_year = db.Column(db.String(9), nullable=False)
     admission_year = db.Column(db.Integer, nullable=False)
@@ -44,6 +46,8 @@ class Student(db.Model):
 
     # Relationships
     user = db.relationship("User", back_populates="student_profile")
+    course = db.relationship("Course", back_populates="students")
+    academic_department = db.relationship("Department", foreign_keys=[academic_department_id])
     applications = db.relationship("NoDuesApplication", back_populates="student", lazy="dynamic")
     admit_cards = db.relationship("AdmitCard", back_populates="student", lazy="dynamic")
 
@@ -58,8 +62,11 @@ class Student(db.Model):
             "user_id": str(self.user_id),
             "roll_number": self.roll_number,
             "enrollment_number": self.enrollment_number,
+            "course_id": str(self.course_id) if self.course_id else None,
             "course_name": self.course_name,
             "branch": self.branch,
+            "academic_department_id": str(self.academic_department_id) if self.academic_department_id else None,
+            "academic_department_name": self.academic_department.name if self.academic_department else None,
             "current_semester": self.current_semester,
             "batch_year": self.batch_year,
             "admission_year": self.admission_year,
@@ -67,6 +74,8 @@ class Student(db.Model):
             "student_name": self.student_name,
             "father_name": self.father_name,
             "mother_name": self.mother_name,
+            "phone": self.user.phone if self.user else None,
+            "email": self.user.email if self.user else None,
             "city": self.city,
             "state": self.state,
         }

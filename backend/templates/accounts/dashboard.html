@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts Dashboard - Smart NoDues AI</title>
+    <title>Accounts Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-2"></div>
+        <div class="floating-shape floating-shape-5"></div>
+    </div>
+
     <div id="app" style="display: flex;">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">A</div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Accounts Portal</div>
-                    </div>
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem; font-family: 'DM Serif Display', serif;">A</div>
+                    <div><div style="font-weight: 600; font-size: 0.85rem;">Smart NoDues</div><div style="font-size: 0.7rem; color: var(--text-muted);">Accounts Portal</div></div>
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -26,9 +27,7 @@
                 <a href="/accounts/dashboard" class="sidebar-nav-item"><span class="nav-icon">✅</span> Processed</a>
                 <a href="/accounts/dashboard" class="sidebar-nav-item"><span class="nav-icon">📈</span> Analytics</a>
             </nav>
-            <div class="sidebar-footer">
-                <a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a>
-            </div>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
 
         <div style="flex: 1; margin-left: 280px;">
@@ -46,47 +45,24 @@
                 </div>
             </header>
 
-            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
-                <!-- Header -->
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px);">
                 <div style="margin-bottom: 2rem;">
-                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Accounts Dashboard</h1>
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;">Accounts Dashboard</h1>
                     <p style="color: var(--text-muted);">Manage financial clearances and fee verifications.</p>
                 </div>
 
-                <!-- Stats Cards -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--gradient-warning);">⏳</div>
-                        <div class="stat-value" id="pendingCount">0</div>
-                        <div class="stat-label">Pending</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--gradient-info);">🔍</div>
-                        <div class="stat-value" id="inReviewCount">0</div>
-                        <div class="stat-label">In Review</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--gradient-success);">✅</div>
-                        <div class="stat-value" id="approvedTodayCount">0</div>
-                        <div class="stat-label">Approved Today</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--gradient-danger);">❌</div>
-                        <div class="stat-value" id="rejectedCount">0</div>
-                        <div class="stat-label">Rejected</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: var(--gradient-primary);">📊</div>
-                        <div class="stat-value" id="totalProcessed">0</div>
-                        <div class="stat-label">Total Processed</div>
-                    </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-info); color: white;">🔍</div><div class="stat-value" id="inReviewCount">0</div><div class="stat-label">In Review</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success); color: white;">✅</div><div class="stat-value" id="approvedTodayCount">0</div><div class="stat-label">Approved Today</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary); color: white;">📊</div><div class="stat-value" id="totalProcessed">0</div><div class="stat-label">Total Processed</div></div>
                 </div>
 
-                <!-- Pending Applications Table -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3>Pending Applications</h3>
-                        <select class="form-select" style="width: auto;" id="statusFilter" onchange="loadApplications()">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem;">
+                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Pending Applications</h3>
+                        <select class="form-select" style="width: auto; padding: 0.5rem 1rem;" id="statusFilter" onchange="loadApplications()">
                             <option value="pending">Pending</option>
                             <option value="in_review">In Review</option>
                             <option value="approved">Approved</option>
@@ -96,20 +72,8 @@
                     <div class="card-body">
                         <div class="table-container">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th>App #</th>
-                                        <th>Student</th>
-                                        <th>Roll No</th>
-                                        <th>Course</th>
-                                        <th>Semester</th>
-                                        <th>Submitted</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="applicationsTableBody">
-                                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading...</td></tr>
-                                </tbody>
+                                <thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Submitted</th><th>Action</th></tr></thead>
+                                <tbody id="applicationsTableBody"><tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -118,11 +82,10 @@
         </div>
     </div>
 
-    <!-- Approve/Reject Modal -->
-    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem;">
-            <h3 style="margin-bottom: 1rem;" id="modalTitle">Process Application</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;" id="modalAppInfo"></p>
+    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem; box-shadow: var(--shadow-xl);">
+            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; font-weight: 400; margin-bottom: 0.5rem;" id="modalTitle">Process Application</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.85rem;" id="modalAppInfo"></p>
             <div class="form-group">
                 <label class="form-label">Action</label>
                 <div style="display: flex; gap: 1rem;">
@@ -132,7 +95,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="modalRemarks">Remarks</label>
-                <textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..."></textarea>
+                <textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..." style="min-height: 80px;"></textarea>
             </div>
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                 <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -142,12 +105,7 @@
 
     <script>
         let currentAppDeptId = null;
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-        }
+        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
 
         async function loadDashboard() {
             try {
@@ -162,44 +120,24 @@
                     document.getElementById('rejectedCount').textContent = data.data.stats.rejected || 0;
                     document.getElementById('totalProcessed').textContent = data.data.stats.total_processed || 0;
                     document.getElementById('notifBadge').setAttribute('data-count', data.data.stats.pending || 0);
-
                     const tbody = document.getElementById('applicationsTableBody');
                     if (data.data.pending_applications && data.data.pending_applications.length > 0) {
                         tbody.innerHTML = data.data.pending_applications.map(app => `
                             <tr>
                                 <td><strong>${app.application_number || 'N/A'}</strong></td>
-                                <td>${app.student_name}</td>
-                                <td>${app.roll_number}</td>
-                                <td>${app.course_name}</td>
+                                <td>${app.student_name}</td><td>${app.roll_number}</td><td>${app.course_name}</td>
                                 <td>Sem ${app.semester}</td>
-                                <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                                <td>
-                                    <button class="btn btn-success btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button>
-                                </td>
+                                <td style="font-size: 0.8rem; color: var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
+                                <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
                             </tr>
                         `).join('');
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No pending applications</td></tr>';
-                    }
+                    } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No pending applications</td></tr>'; }
                 }
-            } catch (e) {
-                console.error('Dashboard load error:', e);
-                document.getElementById('applicationsTableBody').innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--crimson);">Error loading dashboard. Check console.</td></tr>';
-            }
+            } catch (e) { console.error('Dashboard load error:', e); }
         }
 
-        function openModal(appDeptId, studentName, appNumber) {
-            currentAppDeptId = appDeptId;
-            document.getElementById('modalTitle').textContent = `Process: ${studentName}`;
-            document.getElementById('modalAppInfo').textContent = `Application: ${appNumber}`;
-            document.getElementById('actionModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            currentAppDeptId = null;
-            document.getElementById('actionModal').style.display = 'none';
-            document.getElementById('modalRemarks').value = '';
-        }
+        function openModal(appDeptId, studentName, appNumber) { currentAppDeptId = appDeptId; document.getElementById('modalTitle').textContent = `Process: ${studentName}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNumber}`; document.getElementById('actionModal').style.display = 'flex'; }
+        function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
 
         async function processApplication(action) {
             if (!currentAppDeptId) return;
@@ -207,52 +145,35 @@
                 const token = localStorage.getItem('access_token');
                 const remarks = document.getElementById('modalRemarks').value;
                 const res = await fetch(`/accounts/api/process/${currentAppDeptId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ action, remarks })
                 });
                 const data = await res.json();
-                alert(data.message);
-                closeModal();
-                loadDashboard();
-            } catch (e) {
-                alert('Error processing application');
-                console.error(e);
-            }
+                alert(data.message); closeModal(); loadDashboard();
+            } catch (e) { alert('Error processing application'); console.error(e); }
         }
 
         async function loadApplications() {
             try {
                 const token = localStorage.getItem('access_token');
                 const status = document.getElementById('statusFilter').value;
-                const res = await fetch(`/accounts/api/applications?status=${status}&per_page=20`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`/accounts/api/applications?status=${status}&per_page=20`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await res.json();
                 const tbody = document.getElementById('applicationsTableBody');
                 if (data.success && data.data && data.data.items) {
                     tbody.innerHTML = data.data.items.map(item => {
                         const app = item.application || item;
-                        return `
-                            <tr>
-                                <td><strong>${app.application_number || 'N/A'}</strong></td>
-                                <td>${app.student_name || 'N/A'}</td>
-                                <td>${app.roll_number || 'N/A'}</td>
-                                <td>${app.course_name || 'N/A'}</td>
-                                <td>Sem ${app.semester || 'N/A'}</td>
-                                <td>${item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</td>
-                                <td>
-                                    <span class="badge badge-${item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : item.status === 'in_review' ? 'info' : 'pending'}">${item.status}</span>
-                                </td>
-                            </tr>
-                        `;
+                        return `<tr>
+                            <td><strong>${app.application_number || 'N/A'}</strong></td>
+                            <td>${app.student_name || 'N/A'}</td><td>${app.roll_number || 'N/A'}</td><td>${app.course_name || 'N/A'}</td>
+                            <td>Sem ${app.semester || 'N/A'}</td>
+                            <td style="font-size: 0.8rem; color: var(--text-muted);">${item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</td>
+                            <td><span class="badge badge-${item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : item.status === 'in_review' ? 'info' : 'pending'}">${item.status}</span></td>
+                        </tr>`;
                     }).join('');
                 }
-            } catch (e) {
-                console.error('Error loading applications:', e);
-            }
+            } catch (e) { console.error('Error loading applications:', e); }
         }
-
         loadDashboard();
     </script>
 </body>

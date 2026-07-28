@@ -1,47 +1,60 @@
-# Super Admin Dashboard Implementation - ✅ COMPLETE
+# ADVANCED APPLICATION WORKFLOW SYSTEM - TODO
 
-## ✅ All Steps Completed
+## Phase 1: Database Models (New + Modifications)
+- [x] Create Course model with all university courses
+- [x] Add academic_department_id to Student model
+- [x] Add selected_departments JSON + digital_signature to NoDuesApplication
+- [x] Add new document types (application_form, next_sem_fee_receipt)
+- [x] Create DigitalSignature model
+- [x] Update __init__.py imports
+- [x] Create seed_courses.py with all university courses
 
-### Step 1: User Model
-- [x] Added `must_change_password` boolean field
-- [x] Added `password_reset_at` timestamp field
+## Phase 2: Registration Enhancement
+- [x] Add department selection (all departments)
+- [x] Add course selection (filtered by department)
+- [x] Add phone number field
+- [x] Update backend auth routes
 
-### Step 2: Super Admin Backend APIs
-- [x] Full CRUD for staff users (create with temp password, list, search, filter)
-- [x] User management (activate/deactivate, reset password, soft delete)
-- [x] Student listing with search/filter
-- [x] Application monitoring with search/filter/detail view
-- [x] Audit logs with action/resource filtering
-- [x] Semester management (create, update, delete)
-- [x] Department management (list, toggle active)
-- [x] System settings (get, update, init defaults)
-- [x] Advanced analytics (daily, monthly, role/status distribution)
-- [x] Auto-generated temp passwords on staff creation
+## Phase 3: Student Application Form (New)
+- [x] Create new application form template (apply.html)
+- [x] Pre-filled personal info from profile
+- [x] Department selection checkboxes
+- [x] HOD department selector
+- [x] Document upload (exam fee, next sem fee, application form)
+- [x] Digital signature pad
+- [x] Backend API for form submission
 
-### Step 3: Password Change
-- [x] Created `templates/auth/change_password.html` — clean UI with strength indicator
-- [x] Added `GET` and `POST` route for `/auth/change-password`
-- [x] Forced redirect to change-password on login when `must_change_password=True`
+## Phase 4: Backend Routes
+- [x] Create student application submission API
+- [x] Create document upload API for application form
+- [x] Create digital signature save API
+- [x] Update accounts routes with sign/stamp feature
+- [x] Update hod routes with department filtering
+- [x] Update student dashboard to show new flow
 
-### Step 4: Dashboard UI
-- [x] **Overview** — Animated stat cards, 4 Chart.js charts (daily apps, role dist, status dist, monthly), department queues, recent activity
-- [x] **Staff Management** — Full CRUD table with search, filter by role/status, create modal with temp password display, reset password, toggle status, delete
-- [x] **Students** — Searchable table with profile info, status toggle
-- [x] **Applications** — Filterable by status, searchable, detail modal showing approvals & documents
-- [x] **Departments** — List with active toggle
-- [x] **Semesters** — CRUD with create modal, delete
-- [x] **Analytics** — 4 interactive charts with day-range selector
-- [x] **Audit Logs** — Paginated with action/resource filters
-- [x] **System Settings** — Key-value editor with bool/string types, init defaults button
-- [x] **Profile** — User info card with password change link
+## Phase 5: HOD Department Filtering
+- [x] HOD sees only students from their academic department
+- [x] HOD student listing with full details
+- [x] Department-based routing
 
-### Step 5: Seed Data
-- [x] Accounts staff user marked with `must_change_password=True` for testing
+## Phase 6: Accounts Sign & Stamp
+- [x] Verify all department clearances
+- [x] Digital sign and stamp
+- [x] Forward to HOD
 
-### How to Test
-1. Delete old DB: `del backend\nodues_ai_dev.db`
-2. Init + seed: `cd backend && py init_db.py && flask seed-db`
-3. Run: `py run.py` (from root) or `cd backend && py run.py`
-4. Login as `admin@rayatbahra.edu / Admin@123` → see Super Admin Dashboard
-5. Login as `accounts@rayatbahra.edu / Accounts@123` → forced password change
+## Phase 7: Examination Admit Card
+- [x] Generate admit card after HOD clearance
+- [x] QR code integration
+- [x] Student admit card download
 
+## Phase 8: Frontend Templates Update
+- [x] Register page with all fields
+- [x] Student dashboard with new flow
+- [x] Accounts dashboard with sign/stamp
+- [x] HOD dashboard with department filtering
+- [x] Examination dashboard updates
+
+## Phase 9: Testing
+- [x] Verify all API endpoints
+- [x] Test complete workflow
+- [x] Database migration testing

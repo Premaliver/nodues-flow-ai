@@ -3,68 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Smart NoDues AI</title>
+    <title>Create Account — Smart NoDues AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .error-msg { color: var(--crimson); font-size: 0.8125rem; text-align: center; margin-bottom: 1rem; display: none; }
-        .success-msg { color: var(--emerald); font-size: 0.8125rem; text-align: center; margin-bottom: 1rem; display: none; }
+        .error-msg { color: var(--crimson); font-size: 0.85rem; text-align: center; display: none; padding: 0.75rem; background: var(--crimson-soft); border-radius: var(--radius-md); margin-bottom: 1.25rem; }
+        .success-msg { color: var(--emerald); font-size: 0.85rem; text-align: center; display: none; padding: 0.75rem; background: var(--emerald-soft); border-radius: var(--radius-md); margin-bottom: 1.25rem; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
+        .del-1 { animation-delay: 0.1s; } .del-2 { animation-delay: 0.2s; } .del-3 { animation-delay: 0.3s; }
+        .del-4 { animation-delay: 0.4s; } .del-5 { animation-delay: 0.5s; }
     </style>
 </head>
 <body>
-    <div class="aurora-bg" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem;">
-        <div style="width: 100%; max-width: 520px;">
-            <div class="card shadow-elevated" style="padding: 2.5rem;">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Create Account</h1>
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-1"></div>
+        <div class="floating-shape floating-shape-3"></div>
+        <div class="floating-shape floating-shape-5"></div>
+    </div>
+
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+        <div style="width: 100%; max-width: 560px;">
+            <div class="card" style="padding: 2.5rem; box-shadow: var(--shadow-xl);">
+                <div class="animate-in del-1" style="text-align: center; margin-bottom: 2rem;">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; margin: 0 auto 1rem; font-family: 'DM Serif Display', serif;">S</div>
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Create Account</h1>
                     <p style="color: var(--text-muted); font-size: 0.875rem;">Register as a student</p>
                 </div>
-                <div id="errorMsg" class="error-msg"></div>
-                <div id="successMsg" class="success-msg"></div>
-                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+
+                <div id="errorMsg" class="error-msg animate-in del-2"></div>
+                <div id="successMsg" class="success-msg animate-in del-2"></div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm" class="animate-in del-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" class="form-input" autocomplete="given-name" required>
+                            <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Your first name" autocomplete="given-name" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" class="form-input" autocomplete="family-name" required>
+                            <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Your last name" autocomplete="family-name" required>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label class="form-label" for="email">Email Address</label>
                         <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" autocomplete="email" required>
                     </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-input" placeholder="+91-XXXXXXXXXX" autocomplete="tel">
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" required>
                     </div>
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="roll_number">Roll Number</label>
-                            <input type="text" id="roll_number" name="roll_number" class="form-input" required>
+                            <input type="text" id="roll_number" name="roll_number" class="form-input" placeholder="e.g. RBU/22CSE/0142" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="enrollment_number">Enrollment Number</label>
-                            <input type="text" id="enrollment_number" name="enrollment_number" class="form-input" required>
+                            <input type="text" id="enrollment_number" name="enrollment_number" class="form-input" placeholder="e.g. ENR/2022/4257" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+
+                    <div class="form-group">
+                        <label class="form-label" for="course_name">Course</label>
+                        <select class="form-select" id="course_name" name="course_name" onchange="updateSemesters()">
+                            <option value="">— Select your course —</option>
+                            <option value="B.Tech Computer Science Engineering">B.Tech CSE</option>
+                            <option value="B.Tech Electronics & Communication Engineering">B.Tech ECE</option>
+                            <option value="B.Tech Mechanical Engineering">B.Tech ME</option>
+                            <option value="B.Tech Civil Engineering">B.Tech CE</option>
+                            <option value="B.Tech Information Technology">B.Tech IT</option>
+                            <option value="B.Tech Artificial Intelligence & ML">B.Tech AI & ML</option>
+                            <option value="B.Tech Data Science">B.Tech Data Science</option>
+                            <option value="BBA">BBA</option>
+                            <option value="MBA">MBA</option>
+                            <option value="BCA">BCA</option>
+                            <option value="MCA">MCA</option>
+                            <option value="B.Pharm">B.Pharm</option>
+                            <option value="B.Sc Nursing">B.Sc Nursing</option>
+                            <option value="BPT">BPT</option>
+                            <option value="B.Ed">B.Ed</option>
+                            <option value="B.Sc Biotechnology">B.Sc Biotechnology</option>
+                            <option value="BJMC">BJMC</option>
+                            <option value="BHM">BHM</option>
+                            <option value="BFA">BFA</option>
+                            <option value="LLB">LLB</option>
+                            <option value="BA LLB">BA LLB</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" for="branch">Branch</label>
+                            <input type="text" id="branch" name="branch" class="form-input" placeholder="e.g. CSE">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="current_semester">Current Semester</label>
+                            <select class="form-select" id="current_semester" name="current_semester">
+                                <option value="1">Semester 1</option>
+                                <option value="2">Semester 2</option>
+                                <option value="3">Semester 3</option>
+                                <option value="4">Semester 4</option>
+                                <option value="5">Semester 5</option>
+                                <option value="6" selected>Semester 6</option>
+                                <option value="7">Semester 7</option>
+                                <option value="8">Semester 8</option>
+                                <option value="9">Semester 9</option>
+                                <option value="10">Semester 10</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" for="batch_year">Batch Year</label>
+                            <input type="text" id="batch_year" name="batch_year" class="form-input" placeholder="e.g. 2022-2026">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="admission_year">Admission Year</label>
+                            <input type="number" id="admission_year" name="admission_year" class="form-input" placeholder="e.g. 2022" min="2000" max="2030">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="category">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="day_scholar">Day Scholar</option>
+                            <option value="hosteller">Hosteller</option>
+                            <option value="transport_user">Transport User</option>
+                            <option value="scholarship">Scholarship</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; margin-top: 0.5rem;">
                         Create Account
                     </button>
                 </form>
-                <div style="text-align: center; margin-top: 1.5rem;">
-                    <p style="font-size: 0.875rem; color: var(--text-muted);">
+
+                <div class="animate-in del-5" style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">
                         Already have an account?
-                        <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign in</a>
+                        <a href="{{ url_for('auth.login') }}" style="font-weight: 600; color: var(--accent);">Sign in</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
+
     <script>
+        function updateSemesters() {
+            const course = document.getElementById('course_name').value;
+            const semSelect = document.getElementById('current_semester');
+            semSelect.innerHTML = '';
+            let maxSem = 8;
+            if (course.includes('B.Tech')) maxSem = 8;
+            else if (course.includes('MBA') || course.includes('MCA')) maxSem = 4;
+            else if (course.includes('BBA') || course.includes('BCA') || course.includes('B.Sc') || course.includes('B.Ed') || course.includes('BFA')) maxSem = 6;
+            else if (course.includes('BA LLB')) maxSem = 10;
+            else if (course.includes('LLB')) maxSem = 6;
+            else if (course.includes('BHM') || course.includes('BJMC')) maxSem = 6;
+            else if (course.includes('B.Pharm')) maxSem = 8;
+            else if (course.includes('BPT')) maxSem = 8;
+            else if (course.includes('B.Sc Nursing')) maxSem = 8;
+            for (let i = 1; i <= maxSem; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Semester ${i}`;
+                semSelect.appendChild(opt);
+            }
+        }
+        updateSemesters();
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const err = document.getElementById('errorMsg');
@@ -72,41 +191,46 @@
             err.style.display = 'none';
             success.style.display = 'none';
             const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Creating account...';
             try {
                 const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
                 const res = await fetch(this.action, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({
                         first_name: document.getElementById('first_name').value,
                         last_name: document.getElementById('last_name').value,
                         email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
                         password: document.getElementById('password').value,
                         roll_number: document.getElementById('roll_number').value,
-                        enrollment_number: document.getElementById('enrollment_number').value
+                        enrollment_number: document.getElementById('enrollment_number').value,
+                        course_name: document.getElementById('course_name').value,
+                        branch: document.getElementById('branch').value,
+                        current_semester: parseInt(document.getElementById('current_semester').value),
+                        batch_year: document.getElementById('batch_year').value,
+                        admission_year: parseInt(document.getElementById('admission_year').value) || new Date().getFullYear(),
+                        category: document.getElementById('category').value,
                     })
                 });
                 const data = await res.json();
                 if (data.success) {
                     success.textContent = '✅ Account created! Redirecting to login...';
                     success.style.display = 'block';
-                    setTimeout(() => window.location.href = '/auth/login', 1500);
+setTimeout(() => window.location.href = '/auth/login', 2000);
                 } else {
                     err.textContent = '⚠️ ' + (data.message || 'Registration failed');
                     err.style.display = 'block';
                     btn.disabled = false;
-                    btn.textContent = 'Create Account';
+                    btn.textContent = originalText;
                 }
             } catch (error) {
                 err.textContent = '⚠️ Network error. Please try again.';
                 err.style.display = 'block';
                 btn.disabled = false;
-                btn.textContent = 'Create Account';
+                btn.textContent = originalText;
             }
         });
     </script>

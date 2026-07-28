@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scholarship Dashboard - Smart NoDues AI</title>
+    <title>Scholarship Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="floating-shapes">
+        <div class="floating-shape floating-shape-1"></div>
+        <div class="floating-shape floating-shape-3"></div>
+    </div>
+
     <div id="app" style="display: flex;">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
-                    <div><div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div><div style="font-size: 0.75rem; color: var(--text-muted);">Scholarship Portal</div></div>
+                    <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem; font-family: 'DM Serif Display', serif;">S</div>
+                    <div><div style="font-weight: 600; font-size: 0.85rem;">Smart NoDues</div><div style="font-size: 0.7rem; color: var(--text-muted);">Scholarship Portal</div></div>
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -34,39 +39,37 @@
                     <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
                 </div>
             </header>
-            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px);">
                 <div style="margin-bottom: 2rem;">
-                    <h1 class="gradient-text" style="font-size: 1.75rem; margin-bottom: 0.5rem;">Scholarship Dashboard</h1>
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;">Scholarship Dashboard</h1>
                     <p style="color: var(--text-muted);">Manage scholarship verifications.</p>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning);">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success);">✅</div><div class="stat-value" id="approvedCount">0</div><div class="stat-label">Approved</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger);">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success); color: white;">✅</div><div class="stat-value" id="approvedCount">0</div><div class="stat-label">Approved</div></div>
+                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
                 </div>
                 <div class="card">
-                    <div class="card-header"><h3>Pending Scholarship Verifications</h3></div>
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Pending Scholarship Verifications</h3></div>
                     <div class="card-body">
                         <div class="table-container">
-                            <table>
-                                <thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Scholarship Type</th><th>Submitted</th><th>Action</th></tr></thead>
-                                <tbody id="applicationsTableBody"><tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
-                            </table>
+                            <table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Scholarship Type</th><th>Submitted</th><th>Action</th></tr></thead>
+                            <tbody id="applicationsTableBody"><tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody></table>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
-    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem;">
-            <h3 style="margin-bottom: 1rem;" id="modalTitle">Process Application</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;" id="modalAppInfo"></p>
+    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem; box-shadow: var(--shadow-xl);">
+            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; font-weight: 400; margin-bottom: 0.5rem;" id="modalTitle">Process Application</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.85rem;" id="modalAppInfo"></p>
             <div class="form-group"><div style="display: flex; gap: 1rem;">
                 <button class="btn btn-success" onclick="processApplication('approved')">✅ Approve</button>
                 <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject</button>
             </div></div>
-            <div class="form-group"><label class="form-label">Remarks</label><textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..."></textarea></div>
+            <div class="form-group"><label class="form-label">Remarks</label><textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..." style="min-height: 80px;"></textarea></div>
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end;"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
         </div>
     </div>
@@ -86,10 +89,10 @@
                     const tbody = document.getElementById('applicationsTableBody');
                     if (data.data.pending_applications && data.data.pending_applications.length > 0) {
                         tbody.innerHTML = data.data.pending_applications.map(app => `<tr>
-                            <td><strong>${app.application_number || 'N/A'}</strong></td>
-                            <td>${app.student_name}</td><td>${app.roll_number}</td><td>${app.scholarship_type || 'N/A'}</td>
-                            <td>${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-success btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
+                            <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
+                            <td>${app.scholarship_type || 'N/A'}</td>
+                            <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No pending verifications</td></tr>'; }
                 }

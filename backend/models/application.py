@@ -25,6 +25,7 @@ class NoDuesApplication(db.Model):
         nullable=False, index=True,
     )
     semester_id = db.Column(GUID, db.ForeignKey("semesters.id"), nullable=False)
+    hod_department_id = db.Column(GUID, db.ForeignKey("departments.id"), nullable=True)
     status = db.Column(
         db.Enum(
             "draft", "submitted", "in_review", "approved", "rejected", "partially_approved",
@@ -41,12 +42,19 @@ class NoDuesApplication(db.Model):
         ),
         nullable=False,
     )
+    selected_departments = db.Column(db.JSON, nullable=True, default=list)
+    digital_signature = db.Column(db.Text, nullable=True)
+    signature_hash = db.Column(db.String(128), nullable=True)
     is_urgent = db.Column(db.Boolean, default=False)
     current_step = db.Column(db.Integer, default=0)
     total_steps = db.Column(db.Integer, nullable=False)
     submitted_at = db.Column(db.DateTime(timezone=True))
     completed_at = db.Column(db.DateTime(timezone=True))
     remarks = db.Column(db.Text)
+    accounts_verified = db.Column(db.Boolean, default=False)
+    accounts_verified_at = db.Column(db.DateTime(timezone=True))
+    hod_approved = db.Column(db.Boolean, default=False)
+    hod_approved_at = db.Column(db.DateTime(timezone=True))
     created_at = db.Column(
         db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
     )
