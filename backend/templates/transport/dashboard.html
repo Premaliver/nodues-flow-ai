@@ -92,13 +92,13 @@
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.route || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process</button></td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No pending applications</td></tr>'; }
                 }
             } catch (e) { console.error(e); }
         }
-        function openModal(id, name, appNo) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
+        function openModal(id, name, appNo, appId) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
         function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
         async function processApplication(action) {
             if (!currentAppDeptId) return;

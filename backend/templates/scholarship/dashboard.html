@@ -92,13 +92,14 @@
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.scholarship_type || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.application_id}', '${app.student_name}', '${app.application_number}')">Process</button></td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process</button></td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No pending verifications</td></tr>'; }
                 }
             } catch (e) { console.error(e); }
         }
-        function openModal(id, name, appNo) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
+        function openModal(id, name, appNo, appId) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
+        async function loadSchDocs(appId){const dv=document.getElementById('schDocsList');if(!dv)return;try{const t=localStorage.getItem('access_token');const r=await fetch(`/student/api/documents/${appId}`,{headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(d.success&&d.data.length>0){dv.innerHTML=d.data.map(doc=>`<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem;"><span>${doc.file_name}</span><span class="badge badge-${doc.status==='verified'?'success':'pending'}">${doc.status}</span></div>`).join('')}else{dv.innerHTML='<span style="color:var(--text-muted);">No documents uploaded</span>'}}catch(e){dv.innerHTML='Error loading docs'}}
         function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
         async function processApplication(action) {
             if (!currentAppDeptId) return;
