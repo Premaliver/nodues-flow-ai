@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+`<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -61,6 +61,17 @@
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" for="father_name">Father's Name</label>
+                            <input type="text" id="father_name" name="father_name" class="form-input" placeholder="Your father's full name" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="father_phone">Father's Phone No</label>
+                            <input type="tel" id="father_phone" name="father_phone" class="form-input" placeholder="+91-XXXXXXXXXX" autocomplete="tel">
+                        </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -143,7 +154,6 @@
                             <option value="transport_user">Transport User</option>
                             <option value="scholarship">Scholarship</option>
                         </select>
-                    </div>
 
                     <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; margin-top: 0.5rem;">
                         Create Account
@@ -213,6 +223,8 @@
                         batch_year: document.getElementById('batch_year').value,
                         admission_year: parseInt(document.getElementById('admission_year').value) || new Date().getFullYear(),
                         category: document.getElementById('category').value,
+                        father_name: document.getElementById('father_name').value,
+                        father_phone: document.getElementById('father_phone').value,
                     })
                 });
                 const data = await res.json();

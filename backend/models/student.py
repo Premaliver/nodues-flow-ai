@@ -74,6 +74,7 @@ class Student(db.Model):
             "student_name": self.student_name,
             "father_name": self.father_name,
             "mother_name": self.mother_name,
+            "guardian_phone": self.guardian_phone,
             "phone": self.user.phone if self.user else None,
             "email": self.user.email if self.user else None,
             "city": self.city,

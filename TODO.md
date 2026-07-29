@@ -1,60 +1,32 @@
-# ADVANCED APPLICATION WORKFLOW SYSTEM - TODO
+# Student Dashboard & Registration Updates — DONE ✅
 
-## Phase 1: Database Models (New + Modifications)
-- [x] Create Course model with all university courses
-- [x] Add academic_department_id to Student model
-- [x] Add selected_departments JSON + digital_signature to NoDuesApplication
-- [x] Add new document types (application_form, next_sem_fee_receipt)
-- [x] Create DigitalSignature model
-- [x] Update __init__.py imports
-- [x] Create seed_courses.py with all university courses
+## Step 1: Registration form — Add father name & phone fields ✅
+- File: `backend/templates/auth/register.html`
+  - Added "Father's Name" input field
+  - Added "Father's Phone No" input field
+  - Included in JSON submission payload
 
-## Phase 2: Registration Enhancement
-- [x] Add department selection (all departments)
-- [x] Add course selection (filtered by department)
-- [x] Add phone number field
-- [x] Update backend auth routes
+## Step 2: Auth route — Save father fields to Student model ✅
+- File: `backend/blueprints/auth/routes.py`
+  - Extracts `father_name` and `father_phone` from request data
+  - Passes to Student constructor as `father_name` and `guardian_phone`
 
-## Phase 3: Student Application Form (New)
-- [x] Create new application form template (apply.html)
-- [x] Pre-filled personal info from profile
-- [x] Department selection checkboxes
-- [x] HOD department selector
-- [x] Document upload (exam fee, next sem fee, application form)
-- [x] Digital signature pad
-- [x] Backend API for form submission
+## Step 3: Student model — Expose guardian_phone in API ✅
+- File: `backend/models/student.py`
+  - Added `guardian_phone` to `to_dict()` output
 
-## Phase 4: Backend Routes
-- [x] Create student application submission API
-- [x] Create document upload API for application form
-- [x] Create digital signature save API
-- [x] Update accounts routes with sign/stamp feature
-- [x] Update hod routes with department filtering
-- [x] Update student dashboard to show new flow
+## Step 4: Apply page — Auto-detect HOD from registration data ✅
+- File: `backend/templates/student/apply.html`
+  - Removed "Select Your HOD Department" dropdown
+  - Added read-only auto-detected HOD field based on course_name
+  - Updated review and submission logic
 
-## Phase 5: HOD Department Filtering
-- [x] HOD sees only students from their academic department
-- [x] HOD student listing with full details
-- [x] Department-based routing
+## Step 5: Student routes — Use auto-detected HOD ✅
+- File: `backend/blueprints/student/routes.py`
+  - Backend already auto-finds HOD via `Department.query.filter_by(role="hod")`
+  - Removed manual `hod_department` from `@validate_json` and frontend validation
 
-## Phase 6: Accounts Sign & Stamp
-- [x] Verify all department clearances
-- [x] Digital sign and stamp
-- [x] Forward to HOD
+## Step 6: Dashboard — Show father name & phone ✅
+- File: `backend/templates/student/dashboard.html`
+  - Display father name and guardian phone in student info line
 
-## Phase 7: Examination Admit Card
-- [x] Generate admit card after HOD clearance
-- [x] QR code integration
-- [x] Student admit card download
-
-## Phase 8: Frontend Templates Update
-- [x] Register page with all fields
-- [x] Student dashboard with new flow
-- [x] Accounts dashboard with sign/stamp
-- [x] HOD dashboard with department filtering
-- [x] Examination dashboard updates
-
-## Phase 9: Testing
-- [x] Verify all API endpoints
-- [x] Test complete workflow
-- [x] Database migration testing

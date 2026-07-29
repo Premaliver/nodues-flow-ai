@@ -211,6 +211,8 @@ def register():
         batch_year=data.get("batch_year", ""),
         admission_year=int(data.get("admission_year", datetime.now(timezone.utc).year)),
         category=data.get("category", "day_scholar"),
+        father_name=data.get("father_name", ""),
+        guardian_phone=data.get("father_phone", ""),
     )
     db.session.add(student)
 

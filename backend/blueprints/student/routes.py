@@ -144,9 +144,20 @@ def dashboard_data():
     return jsonify({"success": True, "data": data})
 
 
+@student_bp.route("/api/documents/<app_id>")
+@jwt_required()
+def get_application_documents(app_id):
+    """Get documents for an application (accessible by any authenticated department user)."""
+    documents = Document.query.filter_by(application_id=app_id).all()
+    return jsonify({
+        "success": True,
+        "data": [doc.to_dict() for doc in documents]
+    })
+
+
 @student_bp.route("/api/apply", methods=["POST"])
 @jwt_required()
-@validate_json("selected_departments", "hod_department")
+@validate_json("selected_departments")
 def create_application():
     """Create a new no-dues application with selected departments, documents, and signature."""
     user_id = get_jwt_identity()
@@ -175,17 +186,13 @@ def create_application():
 
     data = request.validated_data
     selected_depts = data.get("selected_departments", [])
-    hod_dept_role = data.get("hod_department", "")
     signature_data = data.get("signature", "")
 
     # Validate selections
     if not selected_depts:
         return jsonify({"success": False, "message": "Please select at least one department"}), 400
 
-    if not hod_dept_role:
-        return jsonify({"success": False, "message": "Please select your HOD department"}), 400
-
-    # Find HOD department
+    # Find HOD department (auto-assigned)
     hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
     if not hod_dept:
         return jsonify({"success": False, "message": "HOD department not configured"}), 400
@@ -310,7 +317,6 @@ def create_application():
         resource_id=application.id,
         details={
             "selected_departments": selected_depts,
-            "hod_department": hod_dept_role,
             "category": category,
         },
         ip_address=get_client_ip(),

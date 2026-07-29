@@ -127,7 +127,12 @@
                 const data = await res.json();
                 if (data.success) {
                     const d = data.data;
-                    if (d.student) { document.getElementById('studentInfo').textContent = `${d.student.student_name || 'Student'} — ${d.student.roll_number || ''} (Sem ${d.student.current_semester || 'N/A'})`; }
+                    if (d.student) { 
+                        let infoText = `${d.student.student_name || 'Student'} — ${d.student.roll_number || ''} (Sem ${d.student.current_semester || 'N/A'})`;
+                        if (d.student.father_name) infoText += ` | Father: ${d.student.father_name}`;
+                        if (d.student.guardian_phone) infoText += ` | Phone: ${d.student.guardian_phone}`;
+                        document.getElementById('studentInfo').textContent = infoText;
+                    }
                     document.getElementById('totalApps').textContent = d.application_count || 0;
                     document.getElementById('approvedApps').textContent = d.approved_count || 0;
                     document.getElementById('pendingApps').textContent = d.pending_count || 0;

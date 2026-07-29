@@ -73,6 +73,7 @@ def dashboard_data():
     for app_dept, app, student, user in pending_apps:
         pending_list.append({
             "application_id": str(app.id),
+            "app_dept_id": str(app_dept.id),
             "application_number": app.application_number,
             "student_name": user.full_name,
             "roll_number": student.roll_number,

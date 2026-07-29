@@ -65,7 +65,7 @@ class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SESSION_COOKIE_SECURE = False
     WTF_CSRF_ENABLED = False
-    # Development always uses SQLite — ignore DATABASE_URL from .env
+
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "nodues_ai_dev.db"
     )

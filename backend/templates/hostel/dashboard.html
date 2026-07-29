@@ -74,7 +74,7 @@
                         tbody.innerHTML = d.data.pending_applications.map(app => `<tr>
                             <td><strong>${app.application_number||'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.room_number||'-'}</td><td>${app.hostel_block||'-'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openHostelModal('${app.application_id}','${app.student_name}')">Process</button></td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openHostelModal('${app.app_dept_id}','${app.student_name}','${app.application_id}')">Process</button></td>
                         </tr>`).join('');
                     } else tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending hostel applications</td></tr>';
                 }

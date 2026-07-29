@@ -112,13 +112,11 @@
                                     <div class="skeleton" style="height: 200px; border-radius: var(--radius-lg);"></div>
                                 </div>
                             </div>
-                            <div class="form-section">
-                                <h3 class="form-section-title">🎯 Select Your HOD Department</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Select your academic department. The HOD of this department will process your final clearance.</p>
+                            <div class="form-section" id="hodSection" style="display: none;">
+                                <h3 class="form-section-title">🎯 Your HOD Department</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Your academic HOD department will be auto-assigned from your profile.</p>
                                 <div class="form-group">
-                                    <select class="form-select" id="hodDepartment" required>
-                                        <option value="">— Select your department —</option>
-                                    </select>
+                                    <input type="text" class="form-input" id="hodDeptDisplay" readonly style="background:var(--bg-secondary);" placeholder="Auto-detected from profile">
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: flex-end;">
@@ -300,28 +298,13 @@
         }
 
         // ───────────────────────────────
-        // INIT: Load Departments & Profile
+        // INIT: Load Profile (HOD auto-detected from course)
         // ───────────────────────────────
         async function init() {
             const token = localStorage.getItem('access_token');
             if (!token) { window.location.href = '/auth/login'; return; }
 
             try {
-                // Load departments for HOD selection
-                const deptRes = await fetch('/student/api/departments', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const deptData = await deptRes.json();
-                if (deptData.success) {
-                    const select = document.getElementById('hodDepartment');
-                    deptData.data.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d.role;
-                        opt.textContent = d.name;
-                        select.appendChild(opt);
-                    });
-                }
-
                 // Load student profile
                 const profileRes = await fetch('/student/api/profile', {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -330,6 +313,35 @@
                 if (profileData.success) {
                     studentData = profileData.data;
                     renderPersonalInfo();
+                    
+                    // Auto-detect HOD department from course/branch
+                    const hodDisplay = document.getElementById('hodDeptDisplay');
+                    if (studentData.course_name) {
+                        const courseName = studentData.course_name.toLowerCase();
+                        let hodDept = 'Computer Science & Engineering';
+                        if (courseName.includes('electronics') || courseName.includes('ece')) hodDept = 'Electronics & Communication Engineering';
+                        else if (courseName.includes('mechanical') || courseName.includes('me')) hodDept = 'Mechanical Engineering';
+                        else if (courseName.includes('civil') || courseName.includes('ce')) hodDept = 'Civil Engineering';
+                        else if (courseName.includes('information technology') || courseName.includes('it')) hodDept = 'Information Technology';
+                        else if (courseName.includes('ai') || courseName.includes('ml') || courseName.includes('artificial intelligence')) hodDept = 'Artificial Intelligence & ML';
+                        else if (courseName.includes('data science')) hodDept = 'Data Science';
+                        else if (courseName.includes('bba')) hodDept = 'Business Administration';
+                        else if (courseName.includes('mba')) hodDept = 'Business Administration';
+                        else if (courseName.includes('bca')) hodDept = 'Computer Applications';
+                        else if (courseName.includes('mca')) hodDept = 'Computer Applications';
+                        else if (courseName.includes('pharm')) hodDept = 'Pharmacy';
+                        else if (courseName.includes('nursing')) hodDept = 'Nursing';
+                        else if (courseName.includes('bpt')) hodDept = 'Physiotherapy';
+                        else if (courseName.includes('b.ed')) hodDept = 'Education';
+                        else if (courseName.includes('biotechnology')) hodDept = 'Biotechnology';
+                        else if (courseName.includes('bjmc')) hodDept = 'Journalism & Mass Communication';
+                        else if (courseName.includes('bhm')) hodDept = 'Hotel Management';
+                        else if (courseName.includes('bfa')) hodDept = 'Fine Arts';
+                        else if (courseName.includes('llb')) hodDept = 'Law';
+                        
+                        hodDisplay.value = hodDept;
+                        document.getElementById('hodSection').style.display = 'block';
+                    }
                 }
             } catch(e) {
                 console.error('Init error:', e);
@@ -503,13 +515,15 @@
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
                 selectedDepts.push(cb.value);
             });
-            const hodDept = document.getElementById('hodDepartment').selectedOptions[0]?.text || 'Not selected';
+            const hodDept = document.getElementById('hodDeptDisplay').value || 'Auto-detected';
 
             document.getElementById('reviewContent').innerHTML = `
                 <div style="display: grid; gap: 0.75rem;">
                     <div style="display:flex; justify-content:space-between;"><strong>Student:</strong> <span>${studentData.student_name}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Roll No:</strong> <span>${studentData.roll_number}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Course:</strong> <span>${studentData.course_name}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Father's Name:</strong> <span>${studentData.father_name || '—'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Father's Phone:</strong> <span>${studentData.guardian_phone || '—'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>HOD Department:</strong> <span>${hodDept}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Selected Departments:</strong> <span>${selectedDepts.length ? selectedDepts.join(', ') : 'None selected'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Exam Fee Receipt:</strong> <span>${uploadedFiles.examFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
@@ -531,12 +545,9 @@
             suc.style.display = 'none';
 
             // Validate
-            const hodDept = document.getElementById('hodDepartment').value;
-            if (!hodDept) { showError('Please select your HOD department.'); return; }
             if (!uploadedFiles.examFee) { showError('Please upload Examination Fee Receipt.'); return; }
             if (!uploadedFiles.nextSemFee) { showError('Please upload Next Semester Fee Receipt.'); return; }
-            if (!uploadedFiles.appForm) { showError('Please upload Signed Application Form.'); return; }
-            if (!signatureData) { showError('Please provide your digital signature.'); return; }
+            
 
             const selectedDepts = [];
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => selectedDepts.push(cb.value));
@@ -554,7 +565,6 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
-                        hod_department: hodDept,
                         selected_departments: selectedDepts,
                         signature: signatureData,
                     })
