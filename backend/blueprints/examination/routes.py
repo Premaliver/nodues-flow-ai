@@ -82,6 +82,7 @@ def dashboard_data():
             },
             "pending_applications": [
                 {
+                    "app_dept_id": str(app_dept.id),
                     "application_id": str(app.id),
                     "application_number": app.application_number,
                     "student_name": user.full_name,

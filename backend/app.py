@@ -118,8 +118,12 @@ def _auto_seed(app):
     # Ensure tables exist first
     db.create_all()
 
-    # Only seed if no users exist
-    if User.query.first():
+    # Only seed if NO DEFAULT users exist (check by known emails)
+    default_emails = ["kprem@rayatbahra.edu", "accounts@rayatbahra.edu", "hostel@rayatbahra.edu", 
+                      "mess@rayatbahra.edu", "transport@rayatbahra.edu", "scholarship@rayatbahra.edu", 
+                      "hod.cse@rayatbahra.edu", "examination@rayatbahra.edu", "student@rayatbahra.edu"]
+    existing_default = User.query.filter(User.email.in_(default_emails)).first()
+    if existing_default:
         return
 
     print("[*] Auto-seeding database with default data...")

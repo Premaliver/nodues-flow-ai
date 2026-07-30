@@ -600,10 +600,10 @@
                 setTimeout(() => window.location.href = '/student/dashboard', 2000);
 
             } catch(e) {
-                showError('Network error. Please try again.');
+                console.error('Submission error:', e);
+                showError('Error: ' + (e.message || 'Network error. Please try again.'));
                 btn.disabled = false;
                 btn.innerHTML = '📤 Submit Application';
-                console.error(e);
             }
         });
 
