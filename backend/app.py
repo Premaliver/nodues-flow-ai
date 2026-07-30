@@ -92,8 +92,11 @@ def create_app(config_name: str = "default") -> Flask:
     # Create upload directory
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    # Auto-seed on first run (development only)
+# Auto-seed on first run (development only)
     if config_name == "development":
+        with app.app_context():
+            _auto_seed(app)
+    elif config_name == "production":
         with app.app_context():
             _auto_seed(app)
 
