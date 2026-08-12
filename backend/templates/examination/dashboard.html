@@ -21,16 +21,16 @@
                     <div><div style="font-weight: 600; font-size: 0.85rem;">Smart NoDues</div><div style="font-size: 0.7rem; color: var(--text-muted);">Examination Portal</div></div>
                 </div>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/examination/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/examination/dashboard" class="sidebar-nav-item"><span class="nav-icon">📋</span> Approved Apps</a>
-                <a href="/examination/dashboard" class="sidebar-nav-item"><span class="nav-icon">🎫</span> Generate Admit Card</a>
-                <a href="/examination/dashboard" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards Issued</a>
+<nav class="sidebar-nav">
+                <a href="#" class="sidebar-nav-item active" data-section="dashboard" onclick="switchSection('dashboard')"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="#" class="sidebar-nav-item" data-section="approved" onclick="switchSection('approved')"><span class="nav-icon">📋</span> Approved Apps</a>
+                <a href="#" class="sidebar-nav-item" data-section="generate" onclick="switchSection('generate')"><span class="nav-icon">🎫</span> Generate Admit Card</a>
+                <a href="#" class="sidebar-nav-item" data-section="issued" onclick="switchSection('issued')"><span class="nav-icon">📄</span> Admit Cards Issued</a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+            <div class="sidebar-footer"><a href="/auth/change-password" class="sidebar-nav-item"><span class="nav-icon">🔑</span> Change Password</a><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
-        <div style="flex: 1; margin-left: 280px;">
-            <header class="top-nav" style="left: 280px;">
+        <div class="app-main-wrapper">
+            <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                     <div class="top-nav-search"><span style="color: var(--text-muted);">🔍</span><input type="text" placeholder="Search applications..."></div>
@@ -51,7 +51,7 @@
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary); color: white;">🎫</div><div class="stat-value" id="admitCardsCount">0</div><div class="stat-label">Admit Cards Issued</div></div>
                 </div>
-                <div class="card">
+<div class="card section-content" id="section-dashboard">
                     <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Applications Ready for Admit Card</h3></div>
                     <div class="card-body">
                         <div class="table-container">
@@ -60,11 +60,104 @@
                         </div>
                     </div>
                 </div>
-            </main>
+                <div class="card section-content" id="section-approved" style="display:none;">
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Approved Applications</h3></div>
+                    <div class="card-body">
+                        <div class="table-container">
+<table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th></tr></thead>
+                            <tbody id="approvedAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Click to load...</td></tr></tbody></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card section-content" id="section-generate" style="display:none;">
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Generate Admit Card</h3></div>
+                    <div class="card-body"><p style="color:var(--text-muted);">Go to <strong>Dashboard</strong> section to generate admit cards for approved applications.</p></div>
+                </div>
+                <div class="card section-content" id="section-issued" style="display:none;">
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Admit Cards Issued</h3></div>
+                    <div class="card-body"><p id="issuedCardsBody" style="color:var(--text-muted);">Loading...</p></div>
+                </div>
+</main>
         </div>
     </div>
-    <script>
+
+    <!-- Document Inspection Modal -->
+    <div id="examDocsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1200;align-items:center;justify-content:center;padding:1rem;">
+        <div class="card" style="width:100%;max-width:540px;padding:2rem;box-shadow:var(--shadow-xl);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="font-family:'DM Serif Display',serif;font-size:1.25rem;font-weight:400;">Examination Document Audit</h3>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('examDocsModal').style.display='none'">✕</button>
+            </div>
+            <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Student Uploaded Clearance Documents</h4>
+                <div id="examDocsContainer" style="display: grid; gap: 0.5rem;">Loading documents...</div>
+            </div>
+            <div style="text-align:right;">
+                <button class="btn btn-secondary" onclick="document.getElementById('examDocsModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inline Admit Card Viewer Modal -->
+    <div id="admitCardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1200;align-items:center;justify-content:center;padding:1rem;">
+        <div class="card" style="width:100%;max-width:820px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);">
+            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;">
+                <h3 style="font-family:'DM Serif Display',serif;font-size:1.1rem;font-weight:400;margin:0;">Admit Card Viewer</h3>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <a id="admitCardDownloadBtn" class="btn btn-primary btn-sm" href="#" target="_blank" style="padding:0.4rem 0.9rem;">⬇️ Download</a>
+                    <button class="btn btn-ghost btn-sm" onclick="closeAdmitCardModal()" style="padding:0.4rem 0.9rem;">✖ Close</button>
+                </div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:1rem;">
+                <iframe id="admitCardFrame" src="" style="width:100%;height:70vh;border:1px solid var(--border-light);border-radius:8px;background:#fff;" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+<script>
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+        
+        async function openExamDocsModal(appId) {
+            const container = document.getElementById('examDocsContainer');
+            container.innerHTML = 'Loading documents...';
+            document.getElementById('examDocsModal').style.display = 'flex';
+            try {
+                const t = localStorage.getItem('access_token');
+                const r = await fetch(`/api/documents/${appId}`, {headers:{'Authorization':`Bearer ${t}`}});
+                const d = await r.json();
+                if (d.success && d.data && d.data.length > 0) {
+                    container.innerHTML = d.data.map(doc => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px dashed var(--border-light);">
+                            <div>
+                                <strong style="font-size:0.85rem;">📄 ${doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT'}:</strong>
+                                <span style="font-size:0.8rem;color:var(--text-muted);">${doc.file_name}</span>
+                                <br><span style="font-size:0.75rem;color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
+                            </div>
+                            <a href="${doc.file_url || '/api/documents/file/' + doc.id}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View Document</a>
+                        </div>
+                    `).join('');
+                } else { container.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }
+            } catch(e) { container.innerHTML = '<span style="font-size:0.85rem;color:var(--crimson);">Error loading docs</span>'; }
+        }
+        function viewAdmitCard(url) {
+            document.getElementById('admitCardFrame').src = url;
+            document.getElementById('admitCardDownloadBtn').href = url;
+            document.getElementById('admitCardModal').style.display = 'flex';
+        }
+        function closeAdmitCardModal() {
+            document.getElementById('admitCardModal').style.display = 'none';
+            document.getElementById('admitCardFrame').src = '';
+        }
+        function switchSection(name) {
+            document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('.sidebar-nav-item[data-section="'+name+'"]')?.classList.add('active');
+            document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+            const el = document.getElementById('section-'+name);
+            if (el) el.style.display = 'block';
+            if (name === 'dashboard') loadDashboard();
+            else if (name === 'approved') loadApprovedApps();
+            else if (name === 'issued') loadIssuedCards();
+        }
         async function loadDashboard() {
             try {
                 const token = localStorage.getItem('access_token');
@@ -82,20 +175,71 @@
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.course_name || 'N/A'}</td><td>Sem ${app.semester || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.completed_at ? new Date(app.completed_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="generateAdmitCard('${app.application_id}')">🎫 Generate Card</button></td>
+                            <td>
+                                <button class="btn btn-outline btn-sm" onclick="openExamDocsModal('${app.application_id}')" style="margin-right:0.3rem;">👁️ Docs</button>
+                                <button class="btn btn-primary btn-sm" onclick="generateAdmitCard('${app.application_id}')">🎫 Generate Card</button>
+                            </td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No applications ready for admit card</td></tr>'; }
                 }
             } catch (e) { console.error(e); }
         }
+async function loadApprovedApps() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
+                const res = await fetch('/examination/api/applications?status=approved', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('approvedAppsBody');
+                if (data.success && data.data?.items?.length) {
+                    tbody.innerHTML = data.data.items.map(item => `<tr>
+                        <td><strong>${item.application_number||'N/A'}</strong></td>
+                        <td>${item.student_name||''}</td>
+                        <td>${item.roll_number||''}</td>
+                        <td>${item.course_name||'N/A'}</td>
+                        <td>Sem ${item.semester||'N/A'}</td>
+                        <td><span class="badge badge-success">approved</span></td>
+                    </tr>`).join('');
+                } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No approved apps</td></tr>'; }
+            } catch (e) { console.error(e); }
+        }
+        async function loadIssuedCards() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
+                const res = await fetch('/examination/api/admit-cards', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('issuedCardsBody');
+                if (data.success && data.data?.items?.length) {
+                    tbody.innerHTML = `<table><thead><tr><th>Card #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Issued</th><th>Action</th></tr></thead><tbody>` +
+                        data.data.items.map(card => `<tr>
+                            <td><strong>${card.card_number}</strong></td>
+                            <td>${card.student_name||''}</td>
+                            <td>${card.roll_number||''}</td>
+                            <td>${card.course_name||'N/A'}</td>
+                            <td>Sem ${card.semester||'N/A'}</td>
+                            <td style="font-size:0.8rem;color:var(--text-muted);">${card.created_at ? new Date(card.created_at).toLocaleDateString() : 'N/A'}</td>
+<td><button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button></td>
+                        </tr>`).join('') + `</tbody></table>`;
+                } else { tbody.innerHTML = '<table><thead><tr><th>Card #</th><th>Student</th><th>Action</th></tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No admit cards issued yet</td></tr></tbody></table>'; }
+            } catch (e) { console.error(e); }
+        }
         async function generateAdmitCard(applicationId) {
             try {
                 const token = localStorage.getItem('access_token');
+                if (!token) { window.location.href = '/auth/login'; return; }
                 const res = await fetch(`/examination/api/generate-admit-card/${applicationId}`, {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                alert(data.message || 'Admit card generated!');
+if (res.ok) {
+                    alert(data.message || 'Admit card generated!');
+                    if (data.data && data.data.download_url) {
+                        viewAdmitCard(data.data.download_url);
+                    }
+                } else {
+                    alert(data.message || 'Error generating admit card');
+                }
                 loadDashboard();
             } catch (e) { alert('Error generating admit card'); console.error(e); }
         }

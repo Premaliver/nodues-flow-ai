@@ -23,17 +23,17 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="/student/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="#" class="sidebar-nav-item" onclick="createApplication()"><span class="nav-icon">📝</span> New Application</a>
-                <a href="/student/apply" class="sidebar-nav-item"><span class="nav-icon">📋</span> Apply (New)</a>
-                <a href="#" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
-                <a href="#" class="sidebar-nav-item"><span class="nav-icon">🔔</span> Notifications</a>
-                <a href="#" class="sidebar-nav-item"><span class="nav-icon">👤</span> Profile</a>
+                <a href="/student/apply" class="sidebar-nav-item"><span class="nav-icon">📝</span> New Application</a>
+                <a href="#applicationsCard" class="sidebar-nav-item"><span class="nav-icon">📋</span> My Applications</a>
+                <a href="#admitCardsCard" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
+                <a href="#" class="sidebar-nav-item" onclick="showStudentProfileModal(); return false;"><span class="nav-icon">👤</span> Profile</a>
+                <a href="/auth/change-password" class="sidebar-nav-item"><span class="nav-icon">🔑</span> Change Password</a>
             </nav>
             <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
 
-        <div style="flex: 1; margin-left: 280px;">
-            <header class="top-nav" style="left: 280px;">
+        <div class="app-main-wrapper">
+            <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                     <div class="top-nav-search">
@@ -86,7 +86,7 @@
                     </div>
                 </div>
 
-                <div class="card reveal" style="transition-delay: 0.3s;">
+                <div class="card reveal" style="transition-delay: 0.3s;" id="applicationsCard">
                     <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">My Applications</h3></div>
                     <div class="card-body">
                         <div class="table-container">
@@ -104,7 +104,28 @@
                         <p style="color: var(--text-muted);">No active application.</p>
                     </div>
                 </div>
+
+                <div class="card reveal" style="margin-top: 1rem; transition-delay: 0.5s;" id="admitCardsCard">
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">📄 Issued Admit Cards</h3></div>
+                    <div class="card-body" id="admitCardsBody">
+                        <p style="color: var(--text-muted);">Loading admit cards...</p>
+                    </div>
+                </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Student Profile Modal -->
+    <div class="modal-backdrop" id="profileModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:500px; padding:2rem; background:var(--bg-card);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem;">👤 Student Profile</h3>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profileModal').style.display='none'">✕</button>
+            </div>
+            <div id="profileModalBody" style="display:grid; gap:0.75rem;">Loading profile...</div>
+            <div style="margin-top:1.5rem; text-align:right;">
+                <button class="btn btn-secondary" onclick="document.getElementById('profileModal').style.display='none'">Close</button>
+            </div>
         </div>
     </div>
 
@@ -171,18 +192,48 @@
                             ${app.status === 'draft' ? `<button class="btn btn-primary" style="margin-top: 1rem;" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
                         `;
                     }
+
+                    // Render Admit Cards
+                    const admitBody = document.getElementById('admitCardsBody');
+                    if (d.admit_cards && d.admit_cards.length > 0) {
+                        admitBody.innerHTML = d.admit_cards.map(ac => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem; border:1px solid var(--border-light); border-radius:var(--radius-lg); margin-bottom:0.75rem;">
+                                <div>
+                                    <strong>Admit Card #${ac.card_number}</strong>
+                                    <br><span style="font-size:0.8rem; color:var(--text-muted);">Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
+                                </div>
+                                <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-primary btn-sm">
+                                    📥 Download PDF
+                                </a>
+                            </div>
+                        `).join('');
+                    } else {
+                        admitBody.innerHTML = '<p style="color: var(--text-muted);">No admit cards issued yet. Complete all department clearances first.</p>';
+                    }
                 }
             } catch (e) { console.error('Dashboard load error:', e); }
         }
 
-        async function createApplication() {
+        async function showStudentProfileModal() {
             try {
                 const token = localStorage.getItem('access_token');
-                const res = await fetch('/student/api/apply', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
-                alert(data.message || 'Application created!');
-                loadDashboard();
-            } catch (e) { alert('Error creating application'); console.error(e); }
+                const res = await fetch('/student/api/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await res.json();
+                if (d.success && d.data) {
+                    const s = d.data;
+                    document.getElementById('profileModalBody').innerHTML = `
+                        <div><strong>Full Name:</strong> ${s.student_name || s.full_name || 'N/A'}</div>
+                        <div><strong>Roll Number:</strong> ${s.roll_number || 'N/A'}</div>
+                        <div><strong>Enrollment No:</strong> ${s.enrollment_number || 'N/A'}</div>
+                        <div><strong>Course:</strong> ${s.course_name || 'N/A'}</div>
+                        <div><strong>Branch:</strong> ${s.branch || 'N/A'}</div>
+                        <div><strong>Current Semester:</strong> ${s.current_semester || 'N/A'}</div>
+                        <div><strong>Father's Name:</strong> ${s.father_name || 'N/A'}</div>
+                        <div><strong>Email:</strong> ${s.email || 'N/A'}</div>
+                    `;
+                    document.getElementById('profileModal').style.display = 'flex';
+                }
+            } catch (e) { console.error(e); }
         }
 
         async function submitApplication(appId) {

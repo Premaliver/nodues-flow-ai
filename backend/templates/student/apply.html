@@ -69,8 +69,8 @@
             <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
 
-        <div style="flex: 1; margin-left: 280px;">
-            <header class="top-nav" style="left: 280px;">
+        <div class="app-main-wrapper">
+            <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                     <span style="font-weight: 600; font-size: 0.95rem;">New No-Dues Application</span>
@@ -199,20 +199,6 @@
                                         <input type="file" id="nextSemFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'nextSemFee')">
                                     </div>
                                 </div>
-
-                                <!-- Application Form -->
-                                <div class="form-group">
-                                    <label class="form-label">📄 Application Form (Signed) *</label>
-                                    <div class="file-upload-zone" id="appFormZone" onclick="document.getElementById('appFormInput').click()">
-                                        <div id="appFormPlaceholder">
-                                            <span style="font-size: 2rem;">📄</span>
-                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Signed Application Form</p>
-                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
-                                        </div>
-                                        <div id="appFormFile" class="uploaded-file" style="display: none;"></div>
-                                        <input type="file" id="appFormInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'appForm')">
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="form-section">
@@ -259,7 +245,7 @@
         // GLOBALS
         // ───────────────────────────────
         let studentData = null;
-        let uploadedFiles = { examFee: null, nextSemFee: null, appForm: null };
+        let uploadedFiles = { examFee: null, nextSemFee: null };
         let signatureData = null;
         let sigCanvas = null;
         let sigCtx = null;
@@ -298,7 +284,7 @@
         }
 
         // ───────────────────────────────
-        // INIT: Load Profile (HOD auto-detected from course)
+        // INIT: Load Profile (HOD auto-detected from profile branch/course)
         // ───────────────────────────────
         async function init() {
             const token = localStorage.getItem('access_token');
@@ -314,34 +300,11 @@
                     studentData = profileData.data;
                     renderPersonalInfo();
                     
-                    // Auto-detect HOD department from course/branch
+                    // Auto-detect HOD department directly from student profile data
                     const hodDisplay = document.getElementById('hodDeptDisplay');
-                    if (studentData.course_name) {
-                        const courseName = studentData.course_name.toLowerCase();
-                        let hodDept = 'Computer Science & Engineering';
-                        if (courseName.includes('electronics') || courseName.includes('ece')) hodDept = 'Electronics & Communication Engineering';
-                        else if (courseName.includes('mechanical') || courseName.includes('me')) hodDept = 'Mechanical Engineering';
-                        else if (courseName.includes('civil') || courseName.includes('ce')) hodDept = 'Civil Engineering';
-                        else if (courseName.includes('information technology') || courseName.includes('it')) hodDept = 'Information Technology';
-                        else if (courseName.includes('ai') || courseName.includes('ml') || courseName.includes('artificial intelligence')) hodDept = 'Artificial Intelligence & ML';
-                        else if (courseName.includes('data science')) hodDept = 'Data Science';
-                        else if (courseName.includes('bba')) hodDept = 'Business Administration';
-                        else if (courseName.includes('mba')) hodDept = 'Business Administration';
-                        else if (courseName.includes('bca')) hodDept = 'Computer Applications';
-                        else if (courseName.includes('mca')) hodDept = 'Computer Applications';
-                        else if (courseName.includes('pharm')) hodDept = 'Pharmacy';
-                        else if (courseName.includes('nursing')) hodDept = 'Nursing';
-                        else if (courseName.includes('bpt')) hodDept = 'Physiotherapy';
-                        else if (courseName.includes('b.ed')) hodDept = 'Education';
-                        else if (courseName.includes('biotechnology')) hodDept = 'Biotechnology';
-                        else if (courseName.includes('bjmc')) hodDept = 'Journalism & Mass Communication';
-                        else if (courseName.includes('bhm')) hodDept = 'Hotel Management';
-                        else if (courseName.includes('bfa')) hodDept = 'Fine Arts';
-                        else if (courseName.includes('llb')) hodDept = 'Law';
-                        
-                        hodDisplay.value = hodDept;
-                        document.getElementById('hodSection').style.display = 'block';
-                    }
+                    const detectedDept = studentData.branch || studentData.course_name || 'Academic HOD Department';
+                    hodDisplay.value = detectedDept.includes('HOD') ? detectedDept : detectedDept + ' HOD Department';
+                    document.getElementById('hodSection').style.display = 'block';
                 }
             } catch(e) {
                 console.error('Init error:', e);
@@ -528,7 +491,6 @@
                     <div style="display:flex; justify-content:space-between;"><strong>Selected Departments:</strong> <span>${selectedDepts.length ? selectedDepts.join(', ') : 'None selected'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Exam Fee Receipt:</strong> <span>${uploadedFiles.examFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Next Sem Fee Receipt:</strong> <span>${uploadedFiles.nextSemFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Application Form:</strong> <span>${uploadedFiles.appForm ? '✅ Uploaded' : '❌ Missing'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Digital Signature:</strong> <span>${signatureData ? '✅ Signed' : '❌ Not signed'}</span></div>
                 </div>
             `;
@@ -575,7 +537,7 @@
                 const appId = appData.data.application.id;
 
                 // 2. Upload documents
-                const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt', appForm: 'application_form' };
+                const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt' };
                 for (const [key, docType] of Object.entries(docTypes)) {
                     if (uploadedFiles[key]) {
                         const formData = new FormData();

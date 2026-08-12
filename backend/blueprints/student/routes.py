@@ -5,7 +5,7 @@ import uuid
 import hashlib
 from datetime import datetime, timezone
 
-from flask import request, jsonify, render_template, current_app
+from flask import request, jsonify, render_template, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_login import login_required, current_user
 
@@ -192,17 +192,48 @@ def create_application():
     if not selected_depts:
         return jsonify({"success": False, "message": "Please select at least one department"}), 400
 
-    # Find HOD department (auto-assigned)
-    hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
+    # Find HOD department (auto-assigned matching student's branch/course)
+    hod_dept = None
+    student_branch = student.branch or student.course_name
+    if student_branch:
+        hod_dept = Department.query.filter(
+            Department.role == "hod",
+            Department.is_active == True,
+            Department.name.ilike(f"%{student_branch}%")
+        ).first()
+    if not hod_dept:
+        hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
     if not hod_dept:
         return jsonify({"success": False, "message": "HOD department not configured"}), 400
 
     # Determine workflow steps based on selected departments
-    all_workflow_depts = ["accounts", "hostel", "mess", "transport", "scholarship", "hod", "examination"]
+    # Sequence: Facilities (Hostel/Mess/Transport/Scholarship) -> Academic HOD -> Accounts -> Examination
     active_workflow = []
     step_order = 1
 
-    # Always include accounts first (verification department)
+    # 1. Add selected facility departments (hostel, mess, transport, scholarship)
+    facility_order = ["hostel", "mess", "transport", "scholarship"]
+    for dept_role in facility_order:
+        if dept_role in selected_depts:
+            dept = Department.query.filter_by(role=dept_role, is_active=True).first()
+            if dept:
+                active_workflow.append({
+                    "department": dept,
+                    "step_order": step_order,
+                    "is_required": True,
+                })
+                step_order += 1
+
+    # 2. Add Academic HOD Department
+    if hod_dept:
+        active_workflow.append({
+            "department": hod_dept,
+            "step_order": step_order,
+            "is_required": True,
+        })
+        step_order += 1
+
+    # 3. Add Accounts Department (Fee clearance & Financial Audit)
     accounts_dept = Department.query.filter_by(role="accounts").first()
     if accounts_dept and accounts_dept.is_active:
         active_workflow.append({
@@ -212,27 +243,7 @@ def create_application():
         })
         step_order += 1
 
-    # Add selected departments
-    for dept_role in selected_depts:
-        dept = Department.query.filter_by(role=dept_role, is_active=True).first()
-        if dept:
-            active_workflow.append({
-                "department": dept,
-                "step_order": step_order,
-                "is_required": True,
-            })
-            step_order += 1
-
-    # Add HOD
-    if hod_dept:
-        active_workflow.append({
-            "department": hod_dept,
-            "step_order": step_order,
-            "is_required": True,
-        })
-        step_order += 1
-
-    # Add examination last
+    # 4. Add Examination Department (Final Clearance & Admit Card Generation)
     exam_dept = Department.query.filter_by(role="examination").first()
     if exam_dept and exam_dept.is_active:
         active_workflow.append({
@@ -471,6 +482,11 @@ def upload_document(app_id):
     }), 201
 
 
+
+
+
+
+
 @student_bp.route("/api/notifications")
 @jwt_required()
 def get_notifications():
@@ -487,4 +503,45 @@ def get_notifications():
         "success": True,
         "data": paginate_query(query, page=page, per_page=per_page),
     })
+
+
+@student_bp.route("/api/admit-card/<card_number>/pdf")
+@jwt_required(optional=True)
+def download_admit_card_pdf(card_number):
+    """Download Admit Card PDF for student."""
+    card = AdmitCard.query.filter_by(card_number=card_number).first()
+    if not card:
+        return jsonify({"success": False, "message": "Admit card record not found"}), 404
+
+    # If physical file missing, attempt on-the-fly PDF regeneration
+    if not card.pdf_path or not os.path.exists(card.pdf_path):
+        try:
+            from blueprints.examination.routes import _generate_admit_card_pdf
+            student = Student.query.get(card.student_id)
+            semester = Semester.query.get(card.semester_id)
+            application = NoDuesApplication.query.get(card.application_id)
+            if student and semester and application:
+                student_user = User.query.get(student.user_id) if student else None
+                pdf_path = _generate_admit_card_pdf(
+                    card, student, semester, application, student_user or student.user
+                )
+                card.pdf_path = pdf_path
+                db.session.commit()
+        except Exception as e:
+            current_app.logger.error("Auto admit card PDF generation failed: %s", str(e))
+
+    if not card.pdf_path or not os.path.exists(card.pdf_path):
+        return jsonify({"success": False, "message": "Admit card PDF file not found"}), 404
+
+    card.is_downloaded = True
+    card.download_count = (card.download_count or 0) + 1
+    db.session.commit()
+
+    return send_file(
+        card.pdf_path,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"AdmitCard_{card.card_number}.pdf",
+    )
+
 

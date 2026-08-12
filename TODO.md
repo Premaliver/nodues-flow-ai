@@ -1,32 +1,26 @@
-# Student Dashboard & Registration Updates — DONE ✅
+# Fix Progress Tracking
 
-## Step 1: Registration form — Add father name & phone fields ✅
-- File: `backend/templates/auth/register.html`
-  - Added "Father's Name" input field
-  - Added "Father's Phone No" input field
-  - Included in JSON submission payload
+## ✅ Completed
+1. ✅ Added Change Password button to all department dashboards (hostel, mess, transport, scholarship, accounts, hod, examination, superadmin)
+2. ✅ Added "View Documents" button in hostel process modal (staff can view uploaded docs before approving)
+3. ✅ Added `/api/documents/<app_id>` endpoint for staff to fetch application documents
+4. ✅ Removed duplicate route in student routes.py
+5. ✅ Fixed hostel dashboard modal to properly store app ID and reset docs list
 
-## Step 2: Auth route — Save father fields to Student model ✅
-- File: `backend/blueprints/auth/routes.py`
-  - Extracts `father_name` and `father_phone` from request data
-  - Passes to Student constructor as `father_name` and `guardian_phone`
+## ✅ Fixes Applied
+- Hostel dashboard: Change Password link, View Documents button, proper modal state management
+- Student routes: Documents API endpoint, removed duplicate route, cleaned up validation
+- All other dashboards: Change Password link added
 
-## Step 3: Student model — Expose guardian_phone in API ✅
-- File: `backend/models/student.py`
-  - Added `guardian_phone` to `to_dict()` output
+## ✅ Examination Board Fix
+- [x] Fix `dashboard_data` to show applications ready for admit card (query exam ApplicationDepartment pending rows)
+- [x] Fix `list_applications` to include student/application details (Approved Apps tab)
+- [x] Fix `generate_admit_card` to remove blocking approved check, generate real PDF + QR
+- [x] Add `list_admit_cards` endpoint for "Admit Cards Issued" tab
+- [x] Add PDF download/view endpoint for admit cards
+- [x] Fix frontend dashboard JavaScript for all sidebar sections
 
-## Step 4: Apply page — Auto-detect HOD from registration data ✅
-- File: `backend/templates/student/apply.html`
-  - Removed "Select Your HOD Department" dropdown
-  - Added read-only auto-detected HOD field based on course_name
-  - Updated review and submission logic
-
-## Step 5: Student routes — Use auto-detected HOD ✅
-- File: `backend/blueprints/student/routes.py`
-  - Backend already auto-finds HOD via `Department.query.filter_by(role="hod")`
-  - Removed manual `hod_department` from `@validate_json` and frontend validation
-
-## Step 6: Dashboard — Show father name & phone ✅
-- File: `backend/templates/student/dashboard.html`
-  - Display father name and guardian phone in student info line
-
+## pending (original)
+- [x] examination dashboard application not showing
+- [x] option on the examination dashboard is not working
+- [x] genrating admit card and other option is not working fix it

@@ -168,17 +168,8 @@ def process_application(app_dept_id):
     if action == "approved":
         app_dept.status = "approved"
         application.current_step += 1
-
-        # Check if all departments approved
-        all_approved = all(
-            ad.status == "approved"
-            for ad in application.department_approvals
-            if ad.is_required
-        )
-        if all_approved:
-            application.status = "approved"
-            application.completed_at = datetime.now(timezone.utc)
-
+        if application.status == "submitted":
+            application.status = "in_review"
     else:
         app_dept.status = "rejected"
         application.status = "rejected"

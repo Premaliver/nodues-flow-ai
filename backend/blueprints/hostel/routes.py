@@ -154,6 +154,8 @@ def process_application(app_dept_id):
 
     if action == "approved":
         application.current_step += 1
+        if application.status == "submitted":
+            application.status = "in_review"
     else:
         application.status = "rejected"
 

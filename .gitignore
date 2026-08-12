@@ -49,5 +49,9 @@ env/
 # Python logs
 *.log
 
-# PostgreSQL
+# PostgreSQL & SQLite
 *.db
+
+# Uploads
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep

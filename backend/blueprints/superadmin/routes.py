@@ -684,32 +684,52 @@ def init_default_settings():
 @jwt_required()
 @admin_only
 def get_analytics():
-    """Get detailed analytics for charts."""
+    """Get detailed real-time analytics for charts and KPIs."""
     days = request.args.get("days", 30, type=int)
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days)
 
-    daily_apps = (
+    # 1. Realtime Date Range Map
+    date_counts_apps = {}
+    date_counts_reg = {}
+    for i in range(days):
+        d_str = (now - timedelta(days=days - 1 - i)).strftime("%Y-%m-%d")
+        date_counts_apps[d_str] = 0
+        date_counts_reg[d_str] = 0
+
+    daily_apps_query = (
         db.session.query(
             db.func.date(NoDuesApplication.created_at).label("date"),
             db.func.count().label("count"),
         )
         .filter(NoDuesApplication.created_at >= since)
         .group_by(db.func.date(NoDuesApplication.created_at))
-        .order_by(db.func.date(NoDuesApplication.created_at))
         .all()
     )
 
-    daily_registrations = (
+    for row in daily_apps_query:
+        if row.date:
+            d_str = str(row.date)
+            if d_str in date_counts_apps:
+                date_counts_apps[d_str] = row.count
+
+    daily_reg_query = (
         db.session.query(
             db.func.date(User.created_at).label("date"),
             db.func.count().label("count"),
         )
         .filter(User.created_at >= since)
         .group_by(db.func.date(User.created_at))
-        .order_by(db.func.date(User.created_at))
         .all()
     )
 
+    for row in daily_reg_query:
+        if row.date:
+            d_str = str(row.date)
+            if d_str in date_counts_reg:
+                date_counts_reg[d_str] = row.count
+
+    # 2. Role Distribution
     role_dist = (
         db.session.query(User.role, db.func.count().label("count"))
         .filter(User.deleted_at.is_(None))
@@ -717,6 +737,7 @@ def get_analytics():
         .all()
     )
 
+    # 3. Application Status Distribution
     status_dist = (
         db.session.query(
             NoDuesApplication.status, db.func.count().label("count")
@@ -726,30 +747,47 @@ def get_analytics():
         .all()
     )
 
-    # Monthly trend (last 12 months)
-    twelve_months_ago = now - timedelta(days=365)
-    monthly_apps = (
-        db.session.query(
-            db.func.strftime("%Y-%m", NoDuesApplication.created_at).label("month"),
-            db.func.count().label("count"),
-        )
-        .filter(NoDuesApplication.created_at >= twelve_months_ago)
-        .group_by(db.func.strftime("%Y-%m", NoDuesApplication.created_at))
-        .order_by(db.func.strftime("%Y-%m", NoDuesApplication.created_at))
-        .all()
-    )
+    # 4. Department Performance Metrics (Pending, Approved, Rejected per Department)
+    departments = Department.query.filter_by(is_active=True).all()
+    dept_perf = []
+    for d in departments:
+        pending_c = ApplicationDepartment.query.filter_by(department_id=d.id, status="pending").count()
+        approved_c = ApplicationDepartment.query.filter_by(department_id=d.id, status="approved").count()
+        rejected_c = ApplicationDepartment.query.filter_by(department_id=d.id, status="rejected").count()
+        dept_perf.append({
+            "code": d.code,
+            "name": d.name,
+            "role": d.role,
+            "pending": pending_c,
+            "approved": approved_c,
+            "rejected": rejected_c,
+        })
+
+    # 5. Key System KPIs
+    total_apps = NoDuesApplication.query.filter_by(deleted_at=None).count()
+    total_students = Student.query.count()
+    approved_apps = NoDuesApplication.query.filter_by(status="approved", deleted_at=None).count()
+    rejected_apps = NoDuesApplication.query.filter_by(status="rejected", deleted_at=None).count()
+    admit_cards = AdmitCard.query.count()
+
+    approval_rate = round((approved_apps / total_apps * 100), 1) if total_apps > 0 else 0.0
 
     return jsonify({
         "success": True,
         "data": {
+            "kpi": {
+                "total_applications": total_apps,
+                "total_students": total_students,
+                "approved_applications": approved_apps,
+                "rejected_applications": rejected_apps,
+                "admit_cards_issued": admit_cards,
+                "approval_rate": approval_rate,
+            },
             "daily_applications": [
-                {"date": str(row.date), "count": row.count} for row in daily_apps
+                {"date": k, "count": v} for k, v in date_counts_apps.items()
             ],
             "daily_registrations": [
-                {"date": str(row.date), "count": row.count} for row in daily_registrations
-            ],
-            "monthly_applications": [
-                {"month": row.month, "count": row.count} for row in monthly_apps
+                {"date": k, "count": v} for k, v in date_counts_reg.items()
             ],
             "role_distribution": [
                 {"role": row.role, "count": row.count} for row in role_dist
@@ -757,5 +795,6 @@ def get_analytics():
             "application_status": [
                 {"status": row.status, "count": row.count} for row in status_dist
             ],
+            "department_performance": dept_perf,
         },
     })

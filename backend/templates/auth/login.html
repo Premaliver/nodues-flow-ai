@@ -52,10 +52,14 @@
         <div class="login-card">
             <div class="card" style="padding: 2.5rem; box-shadow: var(--shadow-xl);">
                 <!-- Brand -->
-                <div class="animate-in del-1" style="text-align: center; margin-bottom: 2rem;">
-                    <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; margin: 0 auto 1rem; font-family: 'DM Serif Display', serif;">S</div>
+                <div class="animate-in del-1" id="brandLogo" style="text-align: center; margin-bottom: 1.5rem; cursor: pointer;" title="Triple click to toggle hidden admin mode">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; margin: 0 auto 0.75rem; font-family: 'DM Serif Display', serif;">S</div>
                     <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Welcome Back</h1>
                     <p style="color: var(--text-muted); font-size: 0.875rem;">Sign in to your account</p>
+                </div>
+
+                <div id="secretAdminBanner" style="display:none; text-align:center; padding:0.5rem; margin-bottom:1rem; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-size:0.75rem; font-weight:700; border-radius:var(--radius-md); letter-spacing:0.05em; text-transform:uppercase; box-shadow:var(--shadow-glow);">
+                    🔐 SECRET SUPER ADMIN LOGGER UNLOCKED
                 </div>
 
                 <div id="errorMsg" class="error-msg animate-in del-2"></div>
@@ -79,9 +83,6 @@
                                     <option value="scholarship">📜 Scholarship</option>
                                     <option value="hod">📚 HOD</option>
                                     <option value="examination">📝 Examination</option>
-                                </optgroup>
-                                <optgroup label="Administration">
-                                    <option value="super_admin">⚙️ Super Admin</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -132,6 +133,50 @@
     </div>
 
     <script>
+        function enableSuperAdminMode() {
+            const roleSelect = document.getElementById('roleSelect');
+            let superAdminOpt = roleSelect.querySelector('option[value="super_admin"]');
+            if (!superAdminOpt) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = "Administration (Secret Access)";
+                optgroup.innerHTML = '<option value="super_admin">⚙️ Super Admin</option>';
+                roleSelect.appendChild(optgroup);
+            }
+            roleSelect.value = 'super_admin';
+            document.getElementById('secretAdminBanner').style.display = 'block';
+            roleSelect.dispatchEvent(new Event('change'));
+            if (window.FuturisticAudio) window.FuturisticAudio.playAccessGranted();
+        }
+
+        // Secret Trigger 1: Keyboard Shortcut (Ctrl + Shift + A  OR  Alt + S)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 's' || e.key === 'S'))) {
+                e.preventDefault();
+                enableSuperAdminMode();
+            }
+        });
+
+        // Secret Trigger 2: Triple Click on the "S" Brand Logo
+        let logoClickCount = 0;
+        let logoClickTimer = null;
+        const brandLogo = document.getElementById('brandLogo');
+        if (brandLogo) {
+            brandLogo.addEventListener('click', function() {
+                logoClickCount++;
+                if (logoClickTimer) clearTimeout(logoClickTimer);
+                logoClickTimer = setTimeout(() => { logoClickCount = 0; }, 1200);
+                if (logoClickCount >= 3) {
+                    logoClickCount = 0;
+                    enableSuperAdminMode();
+                }
+            });
+        }
+
+        // Secret Trigger 3: URL Parameter ?admin=secret or /auth/hidden-admin-access
+        if (window.location.search.includes('admin=secret') || window.location.search.includes('mode=admin')) {
+            enableSuperAdminMode();
+        }
+
         document.getElementById('roleSelect').addEventListener('change', function() {
             const isSuperAdmin = this.value === 'super_admin';
             document.getElementById('emailField').style.display = isSuperAdmin ? 'none' : 'block';

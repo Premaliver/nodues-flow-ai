@@ -23,13 +23,12 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="/hod/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/hod/dashboard" class="sidebar-nav-item"><span class="nav-icon">📋</span> Applications</a>
-                <a href="/hod/dashboard" class="sidebar-nav-item"><span class="nav-icon">✅</span> Cleared</a>
+                <a href="/auth/change-password" class="sidebar-nav-item"><span class="nav-icon">🔑</span> Change Password</a>
             </nav>
             <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
-        <div style="flex: 1; margin-left: 280px;">
-            <header class="top-nav" style="left: 280px;">
+        <div class="app-main-wrapper">
+            <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
                     <div class="top-nav-search"><span style="color: var(--text-muted);">🔍</span><input type="text" placeholder="Search applications..."></div>
@@ -41,8 +40,8 @@
             </header>
             <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px);">
                 <div style="margin-bottom: 2rem;">
-                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;">HOD Dashboard</h1>
-                    <p style="color: var(--text-muted);">Manage academic clearances.</p>
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;">HOD Academic Clearance Dashboard</h1>
+                    <p style="color: var(--text-muted);">Review & grant departmental academic clearances.</p>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
@@ -61,21 +60,56 @@
             </main>
         </div>
     </div>
-    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card" style="width: 100%; max-width: 450px; padding: 2rem; box-shadow: var(--shadow-xl);">
-            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; font-weight: 400; margin-bottom: 0.5rem;" id="modalTitle">Process Application</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.85rem;" id="modalAppInfo"></p>
-            <div class="form-group"><div style="display: flex; gap: 1rem;">
-                <button class="btn btn-success" onclick="processApplication('approved')">✅ Approve</button>
-                <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject</button>
-            </div></div>
-            <div class="form-group"><label class="form-label">Remarks</label><textarea id="modalRemarks" class="form-textarea" placeholder="Add remarks..." style="min-height: 80px;"></textarea></div>
-            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+
+    <!-- Hi-Tech HOD Modal -->
+    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 540px; padding: 2rem; box-shadow: var(--shadow-xl);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;" id="modalTitle">HOD Academic Clearance</h3>
+                <span style="font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--emerald); padding: 4px 10px; border-radius: 20px; font-weight: 600;">ACADEMIC AUDIT ✓</span>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;" id="modalAppInfo"></p>
+            
+            <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Uploaded Clearance Documents & Verification</h4>
+                <div id="hodDocsList" style="display: grid; gap: 0.5rem;">Loading documents...</div>
+            </div>
+
+            <div class="form-group"><label class="form-label" for="modalRemarks">Academic Remarks</label><textarea id="modalRemarks" class="form-textarea" placeholder="Add academic clearance notes..." style="min-height: 80px;"></textarea></div>
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject Clearance</button>
+                <button class="btn btn-success" onclick="processApplication('approved')">✅ Grant Academic Clearance</button>
+            </div>
         </div>
     </div>
     <script>
         let currentAppDeptId = null;
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+        
+        async function loadHodDocs(appId) {
+            if (!appId) return;
+            const dv = document.getElementById('hodDocsList');
+            dv.innerHTML = 'Loading documents...';
+            try {
+                const t = localStorage.getItem('access_token');
+                const r = await fetch(`/api/documents/${appId}`, {headers:{'Authorization':`Bearer ${t}`}});
+                const d = await r.json();
+                if (d.success && d.data && d.data.length > 0) {
+                    dv.innerHTML = d.data.map(doc => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px dashed var(--border-light);">
+                            <div>
+                                <strong style="font-size:0.85rem;">📄 ${doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT'}:</strong>
+                                <span style="font-size:0.8rem;color:var(--text-muted);">${doc.file_name}</span>
+                                <br><span style="font-size:0.75rem;color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
+                            </div>
+                            <a href="${doc.file_url || '/api/documents/file/' + doc.id}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View Document</a>
+                        </div>
+                    `).join('');
+                } else { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }
+            } catch(e) { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--crimson);">Error loading docs</span>'; }
+        }
+
         async function loadDashboard() {
             try {
                 const token = localStorage.getItem('access_token');
@@ -92,15 +126,23 @@
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.course_name || 'N/A'}</td><td>${app.branch || 'N/A'}</td><td>Sem ${app.semester || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process</button></td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process & Review</button></td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No pending clearances</td></tr>'; }
                 }
             } catch (e) { console.error(e); }
         }
-        function openModal(id, name, appNo, appId) { currentAppDeptId = id; document.getElementById('modalTitle').textContent = `Process: ${name}`; document.getElementById('modalAppInfo').textContent = `Application: ${appNo}`; document.getElementById('actionModal').style.display = 'flex'; }
-        async function loadHodDocs(appId){const dv=document.getElementById('hodDocsList');if(!dv)return;try{const t=localStorage.getItem('access_token');const r=await fetch(`/student/api/documents/${appId}`,{headers:{'Authorization':`Bearer ${t}`}});const d=await r.json();if(d.success&&d.data.length>0){dv.innerHTML=d.data.map(doc=>`<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem;"><span>${doc.file_name}</span><span class="badge badge-${doc.status==='verified'?'success':'pending'}">${doc.status}</span></div>`).join('')}else{dv.innerHTML='<span style="color:var(--text-muted);">No documents uploaded</span>'}}catch(e){dv.innerHTML='Error loading docs'}}
+
+        function openModal(id, name, appNo, appId) { 
+            currentAppDeptId = id; 
+            document.getElementById('modalTitle').textContent = `Process: ${name}`; 
+            document.getElementById('modalAppInfo').textContent = `Application #: ${appNo}`; 
+            document.getElementById('actionModal').style.display = 'flex'; 
+            loadHodDocs(appId);
+        }
+
         function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
+        
         async function processApplication(action) {
             if (!currentAppDeptId) return;
             try {

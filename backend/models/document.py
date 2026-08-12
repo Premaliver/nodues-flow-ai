@@ -63,6 +63,8 @@ class Document(db.Model):
             "file_name": self.file_name,
             "file_size": self.file_size,
             "mime_type": self.mime_type,
+            "file_url": f"/api/documents/file/{self.id}",
+            "view_url": f"/api/documents/file/{self.id}",
             "status": self.status,
             "verified_at": self.verified_at.isoformat() if self.verified_at else None,
             "rejection_reason": self.rejection_reason,

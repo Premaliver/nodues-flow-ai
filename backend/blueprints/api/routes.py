@@ -1,6 +1,7 @@
 """Public API routes — dashboard data, settings, etc."""
 
-from flask import jsonify, current_app
+import os
+from flask import jsonify, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api_bp
@@ -11,6 +12,7 @@ from models.department import Department
 from models.semester import Semester
 from models.system_setting import SystemSetting
 from models.workflow import WorkflowConfig
+from models.document import Document
 
 
 @api_bp.route("/settings")
@@ -77,4 +79,35 @@ def get_workflow(category):
             for step in steps
         ],
     })
+
+
+@api_bp.route("/documents/file/<doc_id>")
+def view_document_file(doc_id):
+    """Serve an uploaded document file inline (PDF, Image, etc.)."""
+    doc = Document.query.get(doc_id)
+    if not doc:
+        return jsonify({"success": False, "message": "Document record not found"}), 404
+
+    if not doc.file_path or not os.path.exists(doc.file_path):
+        return jsonify({"success": False, "message": "Physical document file not found"}), 404
+
+    mime = doc.mime_type or ("application/pdf" if doc.file_name.lower().endswith(".pdf") else "image/jpeg")
+    return send_file(
+        doc.file_path,
+        mimetype=mime,
+        as_attachment=False,
+        download_name=doc.file_name,
+    )
+
+
+@api_bp.route("/documents/<app_id>")
+def get_documents_by_app(app_id):
+    """Get documents list for an application."""
+    documents = Document.query.filter_by(application_id=app_id).all()
+    return jsonify({
+        "success": True,
+        "data": [doc.to_dict() for doc in documents]
+    })
+
+
 
