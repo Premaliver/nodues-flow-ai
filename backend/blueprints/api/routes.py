@@ -110,4 +110,66 @@ def get_documents_by_app(app_id):
     })
 
 
+@api_bp.route("/docs")
+def render_api_docs():
+    """Interactive Enterprise API Developer Portal."""
+    from flask import render_template
+    return render_template("docs.html")
+
+
+@api_bp.route("/openapi.json")
+def get_openapi_spec():
+    """OpenAPI 3.0.3 Spec for Enterprise ERP/LMS Integration."""
+    return jsonify({
+        "openapi": "3.0.3",
+        "info": {
+            "title": "Smart NoDues AI Enterprise API",
+            "version": "1.0.0",
+            "description": "Automated No-Dues Clearance & Signed Admit Card Generation Platform for Universities."
+        },
+        "servers": [{"url": "http://localhost:5000", "description": "Local Development Server"}],
+        "paths": {
+            "/auth/login": {
+                "post": {
+                    "summary": "User Authentication (JWT)",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "email": {"type": "string"},
+                                        "username": {"type": "string"},
+                                        "password": {"type": "string"},
+                                        "role": {"type": "string"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {"200": {"description": "JWT Access Token Issued"}}
+                }
+            },
+            "/student/api/apply": {
+                "post": {
+                    "summary": "Submit No-Dues Application",
+                    "responses": {"201": {"description": "Application Created"}}
+                }
+            },
+            "/examination/api/generate-admit-card/{application_id}": {
+                "post": {
+                    "summary": "Generate HMAC Signed Admit Card PDF",
+                    "responses": {"201": {"description": "Admit Card Generated"}}
+                }
+            },
+            "/verify-admit-card/{card_number}": {
+                "get": {
+                    "summary": "Scannable QR Verification",
+                    "responses": {"200": {"description": "Verification Record"}}
+                }
+            }
+        }
+    })
+
+
 

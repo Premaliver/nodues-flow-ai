@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart NoDues AI — Enterprise API Developer Portal</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .api-sidebar { width: 280px; position: fixed; top: 0; left: 0; bottom: 0; background: var(--bg-card); border-right: 1px solid var(--border-light); padding: 1.5rem; overflow-y: auto; z-index: 100; }
+        .api-content { margin-left: 280px; padding: 2rem 3rem; max-width: 1200px; }
+        .endpoint-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); margin-bottom: 1.5rem; padding: 1.5rem; box-shadow: var(--shadow-sm); }
+        .method-tag { display: inline-block; padding: 0.25rem 0.65rem; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.75rem; font-family: var(--font-mono); text-transform: uppercase; margin-right: 0.5rem; }
+        .method-get { background: rgba(16, 185, 129, 0.15); color: #059669; }
+        .method-post { background: rgba(99, 102, 241, 0.15); color: #4f46e5; }
+        .method-put { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .method-delete { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+        .code-block { background: #1e1e2e; color: #a6adc8; padding: 1rem; border-radius: var(--radius-md); font-family: 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.75rem; line-height: 1.5; }
+        .code-block span.keyword { color: #cba6f7; }
+        .code-block span.string { color: #a6e3a1; }
+        .code-block span.number { color: #fab387; }
+        .nav-link { display: block; padding: 0.4rem 0.75rem; color: var(--text-secondary); border-radius: var(--radius-sm); font-size: 0.85rem; text-decoration: none; margin-bottom: 0.2rem; transition: all var(--transition-fast); }
+        .nav-link:hover, .nav-link.active { background: var(--bg-secondary); color: var(--accent); font-weight: 600; }
+        @media (max-width: 768px) {
+            .api-sidebar { display: none; }
+            .api-content { margin-left: 0; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="api-sidebar">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border-light);">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;font-family:'DM Serif Display',serif;">API</div>
+            <div><div style="font-weight:700;font-size:0.9rem;">Smart NoDues AI</div><div style="font-size:0.7rem;color:var(--text-muted);">Enterprise API v1.0</div></div>
+        </div>
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;letter-spacing:0.05em;">Getting Started</div>
+        <a href="#overview" class="nav-link">Overview & Specs</a>
+        <a href="#authentication" class="nav-link">Authentication (JWT)</a>
+        <a href="#security" class="nav-link">HMAC & Security Audit</a>
+        
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-top:1.25rem;margin-bottom:0.5rem;letter-spacing:0.05em;">Student APIs</div>
+        <a href="#endpoint-apply" class="nav-link">POST Submit Application</a>
+        <a href="#endpoint-student-dash" class="nav-link">GET Student Status</a>
+        <a href="#endpoint-download-card" class="nav-link">GET Download Admit Card</a>
+
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-top:1.25rem;margin-bottom:0.5rem;letter-spacing:0.05em;">Department Staff APIs</div>
+        <a href="#endpoint-dept-dash" class="nav-link">GET Department Queue</a>
+        <a href="#endpoint-dept-process" class="nav-link">POST Process Clearance</a>
+
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-top:1.25rem;margin-bottom:0.5rem;letter-spacing:0.05em;">Examination & Admin</div>
+        <a href="#endpoint-gen-card" class="nav-link">POST Generate Admit Card</a>
+        <a href="#endpoint-analytics" class="nav-link">GET System Analytics</a>
+        <a href="#endpoint-verify-qr" class="nav-link">GET Verify QR Code</a>
+    </div>
+
+    <div class="api-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;">
+            <div>
+                <h1 style="font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;margin-bottom:0.5rem;">Enterprise API Developer Documentation</h1>
+                <p style="color:var(--text-muted);font-size:0.95rem;">RESTful Web APIs for Seamless University ERP / LMS & Student Portal Integration</p>
+            </div>
+            <div>
+                <a href="/api/openapi.json" target="_blank" class="btn btn-outline btn-sm">📥 OpenAPI 3.0 Spec (.json)</a>
+            </div>
+        </div>
+
+        <!-- OVERVIEW -->
+        <section id="overview" class="endpoint-card">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:1.35rem;font-weight:400;margin-bottom:0.75rem;">🚀 Overview & University Integration</h2>
+            <p style="color:var(--text-secondary);line-height:1.6;font-size:0.9rem;">
+                Smart NoDues AI provides high-throughput, secure RESTful APIs designed for instant integration with University Enterprise Resource Planning (ERP) systems, Student Information Systems (SIS), and Learning Management Systems (LMS) such as SAP Higher Education, ERPNext, CollPoll, Academia ERP, and PowerCampus.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
+                <div style="padding:0.85rem;background:var(--bg-secondary);border-radius:var(--radius-md);"><strong style="font-size:0.85rem;">🔒 Protocol:</strong> HTTPS / TLS 1.3</div>
+                <div style="padding:0.85rem;background:var(--bg-secondary);border-radius:var(--radius-md);"><strong style="font-size:0.85rem;">🔑 Auth:</strong> JWT Bearer Tokens</div>
+                <div style="padding:0.85rem;background:var(--bg-secondary);border-radius:var(--radius-md);"><strong style="font-size:0.85rem;">⚡ Data Format:</strong> Application/JSON</div>
+                <div style="padding:0.85rem;background:var(--bg-secondary);border-radius:var(--radius-md);"><strong style="font-size:0.85rem;">🛡️ Security:</strong> HMAC-SHA256 Signed QR</div>
+            </div>
+        </section>
+
+        <!-- AUTHENTICATION -->
+        <section id="authentication" class="endpoint-card">
+            <div style="display:flex;align-items:center;margin-bottom:0.75rem;"><span class="method-tag method-post">POST</span> <strong style="font-family:var(--font-mono);font-size:1rem;">/auth/login</strong></div>
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">Authenticate & Issue JWT Bearer Token</h3>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Authenticates students, staff, or administrators and returns a JWT access token for subsequent API calls.</p>
+            
+            <h4 style="font-size:0.8rem;font-weight:700;margin-top:1rem;text-transform:uppercase;color:var(--text-muted);">Request Payload</h4>
+            <div class="code-block">{
+  <span class="keyword">"email"</span>: <span class="string">"student@rayatbahra.edu"</span>,
+  <span class="keyword">"password"</span>: <span class="string">"SecurePass123!"</span>,
+  <span class="keyword">"role"</span>: <span class="string">"student"</span>
+}</div>
+
+            <h4 style="font-size:0.8rem;font-weight:700;margin-top:1rem;text-transform:uppercase;color:var(--text-muted);">Response (200 OK)</h4>
+            <div class="code-block">{
+  <span class="keyword">"success"</span>: <span class="keyword">true</span>,
+  <span class="keyword">"message"</span>: <span class="string">"Login successful"</span>,
+  <span class="keyword">"data"</span>: {
+    <span class="keyword">"access_token"</span>: <span class="string">"eyJhbGciOiJIUzI1NiIsInR..."</span>,
+    <span class="keyword">"user"</span>: { <span class="keyword">"id"</span>: <span class="string">"u-123"</span>, <span class="keyword">"email"</span>: <span class="string">"student@rayatbahra.edu"</span>, <span class="keyword">"role"</span>: <span class="string">"student"</span> }
+  }
+}</div>
+        </section>
+
+        <!-- SUBMIT APPLICATION -->
+        <section id="endpoint-apply" class="endpoint-card">
+            <div style="display:flex;align-items:center;margin-bottom:0.75rem;"><span class="method-tag method-post">POST</span> <strong style="font-family:var(--font-mono);font-size:1rem;">/student/api/apply</strong></div>
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">Submit New No-Dues Application</h3>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Initiates sequential clearance workflow (Facilities -> HOD -> Accounts -> Examination).</p>
+            
+            <h4 style="font-size:0.8rem;font-weight:700;margin-top:1rem;text-transform:uppercase;color:var(--text-muted);">Header</h4>
+            <div class="code-block">Authorization: Bearer &lt;access_token&gt;</div>
+
+            <h4 style="font-size:0.8rem;font-weight:700;margin-top:1rem;text-transform:uppercase;color:var(--text-muted);">Request Payload</h4>
+            <div class="code-block">{
+  <span class="keyword">"semester_id"</span>: <span class="string">"sem-uuid-6"</span>,
+  <span class="keyword">"category"</span>: <span class="string">"hosteller"</span>,
+  <span class="keyword">"selected_departments"</span>: [<span class="string">"hostel"</span>, <span class="string">"mess"</span>],
+  <span class="keyword">"hod_department_id"</span>: <span class="string">"dept-hod-civil"</span>
+}</div>
+        </section>
+
+        <!-- PROCESS CLEARANCE -->
+        <section id="endpoint-dept-process" class="endpoint-card">
+            <div style="display:flex;align-items:center;margin-bottom:0.75rem;"><span class="method-tag method-post">POST</span> <strong style="font-family:var(--font-mono);font-size:1rem;">/&lt;department&gt;/api/process/&lt;app_dept_id&gt;</strong></div>
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">Process Department Clearance (Approve / Reject)</h3>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Executes clearance verification with official remarks and digital signature audit.</p>
+            
+            <h4 style="font-size:0.8rem;font-weight:700;margin-top:1rem;text-transform:uppercase;color:var(--text-muted);">Request Payload</h4>
+            <div class="code-block">{
+  <span class="keyword">"action"</span>: <span class="string">"approved"</span>,
+  <span class="keyword">"remarks"</span>: <span class="string">"No pending dues verified. Clearance granted."</span>
+}</div>
+        </section>
+
+        <!-- GENERATE ADMIT CARD -->
+        <section id="endpoint-gen-card" class="endpoint-card">
+            <div style="display:flex;align-items:center;margin-bottom:0.75rem;"><span class="method-tag method-post">POST</span> <strong style="font-family:var(--font-mono);font-size:1rem;">/examination/api/generate-admit-card/&lt;application_id&gt;</strong></div>
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">Generate HMAC-SHA256 Signed Admit Card PDF</h3>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Enforces strict verification check (all preceding departments must be approved) and generates scannable QR PDF.</p>
+        </section>
+
+        <!-- VERIFY QR CODE -->
+        <section id="endpoint-verify-qr" class="endpoint-card">
+            <div style="display:flex;align-items:center;margin-bottom:0.75rem;"><span class="method-tag method-get">GET</span> <strong style="font-family:var(--font-mono);font-size:1rem;">/verify-admit-card/&lt;card_number&gt;</strong></div>
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;">Public Scannable Admit Card Verification</h3>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">Public verification endpoint used by examination invigilators and security scanners to instantly validate student authenticity.</p>
+        </section>
+
+    </div>
+</body>
+</html>
