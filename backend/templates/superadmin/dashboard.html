@@ -16,6 +16,8 @@
 </div>
 <div class="toast-container" id="toastContainer"></div>
 
+<div class="sidebar-backdrop" id="superSidebarBackdrop" onclick="toggleSuperSidebar(false)"></div>
+
 <aside class="super-sidebar" id="superSidebar">
     <div class="super-sidebar-header">
         <a href="/superadmin/dashboard" class="super-sidebar-brand">
@@ -44,7 +46,7 @@
 <div class="super-main">
     <header class="super-topbar">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <button class="menu-toggle" onclick="document.getElementById('superSidebar').classList.toggle('open')">☰</button>
+            <button class="menu-toggle" onclick="toggleSuperSidebar()">☰</button>
             <span class="page-title" id="pageTitle">Overview</span>
         </div>
         <div class="super-topbar-actions">
@@ -234,6 +236,19 @@
 
 <script>
 let confirmCallback = null, debounceTimer = null;
+function toggleSuperSidebar(show) {
+    const sb = document.getElementById('superSidebar');
+    const bd = document.getElementById('superSidebarBackdrop');
+    if (!sb || !bd) return;
+    const isOpen = show !== undefined ? show : !sb.classList.contains('open');
+    if (isOpen) {
+        sb.classList.add('open');
+        bd.classList.add('active');
+    } else {
+        sb.classList.remove('open');
+        bd.classList.remove('active');
+    }
+}
 function debounce(fn, delay) { return function(...args) { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => fn(...args), delay); }; }
 function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
 function showToast(message, type = 'success') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast toast-' + type; t.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️') + ' ' + message; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000); }
@@ -249,7 +264,7 @@ function switchSection(name) {
     document.querySelectorAll('.super-sidebar-item').forEach(i => i.classList.remove('active'));
     document.querySelector('.super-sidebar-item[data-section="' + name + '"]')?.classList.add('active');
     document.getElementById('pageTitle').textContent = sectionLabels[name] || name;
-    document.getElementById('superSidebar').classList.remove('open');
+    toggleSuperSidebar(false);
     const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, departments: loadDepartments, semesters: loadSemesters, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
     if (loaders[name]) loaders[name]();
 }

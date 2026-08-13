@@ -13,6 +13,7 @@
         <div class="floating-shape floating-shape-4"></div>
     </div>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
     <div id="app" style="display: flex;">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -22,15 +23,15 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="/transport/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/auth/change-password" class="sidebar-nav-item"><span class="nav-icon">🔑</span> Change Password</a>
+                <a href="/transport/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🔑</span> Change Password</a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
         <div class="app-main-wrapper">
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
                     <div class="top-nav-search"><span style="color: var(--text-muted);">🔍</span><input type="text" placeholder="Search applications..."></div>
                 </div>
                 <div class="top-nav-actions">
@@ -38,10 +39,12 @@
                     <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
                 </div>
             </header>
-            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px);">
-                <div style="margin-bottom: 2rem;">
-                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;">Transport Dashboard</h1>
-                    <p style="color: var(--text-muted);">Manage transport fee clearances.</p>
+            <main class="main-content">
+                <div class="dashboard-header">
+                    <div class="dashboard-header-title">
+                        <h1>Transport Dues Clearance Dashboard</h1>
+                        <p>Manage bus pass & transport fee clearances.</p>
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
@@ -85,6 +88,19 @@
     </div>
     <script>
         let currentAppDeptId = null;
+        function toggleSidebar(show) {
+            const sb = document.getElementById('sidebar');
+            const bd = document.getElementById('sidebarBackdrop');
+            if (!sb || !bd) return;
+            const isOpen = show !== undefined ? show : !sb.classList.contains('open');
+            if (isOpen) {
+                sb.classList.add('open');
+                bd.classList.add('active');
+            } else {
+                sb.classList.remove('open');
+                bd.classList.remove('active');
+            }
+        }
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
         
         async function loadTransportDocs(appId) {

@@ -13,20 +13,20 @@
         <div class="floating-shape floating-shape-4"></div>
     </div>
 
-    <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <div>
-                <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.25rem;">🏠 Hostel Dashboard</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Hostel accommodation clearances</p>
+    <div style="padding: 1.5rem; max-width: 1200px; margin: 0 auto;">
+        <div class="dashboard-header">
+            <div class="dashboard-header-title">
+                <h1>🏠 Hostel Clearance Dashboard</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Hostel accommodation clearances & room audit</p>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <a href="/auth/change-password" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem;">🔑 Change Password</a>
+            <div class="dashboard-header-actions">
+                <a href="/auth/change-password" class="btn btn-ghost btn-sm">🔑 Change Password</a>
                 <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-                <a href="/auth/logout" class="btn btn-ghost btn-sm" style="padding: 0.5rem 1rem;">🚪 Logout</a>
+                <a href="/auth/logout" class="btn btn-ghost btn-sm">🚪 Logout</a>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;" id="statsGrid">
             <div class="stat-card"><div class="stat-value" id="hostelPending">0</div><div class="stat-label">Pending</div></div>
             <div class="stat-card"><div class="stat-value" id="hostelInReview">0</div><div class="stat-label">In Review</div></div>
             <div class="stat-card"><div class="stat-value" id="hostelApprovedToday">0</div><div class="stat-label">Approved Today</div></div>
@@ -87,58 +87,64 @@
                                 <span style="font-size:0.8rem;color:var(--text-muted);">${doc.file_name}</span>
                                 <br><span style="font-size:0.75rem;color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
                             </div>
-                            <a href="${doc.file_url || '/api/documents/file/' + doc.id}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View Document</a>
+                            <a href="/${doc.file_path}" target="_blank" class="btn btn-ghost btn-sm" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View</a>
                         </div>
                     `).join('');
                 } else { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }
             } catch(e) { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--crimson);">Error loading docs</span>'; }
         }
 
-        async function loadHostelDashboard() {
+        async function loadHostel() {
+            const token = localStorage.getItem('access_token');
+            if (!token) { window.location.href='/auth/login'; return; }
             try {
-                const token = localStorage.getItem('access_token');
-                if (!token) { window.location.href = '/auth/login'; return; }
                 const res = await fetch('/hostel/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
                 const d = await res.json();
                 if (d.success) {
                     document.getElementById('hostelPending').textContent = d.data.stats.pending || 0;
                     document.getElementById('hostelInReview').textContent = d.data.stats.in_review || 0;
                     document.getElementById('hostelApprovedToday').textContent = d.data.stats.approved_today || 0;
-                    const tbody = document.getElementById('hostelAppsBody');
+                    const tb = document.getElementById('hostelAppsBody');
                     if (d.data.pending_applications && d.data.pending_applications.length > 0) {
-                        tbody.innerHTML = d.data.pending_applications.map(app => `<tr>
-                            <td><strong>${app.application_number||'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
-                            <td>${app.room_number||'-'}</td><td>${app.hostel_block||'-'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openHostelModal('${app.app_dept_id}','${app.student_name}','${app.application_id}')">Process & Review</button></td>
-                        </tr>`).join('');
-                    } else tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending hostel applications</td></tr>';
+                        tb.innerHTML = d.data.pending_applications.map(a => `
+                            <tr>
+                                <td><strong>${a.application_number}</strong></td>
+                                <td>${a.student_name}</td><td>${a.roll_number}</td>
+                                <td>${a.room_number || 'N/A'}</td><td>${a.hostel_block || 'N/A'}</td>
+                                <td><button class="btn btn-primary btn-sm" onclick="openHostelModal(${a.app_dept_id}, '${a.application_number}', ${a.id})">Review Dues</button></td>
+                            </tr>
+                        `).join('');
+                    } else { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending hostel clearances! 🎉</td></tr>'; }
                 }
-            } catch(e){console.error(e);}
+            } catch (e) { console.error(e); }
         }
 
-        function openHostelModal(id, name, appId) { 
-            hostelAppDeptId = id; 
-            currentHostelAppId = appId; 
-            document.getElementById('hostelModalTitle').textContent = 'Process: ' + name; 
-            document.getElementById('hostelModal').style.display = 'flex'; 
+        function openHostelModal(appDeptId, appNum, appId) {
+            hostelAppDeptId = appDeptId;
+            currentHostelAppId = appId;
+            document.getElementById('hostelModalTitle').textContent = `Hostel Clearance — ${appNum}`;
+            document.getElementById('hostelRemarks').value = '';
+            document.getElementById('hostelModal').style.display = 'flex';
             loadHostelDocs(appId);
         }
 
-        async function processHostel(action) {
+        async function processHostel(status) {
             if (!hostelAppDeptId) return;
+            const remarks = document.getElementById('hostelRemarks').value;
+            const token = localStorage.getItem('access_token');
             try {
-                const token = localStorage.getItem('access_token');
-                const remarks = document.getElementById('hostelRemarks').value;
-                const res = await fetch(`/hostel/api/process/${hostelAppDeptId}`, { method:'POST',
-                    headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-                    body: JSON.stringify({action,remarks}) });
+                const res = await fetch('/hostel/api/clearance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ app_dept_id: hostelAppDeptId, status, remarks })
+                });
                 const d = await res.json();
-                alert(d.message);
-                document.getElementById('hostelModal').style.display='none';
-                document.getElementById('hostelRemarks').value='';
-                loadHostelDashboard();
-            } catch(e){alert('Error'); console.error(e);}
+                alert(d.message || 'Action completed');
+                document.getElementById('hostelModal').style.display = 'none';
+                loadHostel();
+            } catch (e) { alert('Error processing clearance'); console.error(e); }
         }
-        loadHostelDashboard();
+        loadHostel();
     </script>
-</body></html>
+</body>
+</html>

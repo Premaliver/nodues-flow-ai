@@ -13,6 +13,7 @@
         <div class="floating-shape floating-shape-4"></div>
     </div>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
     <div id="app" style="display: flex;">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -22,20 +23,20 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="/student/dashboard" class="sidebar-nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/student/apply" class="sidebar-nav-item"><span class="nav-icon">📝</span> New Application</a>
-                <a href="#applicationsCard" class="sidebar-nav-item"><span class="nav-icon">📋</span> My Applications</a>
-                <a href="#admitCardsCard" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
-                <a href="#" class="sidebar-nav-item" onclick="showStudentProfileModal(); return false;"><span class="nav-icon">👤</span> Profile</a>
-                <a href="/auth/change-password" class="sidebar-nav-item"><span class="nav-icon">🔑</span> Change Password</a>
+                <a href="/student/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/student/apply" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📝</span> New Application</a>
+                <a href="#applicationsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📋</span> My Applications</a>
+                <a href="#admitCardsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📄</span> Admit Cards</a>
+                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); showStudentProfileModal(); return false;"><span class="nav-icon">👤</span> Profile</a>
+                <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🔑</span> Change Password</a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
 
         <div class="app-main-wrapper">
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
                     <div class="top-nav-search">
                         <span style="color: var(--text-muted); font-size: 0.85rem;">🔍</span>
                         <input type="text" placeholder="Search applications...">
@@ -47,15 +48,17 @@
                 </div>
             </header>
 
-            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px);">
-                <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-bottom: 0.35rem;" id="welcomeHeading">Dashboard</h1>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;" id="studentInfo">Welcome to your no-dues clearance portal.</p>
+            <main class="main-content">
+                <div class="dashboard-header">
+                    <div class="dashboard-header-title">
+                        <h1 id="welcomeHeading">Dashboard</h1>
+                        <p id="studentInfo">Welcome to your no-dues clearance portal.</p>
                     </div>
-                    <a href="/student/apply" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
-                        <span>+</span> New Application
-                    </a>
+                    <div class="dashboard-header-actions">
+                        <a href="/student/apply" class="btn btn-primary">
+                            <span>+</span> New Application
+                        </a>
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;" id="statsGrid">
@@ -138,6 +141,19 @@
         }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
         document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.reveal').forEach(el => observer.observe(el)));
 
+        function toggleSidebar(show) {
+            const sb = document.getElementById('sidebar');
+            const bd = document.getElementById('sidebarBackdrop');
+            if (!sb || !bd) return;
+            const isOpen = show !== undefined ? show : !sb.classList.contains('open');
+            if (isOpen) {
+                sb.classList.add('open');
+                bd.classList.add('active');
+            } else {
+                sb.classList.remove('open');
+                bd.classList.remove('active');
+            }
+        }
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
 
         async function loadDashboard() {

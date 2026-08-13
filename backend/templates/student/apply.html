@@ -50,6 +50,7 @@
         <div class="floating-shape floating-shape-3"></div>
     </div>
 
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
     <div id="app" style="display: flex;">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -60,19 +61,19 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/student/apply" class="sidebar-nav-item active"><span class="nav-icon">📝</span> New Application</a>
-                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📁</span> My Applications</a>
-                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">📄</span> Admit Cards</a>
-                <a href="/student/dashboard" class="sidebar-nav-item"><span class="nav-icon">👤</span> Profile</a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
+                <a href="/student/apply" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📝</span> New Application</a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📁</span> My Applications</a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📄</span> Admit Cards</a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">👤</span> Profile</a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item"><span class="nav-icon">🚪</span> Logout</a></div>
+            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
         </aside>
 
         <div class="app-main-wrapper">
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
                     <span style="font-weight: 600; font-size: 0.95rem;">New No-Dues Application</span>
                 </div>
                 <div class="top-nav-actions">
@@ -80,7 +81,7 @@
                 </div>
             </header>
 
-            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 2rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
+            <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
                 <div style="max-width: 900px; margin: 0 auto;">
                     <!-- Header -->
                     <div class="reveal visible" style="margin-bottom: 2rem;">
@@ -254,6 +255,19 @@
         // ───────────────────────────────
         // TOGGLE THEME
         // ───────────────────────────────
+        function toggleSidebar(show) {
+            const sb = document.getElementById('sidebar');
+            const bd = document.getElementById('sidebarBackdrop');
+            if (!sb || !bd) return;
+            const isOpen = show !== undefined ? show : !sb.classList.contains('open');
+            if (isOpen) {
+                sb.classList.add('open');
+                bd.classList.add('active');
+            } else {
+                sb.classList.remove('open');
+                bd.classList.remove('active');
+            }
+        }
         function toggleTheme() {
             const html = document.documentElement;
             const curr = html.getAttribute('data-theme');
