@@ -5,143 +5,409 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .dept-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body>
+    <!-- Ambient Floating Aura Shapes -->
     <div class="floating-shapes">
         <div class="floating-shape floating-shape-1"></div>
         <div class="floating-shape floating-shape-4"></div>
     </div>
 
+    <!-- Mobile Sidebar Backdrop -->
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
-    <div id="app" style="display: flex;">
+
+    <div id="app" style="display: flex; min-height: 100vh;">
+        <!-- Left Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem; font-family: 'DM Serif Display', serif;">S</div>
-                    <div><div style="font-weight: 600; font-size: 0.85rem;">Smart NoDues</div><div style="font-size: 0.7rem; color: var(--text-muted);">Student Portal</div></div>
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem; font-family: 'DM Serif Display', serif; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);">S</div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em;">Smart NoDues</div>
+                        <div style="font-size: 0.7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Student Portal</div>
+                    </div>
                 </div>
             </div>
+
             <nav class="sidebar-nav">
-                <a href="/student/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/student/apply" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📝</span> New Application</a>
-                <a href="#applicationsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📋</span> My Applications</a>
-                <a href="#admitCardsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📄</span> Admit Cards</a>
-                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); showStudentProfileModal(); return false;"><span class="nav-icon">👤</span> Profile</a>
-                <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🔑</span> Change Password</a>
+                <a href="/student/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">📊</span> Dashboard
+                </a>
+                <a href="/student/apply" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">📝</span> New Application
+                </a>
+                <a href="#activeClearanceSection" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">⚡</span> Clearance Status
+                </a>
+                <a href="#applicationsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">📋</span> Applications
+                </a>
+                <a href="#admitCardsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">🎓</span> Admit Cards
+                </a>
+                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); showStudentProfileModal(); return false;">
+                    <span class="nav-icon">👤</span> My Profile
+                </a>
+                <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">🔑</span> Security & Password
+                </a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
+
+            <div class="sidebar-footer">
+                <a href="/auth/logout" class="sidebar-nav-item" style="color: var(--crimson);" onclick="toggleSidebar(false)">
+                    <span class="nav-icon">🚪</span> Logout
+                </a>
+            </div>
         </aside>
 
+        <!-- Main Wrapper -->
         <div class="app-main-wrapper">
+            <!-- Top Navbar -->
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
                     <div class="top-nav-search">
-                        <span style="color: var(--text-muted); font-size: 0.85rem;">🔍</span>
-                        <input type="text" placeholder="Search applications...">
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">🔍</span>
+                        <input type="text" id="globalSearchInput" placeholder="Search applications, departments..." onkeyup="filterApplicationsTable()">
                     </div>
                 </div>
+
                 <div class="top-nav-actions">
-                    <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
-                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                    <button class="btn btn-ghost btn-icon" style="position: relative;" onclick="openNotificationsModal()">
+                        🔔
+                        <div class="notification-badge" data-count="0" id="notifBadge">0</div>
+                    </button>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                    
+                    <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; padding: 0.25rem 0.6rem; border-radius: var(--radius-full); background: var(--bg-secondary);" onclick="showStudentProfileModal()">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;" id="userAvatarInitials">ST</div>
+                        <span style="font-size: 0.85rem; font-weight: 600; display: none; @media(min-width:640px){display:inline;}" id="navUserName">Student</span>
+                    </div>
                 </div>
             </header>
 
+            <!-- Dashboard Main Content -->
             <main class="main-content">
-                <div class="dashboard-header">
-                    <div class="dashboard-header-title">
-                        <h1 id="welcomeHeading">Dashboard</h1>
-                        <div class="student-review-card" id="studentInfoCard" style="margin-top: 0.75rem; margin-bottom: 0;">
-                            <div class="student-info-item"><span class="info-label">Welcome</span><span class="info-val">Loading clearance portal...</span></div>
+                
+                <!-- Hero Glass Banner Header -->
+                <div class="hero-glass-banner reveal">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; position: relative; z-index: 2;">
+                        <div style="max-width: 600px;">
+                            <div class="hero-pill-badge">
+                                <span>✨</span> <span id="timeGreeting">Welcome back</span> • Academic Clearance Hub
+                            </div>
+                            <h1 style="font-family: 'DM Serif Display', serif; font-size: 2.2rem; font-weight: 400; line-height: 1.15; margin-bottom: 0.5rem;" id="studentWelcomeName">
+                                Hello, Student 👋
+                            </h1>
+                            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.25rem;" id="studentMetaSubtext">
+                                Track your multi-department no-dues clearance status, submit receipts, and download instant exam admit cards.
+                            </p>
+
+                            <!-- Profile Meta Tags Pill Row -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;" id="studentMetaPills">
+                                <span class="badge badge-info" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" id="rollNoPill">🆔 Roll: Loading...</span>
+                                <span class="badge badge-primary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" id="semPill">🎓 Sem: Loading...</span>
+                                <span class="badge badge-success" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" id="coursePill">📚 Course: Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Circular Progress Gauge Widget -->
+                        <div style="display: flex; align-items: center; gap: 1.25rem; background: var(--bg-card); padding: 1.25rem; border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-md);">
+                            <div style="position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="80" height="80" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="var(--border-light)" stroke-width="8" fill="transparent" />
+                                    <circle id="gaugeProgressCircle" class="progress-ring-circle" cx="50" cy="50" r="40" stroke="url(#gradientGauge)" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" fill="transparent" />
+                                    <defs>
+                                        <linearGradient id="gradientGauge" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#6366f1" />
+                                            <stop offset="100%" stop-color="#10b981" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <span style="position: absolute; font-weight: 800; font-size: 1.1rem; color: var(--text-primary);" id="gaugePercentage">0%</span>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Clearance Readiness</div>
+                                <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0.2rem 0;" id="gaugeStatusText">In Progress</div>
+                                <div style="font-size: 0.75rem; color: var(--emerald); font-weight: 600;" id="gaugeSubtext">Check active steps below</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="dashboard-header-actions">
-                        <a href="/student/apply" class="btn btn-primary">
-                            <span>+</span> New Application
-                        </a>
+                </div>
+
+                <!-- Quick Actions Shortcuts -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <a href="/student/apply" class="quick-action-pill">
+                        <div class="dept-icon-box" style="background: rgba(99, 102, 241, 0.15); color: #6366f1;">✨</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">New Application</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Apply for clearance</div>
+                        </div>
+                    </a>
+                    <div class="quick-action-pill" onclick="document.getElementById('admitCardsCard').scrollIntoView({behavior: 'smooth'})">
+                        <div class="dept-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📄</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">Admit Cards</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Download exam pass</div>
+                        </div>
+                    </div>
+                    <div class="quick-action-pill" onclick="showStudentProfileModal()">
+                        <div class="dept-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">👤</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">My Profile</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Academic details</div>
+                        </div>
+                    </div>
+                    <div class="quick-action-pill" onclick="showUploadModal()">
+                        <div class="dept-icon-box" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">📤</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">Upload Receipt</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Submit fee proof</div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;" id="statsGrid">
-                    <div class="stat-card reveal">
-                        <div class="stat-icon" style="background: var(--gradient-primary); color: white;">📋</div>
-                        <div class="stat-value" id="totalApps">0</div>
-                        <div class="stat-label">Total Applications</div>
+                <!-- KPI Metric Cards Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;" id="statsGrid">
+                    <div class="stat-card-v2 reveal">
+                        <div class="stat-glow-bar" style="background: var(--gradient-primary);"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Total Applications</div>
+                            <span style="font-size: 1.3rem;">📋</span>
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="totalApps">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Overall clearance history</div>
                     </div>
-                    <div class="stat-card reveal" style="transition-delay: 0.1s;">
-                        <div class="stat-icon" style="background: var(--gradient-success); color: white;">✅</div>
-                        <div class="stat-value" id="approvedApps">0</div>
-                        <div class="stat-label">Approved</div>
+
+                    <div class="stat-card-v2 reveal" style="transition-delay: 0.1s;">
+                        <div class="stat-glow-bar" style="background: var(--gradient-success);"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--emerald); text-transform: uppercase;">Approved</div>
+                            <span style="font-size: 1.3rem;">✅</span>
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="approvedApps">0</div>
+                        <div style="font-size: 0.75rem; color: var(--emerald); margin-top: 0.25rem;">Fully cleared applications</div>
                     </div>
-                    <div class="stat-card reveal" style="transition-delay: 0.2s;">
-                        <div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div>
-                        <div class="stat-value" id="pendingApps">0</div>
-                        <div class="stat-label">Pending</div>
+
+                    <div class="stat-card-v2 reveal" style="transition-delay: 0.2s;">
+                        <div class="stat-glow-bar" style="background: var(--gradient-warning);"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--amber); text-transform: uppercase;">Pending</div>
+                            <span style="font-size: 1.3rem;">⏳</span>
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="pendingApps">0</div>
+                        <div style="font-size: 0.75rem; color: var(--amber); margin-top: 0.25rem;">Under department review</div>
                     </div>
-                    <div class="stat-card reveal" style="transition-delay: 0.3s;">
-                        <div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div>
-                        <div class="stat-value" id="rejectedApps">0</div>
-                        <div class="stat-label">Rejected</div>
-                    </div>
-                    <div class="stat-card reveal" style="transition-delay: 0.4s;">
-                        <div class="stat-icon" style="background: var(--gradient-info); color: white;">🔔</div>
-                        <div class="stat-value" id="unreadNotif">0</div>
-                        <div class="stat-label">Unread Notifications</div>
+
+                    <div class="stat-card-v2 reveal" style="transition-delay: 0.3s;">
+                        <div class="stat-glow-bar" style="background: var(--gradient-danger);"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--crimson); text-transform: uppercase;">Rejected</div>
+                            <span style="font-size: 1.3rem;">❌</span>
+                        </div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="rejectedApps">0</div>
+                        <div style="font-size: 0.75rem; color: var(--crimson); margin-top: 0.25rem;">Requires student action</div>
                     </div>
                 </div>
 
-                <div class="card reveal" style="transition-delay: 0.3s;" id="applicationsCard">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">My Applications</h3></div>
-                    <div class="card-body">
+                <!-- Active Clearance Workflow & Department Cards Section -->
+                <div class="card reveal" style="margin-bottom: 2rem;" id="activeClearanceSection">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                        <div>
+                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
+                                ⚡ Active Application Clearance Roadmap
+                            </h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="activeAppHeaderSub">
+                                Real-time clearance pipeline tracking across all institutional departments.
+                            </p>
+                        </div>
+                        <span id="activeAppBadgeSlot"><span class="badge badge-secondary">No Active App</span></span>
+                    </div>
+
+                    <div class="card-body" id="activeClearanceBody">
+                        <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+                            <p style="font-weight: 600;">No active clearance process found.</p>
+                            <p style="font-size: 0.85rem; max-width: 400px; margin: 0.5rem auto 1.25rem auto;">Start a new clearance application to trigger department verification for this semester.</p>
+                            <a href="/student/apply" class="btn btn-primary">+ Create Clearance Application</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Applications Table -->
+                <div class="card reveal" style="margin-bottom: 2rem;" id="applicationsCard">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                        <div>
+                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;">📋 Application History</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);">View all past and current no-dues requests</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+                            <a href="/student/apply" class="btn btn-primary btn-sm">+ New Request</a>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
                         <div class="table-container">
-                            <table>
-                                <thead><tr><th>Application #</th><th>Semester</th><th>Status</th><th>Progress</th><th>Submitted</th><th>Action</th></tr></thead>
-                                <tbody id="applicationsTableBody"><tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
+                            <table id="applicationsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Application #</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th>Clearance Progress</th>
+                                        <th>Submitted On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                            <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
+                                            Loading application records...
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <div class="card reveal" style="margin-top: 1rem; transition-delay: 0.4s;" id="activeAppCard">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Active Application Progress</h3></div>
-                    <div class="card-body" id="activeAppBody">
-                        <p style="color: var(--text-muted);">No active application.</p>
+                <!-- Issued Admit Cards & Digital Passes Showcase -->
+                <div class="card reveal" id="admitCardsCard">
+                    <div class="card-header" style="border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
+                            🎓 Official Examination Admit Cards & Digital Clearance Pass
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            Once all department approvals reach 100%, your exam admit card will automatically unlock below for instant download.
+                        </p>
+                    </div>
+                    <div class="card-body" id="admitCardsBody">
+                        <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
+                            Loading admit cards...
+                        </div>
                     </div>
                 </div>
 
-                <div class="card reveal" style="margin-top: 1rem; transition-delay: 0.5s;" id="admitCardsCard">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">📄 Issued Admit Cards</h3></div>
-                    <div class="card-body" id="admitCardsBody">
-                        <p style="color: var(--text-muted);">Loading admit cards...</p>
-                    </div>
-                </div>
             </main>
         </div>
     </div>
 
-    <!-- Student Profile Modal -->
-    <div class="modal-backdrop" id="profileModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
-        <div class="card" style="width:100%; max-width:500px; padding:2rem; background:var(--bg-card);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem;">👤 Student Profile</h3>
-                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profileModal').style.display='none'">✕</button>
+    <!-- Student Full Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-box" style="max-width: 580px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
+                    👤 Student Official Profile
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">✕</button>
             </div>
-            <div id="profileModalBody" style="display:grid; gap:0.75rem;">Loading profile...</div>
-            <div style="margin-top:1.5rem; text-align:right;">
-                <button class="btn btn-secondary" onclick="document.getElementById('profileModal').style.display='none'">Close</button>
+            
+            <div id="profileModalBody">
+                <div class="spinner" style="margin: 2rem auto;"></div>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: right; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- Upload Receipt Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-box" style="max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem;">📤 Upload Payment / No-Dues Receipt</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeUploadModal()">✕</button>
+            </div>
+
+            <form id="receiptUploadForm" onsubmit="handleReceiptUpload(event)">
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <select class="form-select" id="uploadDocType" required>
+                        <option value="fee_receipt">Accounts / Tuition Fee Receipt</option>
+                        <option value="hostel_dues">Hostel Dues Clearance Receipt</option>
+                        <option value="mess_bill">Mess Bill Clearance Receipt</option>
+                        <option value="transport_pass">Transport Fee Receipt</option>
+                        <option value="scholarship_doc">Scholarship Document</option>
+                        <option value="other">Other Supporting Document</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Select File (PDF, PNG, JPG)</label>
+                    <input type="file" class="form-input" id="uploadFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">Upload Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications Drawer Modal -->
+    <div class="modal-overlay" id="notifModal">
+        <div class="modal-box" style="max-width: 480px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                    🔔 Notifications Feed
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeNotificationsModal()">✕</button>
+            </div>
+
+            <div id="notifListContainer" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 350px; overflow-y: auto;">
+                <p style="color: var(--text-muted); text-align: center; padding: 1.5rem;">No unread notifications.</p>
+            </div>
+
+            <div style="margin-top: 1.25rem; text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="closeNotificationsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Client JavaScript Logic -->
     <script>
+        let currentActiveAppId = null;
+
+        // Dynamic Time Greeting Generator
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Good Morning 🌅';
+            if (hour < 17) return 'Good Afternoon ☀️';
+            return 'Good Evening 🌙';
+        }
+        document.getElementById('timeGreeting').textContent = getGreeting();
+
         // Scroll Reveal Observer
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) entry.target.classList.add('visible');
             });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-        document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.reveal').forEach(el => observer.observe(el)));
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        });
 
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
@@ -156,119 +422,424 @@
                 bd.classList.remove('active');
             }
         }
-        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
 
+        function toggleTheme() {
+            const html = document.documentElement;
+            const curr = html.getAttribute('data-theme');
+            const next = curr === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+
+        // Apply saved theme on load
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Fetch Main Dashboard API Data
         async function loadDashboard() {
             try {
                 const token = localStorage.getItem('access_token');
                 if (!token) { window.location.href = '/auth/login'; return; }
-                const res = await fetch('/student/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
-                if (data.success) {
-                    const d = data.data;
-                    if (d.student) { 
-                        const infoCard = document.getElementById('studentInfoCard');
-                        if (infoCard) {
-                            infoCard.innerHTML = `
-                                <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${d.student.student_name || 'Student'}</span></div>
-                                <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${d.student.roll_number || 'N/A'}</span></div>
-                                <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">🎓 Sem ${d.student.current_semester || 'N/A'}</span></div>
-                                ${d.student.father_name ? `<div class="student-info-item"><span class="info-label">Father's Name</span><span class="info-val">👨 ${d.student.father_name}</span></div>` : ''}
-                                ${d.student.guardian_phone ? `<div class="student-info-item"><span class="info-label">Phone</span><span class="info-val">📞 ${d.student.guardian_phone}</span></div>` : ''}
-                            `;
-                        }
+
+                const res = await fetch('/student/api/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const responseData = await res.json();
+
+                if (responseData.success) {
+                    const d = responseData.data;
+
+                    // Update Student Profile Banner
+                    if (d.student) {
+                        const name = d.student.student_name || 'Student';
+                        document.getElementById('studentWelcomeName').textContent = `Hello, ${name} 👋`;
+                        document.getElementById('navUserName').textContent = name;
+                        
+                        // Set Avatar Initials
+                        const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                        document.getElementById('userAvatarInitials').textContent = initials || 'ST';
+
+                        document.getElementById('rollNoPill').textContent = `🆔 Roll: ${d.student.roll_number || 'N/A'}`;
+                        document.getElementById('semPill').textContent = `🎓 Sem: ${d.student.current_semester || 'N/A'}`;
+                        document.getElementById('coursePill').textContent = `📚 ${d.student.course_name || d.student.branch || 'Degree Course'}`;
                     }
+
+                    // Update KPI Counters
                     document.getElementById('totalApps').textContent = d.application_count || 0;
                     document.getElementById('approvedApps').textContent = d.approved_count || 0;
                     document.getElementById('pendingApps').textContent = d.pending_count || 0;
                     document.getElementById('rejectedApps').textContent = d.rejected_count || 0;
-                    document.getElementById('unreadNotif').textContent = d.unread_notification_count || 0;
-                    document.getElementById('notifBadge').setAttribute('data-count', d.unread_notification_count || 0);
+
+                    // Notification Badge & List
+                    const notifCount = d.unread_notification_count || 0;
+                    const notifBadge = document.getElementById('notifBadge');
+                    notifBadge.setAttribute('data-count', notifCount);
+                    notifBadge.textContent = notifCount;
+
+                    if (d.notifications && d.notifications.length > 0) {
+                        document.getElementById('notifListContainer').innerHTML = d.notifications.map(n => `
+                            <div style="padding: 0.85rem; border-radius: var(--radius-lg); background: var(--bg-secondary); border-left: 3px solid var(--accent);">
+                                <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary);">${n.title || 'Notification'}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">${n.message || ''}</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">${n.created_at ? new Date(n.created_at).toLocaleString() : ''}</div>
+                            </div>
+                        `).join('');
+                    }
+
+                    // Render Applications History Table
                     const tbody = document.getElementById('applicationsTableBody');
                     if (d.applications && d.applications.length > 0) {
-                        tbody.innerHTML = d.applications.map(app => `
+                        tbody.innerHTML = d.applications.map(app => {
+                            const pct = app.progress_percentage || 0;
+                            let statusBadgeClass = 'warning';
+                            if (app.status === 'approved') statusBadgeClass = 'success';
+                            else if (app.status === 'rejected') statusBadgeClass = 'danger';
+                            else if (app.status === 'draft') statusBadgeClass = 'pending';
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <strong style="font-family: monospace; font-size: 0.9rem;">${app.application_number || 'APP-#'}</strong>
+                                    </td>
+                                    <td>
+                                        <span style="font-size: 0.8rem; text-transform: capitalize;" class="badge badge-secondary">${(app.category || 'Standard').replace(/_/g, ' ')}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-${statusBadgeClass}">${app.status}</span>
+                                    </td>
+                                    <td style="min-width: 160px;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div class="progress-bar" style="flex: 1; height: 8px;">
+                                                <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+                                            </div>
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">${pct}%</span>
+                                        </div>
+                                    </td>
+                                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                                        ${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not Submitted'}
+                                    </td>
+                                    <td>
+                                        ${app.status === 'draft' ? `
+                                            <button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit</button>
+                                        ` : `
+                                            <button class="btn btn-ghost btn-sm" onclick="viewAppDetails('${app.id}')">🔍 View</button>
+                                        `}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = `
                             <tr>
-                                <td><strong>${app.application_number || 'N/A'}</strong></td>
-                                <td>Sem ${app.total_steps || '?'}</td>
-                                <td><span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : app.status === 'draft' ? 'pending' : 'warning'}">${app.status}</span></td>
-                                <td><div class="progress-bar" style="width: 100px;"><div class="progress-bar-fill" style="width: ${app.progress_percentage || 0}%"></div></div> <span style="font-size: 0.8rem; color: var(--text-muted);">${app.progress_percentage || 0}%</span></td>
-                                <td style="font-size: 0.8rem; color: var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted'}</td>
-                                <td>${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">Submit</button>` : `<span class="badge badge-info">${app.status}</span>`}</td>
+                                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                    <div>📋</div>
+                                    <p style="margin-top: 0.5rem;">No clearance applications submitted yet.</p>
+                                    <a href="/student/apply" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">+ Create First Application</a>
+                                </td>
                             </tr>
-                        `).join('');
-                    } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No applications yet. Click "New Application" to start.</td></tr>'; }
-                    if (d.active_application) {
-                        const app = d.active_application;
-                        let approvalsHtml = '';
-                        if (d.department_approvals) {
-                            approvalsHtml = d.department_approvals.map(ad => `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-light);">
-                                    <span style="font-size: 0.85rem;">${ad.department_name || 'Department'}</span>
-                                    <span class="badge badge-${ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending'}">${ad.status}</span>
-                                </div>
-                            `).join('');
-                        }
-                        document.getElementById('activeAppBody').innerHTML = `
-                            <p><strong>Application #${app.application_number}</strong> — ${app.status}</p>
-                            <div class="progress-bar" style="margin: 1rem 0; height: 8px;"><div class="progress-bar-fill" style="width: ${app.progress_percentage || 0}%"></div></div>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">${app.progress_percentage || 0}% Complete</p>
-                            <div style="margin-top: 1rem;">${approvalsHtml}</div>
-                            ${app.status === 'draft' ? `<button class="btn btn-primary" style="margin-top: 1rem;" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
                         `;
                     }
 
-                    // Render Admit Cards
+                    // Render Active Application Clearance Roadmap Visualizer
+                    if (d.active_application) {
+                        const app = d.active_application;
+                        currentActiveAppId = app.id;
+                        const pct = app.progress_percentage || 0;
+
+                        // Update Circular Gauge
+                        updateGauge(pct);
+
+                        // Render Active Application Header Badge
+                        document.getElementById('activeAppBadgeSlot').innerHTML = `
+                            <span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}">
+                                ${app.application_number} — ${app.status.toUpperCase()}
+                            </span>
+                        `;
+
+                        // Build Department Stepper Timeline & Grid Cards
+                        let deptApprovals = d.department_approvals || [];
+                        let stepperHtml = `
+                            <div class="clearance-stepper">
+                                <div class="clearance-stepper-progress" style="width: ${pct}%;"></div>
+                                ${deptApprovals.map((ad, idx) => {
+                                    const isComp = ad.status === 'approved';
+                                    const isAct = ad.status === 'pending' || ad.status === 'submitted';
+                                    const icon = isComp ? '✓' : isAct ? (idx + 1) : '⏳';
+                                    const deptTitle = ad.department_name || `Dept #${idx+1}`;
+
+                                    return `
+                                        <div class="stepper-item ${isComp ? 'completed' : isAct ? 'active' : ''}">
+                                            <div class="stepper-node">${icon}</div>
+                                            <div class="stepper-label">${deptTitle}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `;
+
+                        let cardsHtml = `
+                            <div class="dept-card-grid">
+                                ${deptApprovals.map(ad => {
+                                    const st = ad.status;
+                                    let borderClass = 'pending';
+                                    let badgeColor = 'warning';
+                                    let iconEmoji = '⏳';
+                                    if (st === 'approved') { borderClass = 'approved'; badgeColor = 'success'; iconEmoji = '✅'; }
+                                    else if (st === 'rejected') { borderClass = 'rejected'; badgeColor = 'danger'; iconEmoji = '❌'; }
+
+                                    return `
+                                        <div class="dept-clearance-card status-${borderClass}">
+                                            <div>
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">${ad.department_name || 'Department'}</div>
+                                                    <span class="badge badge-${badgeColor}">${iconEmoji} ${st}</span>
+                                                </div>
+                                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                                                    Step Order: #${ad.display_order || 1}
+                                                </div>
+                                                ${ad.remarks ? `
+                                                    <div style="font-size: 0.8rem; background: var(--bg-secondary); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border-left: 2px solid var(--accent); margin-bottom: 0.75rem; color: var(--text-secondary);">
+                                                        💬 "${ad.remarks}"
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 0.5rem; margin-top: 0.5rem;">
+                                                <span>${ad.processed_at ? new Date(ad.processed_at).toLocaleDateString() : 'Awaiting Review'}</span>
+                                                ${st === 'rejected' ? `<button class="btn btn-outline btn-sm" onclick="showUploadModal()">Upload Fix</button>` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `;
+
+                        document.getElementById('activeClearanceBody').innerHTML = `
+                            <div style="margin-bottom: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <div style="font-weight: 700; font-size: 1rem;">Overall Clearance Progress (${pct}%)</div>
+                                    ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
+                                </div>
+                                <div class="progress-bar" style="height: 10px;">
+                                    <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+                                </div>
+                            </div>
+                            ${stepperHtml}
+                            <h4 style="font-weight: 700; font-size: 0.95rem; margin: 1.5rem 0 1rem 0; color: var(--text-secondary);">Department Verification Cards</h4>
+                            ${cardsHtml}
+                        `;
+                    } else {
+                        updateGauge(0);
+                    }
+
+                    // Render Issued Admit Cards Showcase
                     const admitBody = document.getElementById('admitCardsBody');
                     if (d.admit_cards && d.admit_cards.length > 0) {
                         admitBody.innerHTML = d.admit_cards.map(ac => `
-                            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem; border:1px solid var(--border-light); border-radius:var(--radius-lg); margin-bottom:0.75rem;">
-                                <div>
-                                    <strong>Admit Card #${ac.card_number}</strong>
-                                    <br><span style="font-size:0.8rem; color:var(--text-muted);">Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
+                            <div class="admit-card-pass" style="margin-bottom: 1rem;">
+                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; position: relative; z-index: 2;">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Official Hall Ticket / Exam Admit Card</div>
+                                        <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin: 0.2rem 0; color: #ffffff;">
+                                            Admit Card #${ac.card_number}
+                                        </h4>
+                                        <div style="font-size: 0.85rem; color: #cbd5e1; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                                            <span>📅 Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span>📥 Downloads: ${ac.download_count || 0} times</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);">
+                                            📥 Download Official PDF
+                                        </a>
+                                    </div>
                                 </div>
-                                <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-primary btn-sm">
-                                    📥 Download PDF
-                                </a>
                             </div>
                         `).join('');
                     } else {
-                        admitBody.innerHTML = '<p style="color: var(--text-muted);">No admit cards issued yet. Complete all department clearances first.</p>';
+                        admitBody.innerHTML = `
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px dashed var(--border-medium);">
+                                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📄</div>
+                                <p style="font-weight: 600;">No admit cards issued yet.</p>
+                                <p style="font-size: 0.85rem; max-width: 420px; margin: 0.25rem auto 0 auto;">
+                                    Complete all department clearance steps (100% progress) to unlock your examination hall ticket.
+                                </p>
+                            </div>
+                        `;
                     }
                 }
-            } catch (e) { console.error('Dashboard load error:', e); }
+            } catch (e) {
+                console.error('Error loading student dashboard:', e);
+            }
         }
 
+        // Circular Gauge Update Animation
+        function updateGauge(percentage) {
+            const circle = document.getElementById('gaugeProgressCircle');
+            const text = document.getElementById('gaugePercentage');
+            const statusText = document.getElementById('gaugeStatusText');
+            if (!circle || !text) return;
+
+            const radius = 40;
+            const circumference = 2 * Math.PI * radius; // ~251.2
+            const offset = circumference - (percentage / 100) * circumference;
+
+            circle.style.strokeDasharray = `${circumference}`;
+            circle.style.strokeDashoffset = offset;
+            text.textContent = `${percentage}%`;
+
+            if (percentage === 100) {
+                statusText.textContent = 'Cleared! 🎉';
+                statusText.style.color = 'var(--emerald)';
+            } else if (percentage > 0) {
+                statusText.textContent = 'In Progress ⏳';
+                statusText.style.color = 'var(--accent)';
+            } else {
+                statusText.textContent = 'Not Started';
+                statusText.style.color = 'var(--text-muted)';
+            }
+        }
+
+        // Profile Modal Handler
         async function showStudentProfileModal() {
+            const modal = document.getElementById('profileModal');
+            const body = document.getElementById('profileModalBody');
+            modal.classList.add('open');
+            body.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+
             try {
                 const token = localStorage.getItem('access_token');
-                const res = await fetch('/student/api/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await fetch('/student/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const d = await res.json();
+
                 if (d.success && d.data) {
                     const s = d.data;
-                    document.getElementById('profileModalBody').innerHTML = `
-                        <div><strong>Full Name:</strong> ${s.student_name || s.full_name || 'N/A'}</div>
-                        <div><strong>Roll Number:</strong> ${s.roll_number || 'N/A'}</div>
-                        <div><strong>Enrollment No:</strong> ${s.enrollment_number || 'N/A'}</div>
-                        <div><strong>Course:</strong> ${s.course_name || 'N/A'}</div>
-                        <div><strong>Branch:</strong> ${s.branch || 'N/A'}</div>
-                        <div><strong>Current Semester:</strong> ${s.current_semester || 'N/A'}</div>
-                        <div><strong>Father's Name:</strong> ${s.father_name || 'N/A'}</div>
-                        <div><strong>Email:</strong> ${s.email || 'N/A'}</div>
+                    body.innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Full Name</label>
+                                <div style="font-weight: 700; font-size: 0.95rem;">${s.student_name || s.full_name || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Roll Number</label>
+                                <div style="font-weight: 700; font-size: 0.95rem; font-family: monospace;">${s.roll_number || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Enrollment Number</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">${s.enrollment_number || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Course / Degree</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">${s.course_name || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Branch / Department</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">${s.branch || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Current Semester</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">Semester ${s.current_semester || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Father's Name</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">${s.father_name || 'N/A'}</div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Guardian Phone</label>
+                                <div style="font-weight: 600; font-size: 0.9rem;">${s.guardian_phone || 'N/A'}</div>
+                            </div>
+                        </div>
                     `;
-                    document.getElementById('profileModal').style.display = 'flex';
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                body.innerHTML = '<p style="color: var(--crimson);">Failed to load profile details.</p>';
+            }
         }
 
-        async function submitApplication(appId) {
+        function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
+
+        // Upload Modal Handler
+        function showUploadModal() { document.getElementById('uploadModal').classList.add('open'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.remove('open'); }
+
+        async function handleReceiptUpload(e) {
+            e.preventDefault();
+            if (!currentActiveAppId) {
+                alert('Please create or select an active application first before uploading receipts.');
+                return;
+            }
+
+            const fileInput = document.getElementById('uploadFileInput');
+            const docType = document.getElementById('uploadDocType').value;
+            if (!fileInput.files[0]) return;
+
+            const btn = document.getElementById('uploadSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('document_type', docType);
+
             try {
                 const token = localStorage.getItem('access_token');
-                const res = await fetch(`/student/api/submit/${appId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await fetch(`/student/api/upload-document/${currentActiveAppId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
                 const data = await res.json();
-                alert(data.message || 'Application submitted!');
-                loadDashboard();
-            } catch (e) { alert('Error submitting'); console.error(e); }
+                if (data.success) {
+                    alert('Document uploaded successfully!');
+                    closeUploadModal();
+                    loadDashboard();
+                } else {
+                    alert(data.message || 'Upload failed');
+                }
+            } catch (err) {
+                alert('Error uploading file');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Upload Document';
+            }
         }
+
+        // Notification Modal Handlers
+        function openNotificationsModal() { document.getElementById('notifModal').classList.add('open'); }
+        function closeNotificationsModal() { document.getElementById('notifModal').classList.remove('open'); }
+
+        // Application Submission Action
+        async function submitApplication(appId) {
+            if (!confirm('Are you sure you want to submit this application for clearance?')) return;
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/student/api/submit/${appId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                alert(data.message || 'Application submitted successfully!');
+                loadDashboard();
+            } catch (e) {
+                alert('Error submitting application');
+                console.error(e);
+            }
+        }
+
+        // Global Search Table Filter
+        function filterApplicationsTable() {
+            const query = document.getElementById('globalSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#applicationsTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Initial Load
         loadDashboard();
     </script>
 </body>
