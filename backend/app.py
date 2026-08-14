@@ -58,6 +58,13 @@ def create_app(config_name: str = "default") -> Flask:
         "JWT_SECRET_KEY", app.config["JWT_SECRET_KEY"]
     )
 
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+
+
     # Initialize extensions
     db.init_app(app)
     bcrypt.init_app(app)

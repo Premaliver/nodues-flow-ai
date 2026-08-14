@@ -7,6 +7,14 @@ import os
 from datetime import timedelta
 
 
+def _get_db_uri(default_uri: str) -> str:
+    """Helper to fetch DATABASE_URL from env and fix legacy postgres:// prefix for SQLAlchemy."""
+    uri = os.environ.get("DATABASE_URL", default_uri)
+    if uri and uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    return uri
+
+
 class BaseConfig:
     """Base configuration shared across all environments."""
 
@@ -15,10 +23,7 @@ class BaseConfig:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/nodues_ai",
-    )
+    SQLALCHEMY_DATABASE_URI = _get_db_uri("postgresql://postgres:postgres@localhost:5432/nodues_ai")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_size": 10,
@@ -66,15 +71,20 @@ class DevelopmentConfig(BaseConfig):
     SESSION_COOKIE_SECURE = False
     WTF_CSRF_ENABLED = False
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "nodues_ai_dev.db"
+    # If DATABASE_URL is set in environment (e.g. Render / Cloud deployment), use it!
+    # Otherwise fall back to local SQLite for local dev machine.
+    SQLALCHEMY_DATABASE_URI = _get_db_uri(
+        "sqlite:///" + os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "nodues_ai_dev.db"
+        )
     )
-    SQLALCHEMY_ENGINE_OPTIONS = {}
+    SQLALCHEMY_ENGINE_OPTIONS = BaseConfig.SQLALCHEMY_ENGINE_OPTIONS if os.environ.get("DATABASE_URL") else {}
 
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
+    SQLALCHEMY_DATABASE_URI = _get_db_uri("postgresql://postgres:postgres@localhost:5432/nodues_ai")
 
 
 class TestingConfig(BaseConfig):
@@ -91,4 +101,5 @@ config_by_name = {
     "testing": TestingConfig,
     "default": DevelopmentConfig,
 }
+
 
