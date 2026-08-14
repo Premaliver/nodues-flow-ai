@@ -91,6 +91,7 @@
                 <h3 style="font-family:'DM Serif Display',serif;font-size:1.25rem;font-weight:400;">Examination Document Audit</h3>
                 <button class="btn btn-ghost btn-sm" onclick="document.getElementById('examDocsModal').style.display='none'">✕</button>
             </div>
+            <div class="student-review-card" id="examStudentReviewCard" style="display:none;"></div>
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
                 <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Student Uploaded Clearance Documents</h4>
                 <div id="examDocsContainer" style="display: grid; gap: 0.5rem;">Loading documents...</div>
@@ -120,9 +121,19 @@
 <script>
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
         
-        async function openExamDocsModal(appId) {
+        async function openExamDocsModal(appId, name, rollNo, course, sem) {
             const container = document.getElementById('examDocsContainer');
             container.innerHTML = 'Loading documents...';
+            const src = document.getElementById('examStudentReviewCard');
+            if (src && name) {
+                src.style.display = 'grid';
+                src.innerHTML = `
+                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${name}</span></div>
+                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Course</span><span class="info-val">🎓 ${course || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">📅 Sem ${sem || 'N/A'}</span></div>
+                `;
+            } else if (src) { src.style.display = 'none'; }
             document.getElementById('examDocsModal').style.display = 'flex';
             try {
                 const t = localStorage.getItem('access_token');
@@ -193,7 +204,7 @@
                             <td>${app.course_name || 'N/A'}</td><td>Sem ${app.semester || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.completed_at ? new Date(app.completed_at).toLocaleDateString() : 'N/A'}</td>
                             <td>
-                                <button class="btn btn-outline btn-sm" onclick="openExamDocsModal('${app.application_id}')" style="margin-right:0.3rem;">👁️ Docs</button>
+                                <button class="btn btn-outline btn-sm" onclick="openExamDocsModal('${app.application_id}', '${app.student_name}', '${app.roll_number}', '${app.course_name||''}', '${app.semester||''}')" style="margin-right:0.3rem;">👁️ Docs</button>
                                 <button class="btn btn-primary btn-sm" onclick="generateAdmitCard('${app.application_id}')">🎫 Generate Card</button>
                             </td>
                         </tr>`).join('');

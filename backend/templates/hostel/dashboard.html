@@ -52,6 +52,8 @@
                 <span style="font-size:0.75rem;background:rgba(16,185,129,0.15);color:var(--emerald);padding:4px 10px;border-radius:20px;font-weight:600;">HOSTEL AUDIT ✓</span>
             </div>
             
+            <div class="student-review-card" id="hostelStudentReviewCard" style="display:none;"></div>
+
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
                 <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Uploaded Clearance Documents & Verification</h4>
                 <div id="hostelDocsList" style="display: grid; gap: 0.5rem;">Loading documents...</div>
@@ -111,7 +113,7 @@
                                 <td><strong>${a.application_number}</strong></td>
                                 <td>${a.student_name}</td><td>${a.roll_number}</td>
                                 <td>${a.room_number || 'N/A'}</td><td>${a.hostel_block || 'N/A'}</td>
-                                <td><button class="btn btn-primary btn-sm" onclick="openHostelModal(${a.app_dept_id}, '${a.application_number}', ${a.id})">Review Dues</button></td>
+                                <td><button class="btn btn-primary btn-sm" onclick="openHostelModal(${a.app_dept_id}, '${a.application_number}', ${a.id}, '${a.student_name}', '${a.roll_number}', '${a.room_number||'N/A'}', '${a.hostel_block||'N/A'}')">Review Dues</button></td>
                             </tr>
                         `).join('');
                     } else { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending hostel clearances! 🎉</td></tr>'; }
@@ -119,10 +121,20 @@
             } catch (e) { console.error(e); }
         }
 
-        function openHostelModal(appDeptId, appNum, appId) {
+        function openHostelModal(appDeptId, appNum, appId, studentName, rollNo, roomNo, block) {
             hostelAppDeptId = appDeptId;
             currentHostelAppId = appId;
             document.getElementById('hostelModalTitle').textContent = `Hostel Clearance — ${appNum}`;
+            const src = document.getElementById('hostelStudentReviewCard');
+            if (src) {
+                src.style.display = 'grid';
+                src.innerHTML = `
+                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${studentName || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Room Number</span><span class="info-val">🚪 ${roomNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Hostel Block</span><span class="info-val">🏢 ${block || 'N/A'}</span></div>
+                `;
+            }
             document.getElementById('hostelRemarks').value = '';
             document.getElementById('hostelModal').style.display = 'flex';
             loadHostelDocs(appId);

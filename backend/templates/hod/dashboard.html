@@ -71,7 +71,8 @@
                 <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;" id="modalTitle">HOD Academic Clearance</h3>
                 <span style="font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--emerald); padding: 4px 10px; border-radius: 20px; font-weight: 600;">ACADEMIC AUDIT ✓</span>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;" id="modalAppInfo"></p>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.85rem;" id="modalAppInfo"></p>
+            <div class="student-review-card" id="studentReviewCard" style="display:none;"></div>
             
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
                 <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Uploaded Clearance Documents & Verification</h4>
@@ -142,17 +143,27 @@
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.course_name || 'N/A'}</td><td>${app.branch || 'N/A'}</td><td>Sem ${app.semester || 'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process & Review</button></td>
+                            <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${app.course_name||''}', '${app.branch||''}', '${app.semester||''}')">Process & Review</button></td>
                         </tr>`).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No pending clearances</td></tr>'; }
                 }
             } catch (e) { console.error(e); }
         }
 
-        function openModal(id, name, appNo, appId) { 
+        function openModal(id, name, appNo, appId, rollNo, course, branch, sem) { 
             currentAppDeptId = id; 
             document.getElementById('modalTitle').textContent = `Process: ${name}`; 
             document.getElementById('modalAppInfo').textContent = `Application #: ${appNo}`; 
+            const src = document.getElementById('studentReviewCard');
+            if (src) {
+                src.style.display = 'grid';
+                src.innerHTML = `
+                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${name}</span></div>
+                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Course / Branch</span><span class="info-val">🎓 ${course || 'N/A'} ${branch ? '('+branch+')' : ''}</span></div>
+                    <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">📅 Sem ${sem || 'N/A'}</span></div>
+                `;
+            }
             document.getElementById('actionModal').style.display = 'flex'; 
             loadHodDocs(appId);
         }

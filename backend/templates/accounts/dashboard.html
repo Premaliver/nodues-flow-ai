@@ -92,7 +92,8 @@
                 <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;" id="modalTitle">Clearance Verification</h3>
                 <span style="font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--emerald); padding: 4px 10px; border-radius: 20px; font-weight: 600;">SECURITY AUDIT LEVEL 3 ✓</span>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;" id="modalAppInfo"></p>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.85rem;" id="modalAppInfo"></p>
+            <div class="student-review-card" id="studentReviewCard" style="display:none;"></div>
             
             <!-- Document Inspection Box -->
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
@@ -151,7 +152,7 @@
                                 <td>${app.student_name}</td><td>${app.roll_number}</td><td>${app.course_name}</td>
                                 <td>Sem ${app.semester}</td>
                                 <td style="font-size: 0.8rem; color: var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                                <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}')">Process & Review</button></td>
+                                <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${app.course_name}', '${app.semester}')">Process & Review</button></td>
                             </tr>
                         `).join('');
                     } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No pending applications</td></tr>'; }
@@ -159,10 +160,20 @@
             } catch (e) { console.error('Dashboard load error:', e); }
         }
 
-        async function openModal(appDeptId, studentName, appNumber, appId) { 
+        async function openModal(appDeptId, studentName, appNumber, appId, rollNo, course, sem) { 
             currentAppDeptId = appDeptId; 
             document.getElementById('modalTitle').textContent = `Clearance: ${studentName}`; 
             document.getElementById('modalAppInfo').textContent = `Application #: ${appNumber}`; 
+            const src = document.getElementById('studentReviewCard');
+            if (src) {
+                src.style.display = 'grid';
+                src.innerHTML = `
+                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${studentName}</span></div>
+                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Course</span><span class="info-val">🎓 ${course || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">📅 Sem ${sem || 'N/A'}</span></div>
+                `;
+            }
             document.getElementById('actionModal').style.display = 'flex'; 
 
             // Load application documents

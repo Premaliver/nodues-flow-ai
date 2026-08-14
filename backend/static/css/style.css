@@ -1153,9 +1153,9 @@ tr:hover td {
     }
 
     .dashboard-header {
-        flex-direction: column !alignment: stretch;
-        align-items: stretch;
-        gap: 0.75rem;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
     }
 
     .dashboard-header-actions {
@@ -1166,6 +1166,39 @@ tr:hover td {
     .dashboard-header-actions .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    /* Student Review Board Card */
+    .student-review-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.25rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.6rem 1rem;
+    }
+
+    .student-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .student-info-item .info-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+    }
+
+    .student-info-item .info-val {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        word-break: break-word;
     }
 
     /* Stats Grid for Phone view */
@@ -1221,36 +1254,86 @@ tr:hover td {
         min-width: 100% !important;
     }
 
-    /* Mobile Table horizontal scroll wrapper */
+    /* Mobile Table horizontal scroll wrapper & mobile cell padding */
     .table-container {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         display: block !important;
         width: 100% !important;
         border-radius: var(--radius-md) !important;
+        border: 1px solid var(--border-light) !important;
     }
 
     .table-container table,
     .glass-table {
-        min-width: 580px !important;
+        min-width: 540px !important;
     }
 
-    /* Mobile Modals */
+    .table-container th,
+    .table-container td,
+    .glass-table th,
+    .glass-table td {
+        padding: 0.65rem 0.75rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    /* Mobile Modals & Review Boards */
     .modal-overlay,
     div[id$="Modal"] {
-        padding: 0.75rem !important;
+        padding: 0.5rem !important;
     }
 
     .modal-box,
     div[id$="Modal"] > .card,
     .modal-backdrop > .card {
-        width: 95vw !important;
-        max-width: 95vw !important;
-        max-height: 88vh !important;
-        padding: 1.25rem !important;
+        width: 96vw !important;
+        max-width: 96vw !important;
+        max-height: 90vh !important;
+        padding: 1.15rem !important;
         margin: 0 auto !important;
         border-radius: var(--radius-xl) !important;
         overflow-y: auto !important;
+    }
+
+    /* Stack Modal Header items cleanly on mobile */
+    div[id$="Modal"] > .card > div:first-child,
+    .modal-box > div:first-child {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Modal Action Buttons: Full-width stacked buttons on phone screen */
+    div[id$="Modal"] div[style*="justify-content: flex-end"],
+    div[id$="Modal"] div[style*="justify-content:flex-end"] {
+        flex-direction: column-reverse !important;
+        gap: 0.6rem !important;
+        width: 100% !important;
+    }
+
+    div[id$="Modal"] div[style*="justify-content: flex-end"] .btn,
+    div[id$="Modal"] div[style*="justify-content:flex-end"] .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        margin-left: 0 !important;
+    }
+
+    /* Stack document items inside clearance review modal on phone view */
+    div[id$="DocsList"] > div,
+    div[id$="DocsContainer"] > div,
+    #modalDocsList > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.4rem !important;
+        padding: 0.6rem 0 !important;
+    }
+
+    div[id$="DocsList"] > div > a,
+    div[id$="DocsContainer"] > div > a,
+    #modalDocsList > div > a {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
     }
     
     h1 { font-size: 1.45rem !important; }
@@ -1261,6 +1344,12 @@ tr:hover td {
 @media (max-width: 480px) {
     .main-content,
     .super-content {
+        padding: 0.75rem !important;
+    }
+
+    .student-review-card {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
         padding: 0.75rem !important;
     }
 

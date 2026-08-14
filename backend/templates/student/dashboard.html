@@ -52,7 +52,9 @@
                 <div class="dashboard-header">
                     <div class="dashboard-header-title">
                         <h1 id="welcomeHeading">Dashboard</h1>
-                        <p id="studentInfo">Welcome to your no-dues clearance portal.</p>
+                        <div class="student-review-card" id="studentInfoCard" style="margin-top: 0.75rem; margin-bottom: 0;">
+                            <div class="student-info-item"><span class="info-label">Welcome</span><span class="info-val">Loading clearance portal...</span></div>
+                        </div>
                     </div>
                     <div class="dashboard-header-actions">
                         <a href="/student/apply" class="btn btn-primary">
@@ -165,10 +167,16 @@
                 if (data.success) {
                     const d = data.data;
                     if (d.student) { 
-                        let infoText = `${d.student.student_name || 'Student'} — ${d.student.roll_number || ''} (Sem ${d.student.current_semester || 'N/A'})`;
-                        if (d.student.father_name) infoText += ` | Father: ${d.student.father_name}`;
-                        if (d.student.guardian_phone) infoText += ` | Phone: ${d.student.guardian_phone}`;
-                        document.getElementById('studentInfo').textContent = infoText;
+                        const infoCard = document.getElementById('studentInfoCard');
+                        if (infoCard) {
+                            infoCard.innerHTML = `
+                                <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${d.student.student_name || 'Student'}</span></div>
+                                <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${d.student.roll_number || 'N/A'}</span></div>
+                                <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">🎓 Sem ${d.student.current_semester || 'N/A'}</span></div>
+                                ${d.student.father_name ? `<div class="student-info-item"><span class="info-label">Father's Name</span><span class="info-val">👨 ${d.student.father_name}</span></div>` : ''}
+                                ${d.student.guardian_phone ? `<div class="student-info-item"><span class="info-label">Phone</span><span class="info-val">📞 ${d.student.guardian_phone}</span></div>` : ''}
+                            `;
+                        }
                     }
                     document.getElementById('totalApps').textContent = d.application_count || 0;
                     document.getElementById('approvedApps').textContent = d.approved_count || 0;
