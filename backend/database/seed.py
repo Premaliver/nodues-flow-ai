@@ -3,13 +3,29 @@ Seed data script for Smart NoDues AI.
 Provides initial institutional structure: departments, staff accounts, workflows, sample student & semester.
 """
 
+import os
+import sys
 from datetime import datetime, timezone
-from models import db
-from models.user import User
-from models.student import Student
-from models.department import Department, DepartmentStaff
-from models.semester import Semester
-from models.workflow import WorkflowConfig
+
+# Ensure backend directory is in sys.path for standalone or subfolder execution
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+try:
+    from models import db
+    from models.user import User
+    from models.student import Student
+    from models.department import Department, DepartmentStaff
+    from models.semester import Semester
+    from models.workflow import WorkflowConfig
+except ImportError:
+    from backend.models import db
+    from backend.models.user import User
+    from backend.models.student import Student
+    from backend.models.department import Department, DepartmentStaff
+    from backend.models.semester import Semester
+    from backend.models.workflow import WorkflowConfig
 
 
 def seed_data() -> None:
