@@ -20,15 +20,6 @@
         .checkbox-card:hover { border-color: var(--accent); background: rgba(99,102,241,0.03); }
         .checkbox-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.08); box-shadow: 0 2px 8px rgba(99,102,241,0.12); }
         .checkbox-card input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
-        .signature-pad { 
-            border: 2px dashed var(--border-medium); border-radius: var(--radius-lg);
-            width: 100%; height: 190px; cursor: crosshair;
-            background: #ffffff;
-            position: relative; overflow: hidden;
-            touch-action: none;
-        }
-        .signature-pad.error-border { border-color: var(--crimson); background: rgba(239,68,68,0.02); }
-        .signature-pad canvas { width: 100%; height: 100%; display: block; }
         .file-upload-zone {
             border: 2px dashed var(--border-medium); border-radius: var(--radius-lg);
             padding: 1.75rem 1rem; text-align: center; cursor: pointer;
@@ -151,20 +142,20 @@
                             </div>
                         </div>
 
-                        <!-- STEP 3: Mandatory Document Upload & Signature -->
+                        <!-- STEP 3: Document Upload (Optional) -->
                         <div class="card" id="step3" style="padding: 2rem; display: none;">
                             <div class="form-section">
                                 <h3 class="form-section-title">
-                                    📎 Step 3: Required Fee Receipts & Digital Signature
+                                    📎 Step 3: Fee Receipts & Documents (Optional)
                                 </h3>
                                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
-                                    Both fee receipts and your digital signature are <strong>STRICTLY MANDATORY</strong>. All files will be verified with SHA-256 integrity checksums.
+                                    Upload your examination fee receipt or next semester fee receipt if available. You can also proceed directly to submit without uploading now.
                                 </p>
                                 
                                 <!-- Exam Fee Receipt -->
                                 <div class="form-group" style="margin-bottom: 1.5rem;">
                                     <label class="form-label" style="font-weight: 600;">
-                                        📄 Examination Fee Receipt <span class="req-tag">* COMPULSORY</span>
+                                        📄 Examination Fee Receipt <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Optional)</span>
                                     </label>
                                     <div class="file-upload-zone" id="examFeeZone" onclick="document.getElementById('examFeeInput').click()">
                                         <div id="examFeePlaceholder">
@@ -180,7 +171,7 @@
                                 <!-- Next Sem Fee Receipt -->
                                 <div class="form-group" style="margin-bottom: 1.5rem;">
                                     <label class="form-label" style="font-weight: 600;">
-                                        📄 Next Semester Fee Receipt <span class="req-tag">* COMPULSORY</span>
+                                        📄 Next Semester Fee Receipt <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Optional)</span>
                                     </label>
                                     <div class="file-upload-zone" id="nextSemFeeZone" onclick="document.getElementById('nextSemFeeInput').click()">
                                         <div id="nextSemFeePlaceholder">
@@ -191,21 +182,6 @@
                                         <div id="nextSemFeeFile" class="uploaded-file" style="display: none;"></div>
                                         <input type="file" id="nextSemFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'nextSemFee')">
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Digital Signature -->
-                            <div class="form-section">
-                                <label class="form-label" style="font-weight: 600;">
-                                    ✍️ Student Digital Signature <span class="req-tag">* COMPULSORY</span>
-                                </label>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Please draw your signature below using mouse, pen, or touch:</p>
-                                <div class="signature-pad" id="signaturePad">
-                                    <canvas id="sigCanvas"></canvas>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem;">
-                                    <button type="button" class="btn btn-ghost btn-sm" onclick="clearSignature()">🗑️ Clear Signature</button>
-                                    <span id="sigStatus" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">⚠️ Not signed yet (Required)</span>
                                 </div>
                             </div>
 
@@ -248,10 +224,6 @@
         // ───────────────────────────────
         let studentData = PRELOADED_STUDENT || null;
         let uploadedFiles = { examFee: null, nextSemFee: null };
-        let signatureData = null;
-        let sigCanvas = null;
-        let sigCtx = null;
-        let isDrawing = false;
         let currentStep = 1;
 
         // ───────────────────────────────
@@ -299,21 +271,7 @@
             }
 
             if (step === 3) {
-                if (!uploadedFiles.examFee) {
-                    showError('⚠️ Examination Fee Receipt is COMPULSORY! Please click and upload your receipt.');
-                    document.getElementById('examFeeZone').classList.add('error-border');
-                    return false;
-                }
-                if (!uploadedFiles.nextSemFee) {
-                    showError('⚠️ Next Semester Fee Receipt is COMPULSORY! Please click and upload your receipt.');
-                    document.getElementById('nextSemFeeZone').classList.add('error-border');
-                    return false;
-                }
-                if (!signatureData || signatureData.length < 50) {
-                    showError('⚠️ Digital Signature is COMPULSORY! Please draw your signature in the signature pad.');
-                    document.getElementById('signaturePad').classList.add('error-border');
-                    return false;
-                }
+                // Documents are optional - allow proceeding to review without blocking
                 return true;
             }
 
@@ -344,9 +302,6 @@
             });
 
             currentStep = targetStep;
-            if (targetStep === 3) {
-                setTimeout(initSignaturePad, 200);
-            }
             if (targetStep === 4) {
                 renderReview();
             }
@@ -572,83 +527,6 @@
         }
 
         // ───────────────────────────────
-        // SIGNATURE PAD
-        // ───────────────────────────────
-        function initSignaturePad() {
-            const canvas = document.getElementById('sigCanvas');
-            if (!canvas) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            sigCanvas = canvas;
-            sigCtx = canvas.getContext('2d');
-            sigCtx.strokeStyle = '#1e1b4b';
-            sigCtx.lineWidth = 2.5;
-            sigCtx.lineCap = 'round';
-            sigCtx.lineJoin = 'round';
-
-            // Desktop events
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-            canvas.addEventListener('mouseleave', stopDraw);
-
-            // Touch events for mobile
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const r = canvas.getBoundingClientRect();
-                isDrawing = true;
-                sigCtx.beginPath();
-                sigCtx.moveTo(touch.clientX - r.left, touch.clientY - r.top);
-            }, { passive: false });
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!isDrawing) return;
-                const touch = e.touches[0];
-                const r = canvas.getBoundingClientRect();
-                sigCtx.lineTo(touch.clientX - r.left, touch.clientY - r.top);
-                sigCtx.stroke();
-            }, { passive: false });
-
-            canvas.addEventListener('touchend', stopDraw);
-        }
-
-        function startDraw(e) {
-            isDrawing = true;
-            sigCtx.beginPath();
-            sigCtx.moveTo(e.offsetX, e.offsetY);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            sigCtx.lineTo(e.offsetX, e.offsetY);
-            sigCtx.stroke();
-        }
-
-        function stopDraw() {
-            if (isDrawing) {
-                isDrawing = false;
-                signatureData = sigCanvas.toDataURL('image/png');
-                document.getElementById('signaturePad').classList.remove('error-border');
-                const statusSpan = document.getElementById('sigStatus');
-                statusSpan.textContent = '✓ Signature captured (Valid)';
-                statusSpan.style.color = 'var(--emerald)';
-                hideError();
-            }
-        }
-
-        function clearSignature() {
-            if (!sigCanvas || !sigCtx) return;
-            sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-            signatureData = null;
-            const statusSpan = document.getElementById('sigStatus');
-            statusSpan.textContent = '⚠️ Not signed yet (Required)';
-            statusSpan.style.color = 'var(--text-muted)';
-        }
-
-        // ───────────────────────────────
         // REVIEW & SUBMIT
         // ───────────────────────────────
         function renderReview() {
@@ -668,6 +546,12 @@
                 : 'None (Standard Clearance: Academic HOD, Accounts, Examination)';
 
             const studentName = studentData.first_name ? (studentData.first_name + ' ' + (studentData.last_name || '')) : (studentData.student_name || '');
+            const examFeeText = uploadedFiles.examFee 
+                ? `<span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.examFee.name})</span>` 
+                : `<span style="color: var(--text-muted);">⚪ Not Uploaded (Optional)</span>`;
+            const nextSemFeeText = uploadedFiles.nextSemFee 
+                ? `<span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.nextSemFee.name})</span>` 
+                : `<span style="color: var(--text-muted);">⚪ Not Uploaded (Optional)</span>`;
 
             document.getElementById('reviewContent').innerHTML = `
                 <div style="display: grid; gap: 0.85rem; font-size: 0.9rem;">
@@ -690,14 +574,10 @@
                         <strong>Selected Facilities:</strong> <span style="font-weight: 600;">${formattedDepts}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
-                        <strong>Exam Fee Receipt:</strong> <span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.examFee?.name || 'File attached'})</span>
+                        <strong>Exam Fee Receipt:</strong> ${examFeeText}
                     </div>
-                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
-                        <strong>Next Sem Fee Receipt:</strong> <span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.nextSemFee?.name || 'File attached'})</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items: center; padding-top: 0.4rem;">
-                        <strong>Digital Signature:</strong> 
-                        <span style="color: var(--emerald); font-weight: 700;">✅ Signed & Verified</span>
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>Next Sem Fee Receipt:</strong> ${nextSemFeeText}
                     </div>
                 </div>
             `;
@@ -709,23 +589,6 @@
         document.getElementById('applicationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             hideError();
-
-            // Final Comprehensive Strict Validation
-            if (!uploadedFiles.examFee) {
-                showError('⚠️ Examination Fee Receipt is mandatory! Please upload receipt in Step 3.');
-                goToStep(3);
-                return;
-            }
-            if (!uploadedFiles.nextSemFee) {
-                showError('⚠️ Next Semester Fee Receipt is mandatory! Please upload receipt in Step 3.');
-                goToStep(3);
-                return;
-            }
-            if (!signatureData || signatureData.length < 50) {
-                showError('⚠️ Digital Signature is mandatory! Please draw your signature in Step 3.');
-                goToStep(3);
-                return;
-            }
 
             const selectedDepts = [];
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
@@ -741,7 +604,7 @@
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '⏳ Submitting Application & Encrypting Documents...';
+            btn.innerHTML = '⏳ Submitting Application...';
 
             try {
                 const token = localStorage.getItem('access_token');
@@ -752,7 +615,6 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         selected_departments: selectedDepts,
-                        signature: signatureData,
                     })
                 });
                 const appData = await appRes.json();
@@ -765,7 +627,7 @@
 
                 const appId = appData.data.application.id;
 
-                // 2. Upload mandatory documents
+                // 2. Upload documents if provided (optional)
                 const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt' };
                 for (const [key, docType] of Object.entries(docTypes)) {
                     if (uploadedFiles[key]) {
@@ -804,7 +666,7 @@
                 suc.innerHTML = '🎉 Application submitted successfully! All clearance approvals initiated. Redirecting to your dashboard...';
                 suc.style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => window.location.href = '/student/dashboard', 2200);
+                setTimeout(() => window.location.href = '/student/dashboard', 2000);
 
             } catch(e) {
                 console.error('Submission error:', e);

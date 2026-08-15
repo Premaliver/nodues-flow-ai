@@ -32,16 +32,37 @@ def _get_exam_dept():
     return Department.query.filter_by(role="examination").first()
 
 
-def _is_preceding_clearance_complete(application_id, exam_dept_id) -> bool:
+def _is_preceding_clearance_complete(application_id, exam_dept_id=None) -> bool:
     """Verify that all department clearances prior to Examination are approved."""
     approvals = ApplicationDepartment.query.filter_by(application_id=application_id).all()
-    exam_app = next((a for a in approvals if a.department_id == exam_dept_id), None)
-    if not exam_app:
-        # If no explicit examination step, check that all required steps are approved
-        return all(a.status == "approved" for a in approvals if a.is_required)
+    if not approvals:
+        return False
 
-    preceding = [a for a in approvals if a.is_required and a.display_order < exam_app.display_order]
-    return all(a.status == "approved" for a in preceding)
+    # Find the examination step
+    exam_app = None
+    if exam_dept_id:
+        exam_app = next((a for a in approvals if str(a.department_id) == str(exam_dept_id)), None)
+    if not exam_app:
+        for a in approvals:
+            dept = Department.query.get(a.department_id)
+            if dept and dept.role == "examination":
+                exam_app = a
+                break
+
+    if exam_app:
+        preceding = [
+            a for a in approvals
+            if a.is_required and str(a.id) != str(exam_app.id) and a.display_order < exam_app.display_order
+        ]
+        return all(a.status == "approved" for a in preceding)
+
+    # If no explicit examination step, check that all non-examination required steps are approved
+    non_exam = []
+    for a in approvals:
+        dept = Department.query.get(a.department_id)
+        if (not dept or dept.role != "examination") and a.is_required:
+            non_exam.append(a)
+    return all(a.status == "approved" for a in non_exam) if non_exam else True
 
 
 @exam_bp.route("/dashboard")
@@ -56,16 +77,15 @@ def dashboard():
 def dashboard_data():
     """Get examination dashboard data — applications ready for admit cards."""
     exam_dept = _get_exam_dept()
+    exam_depts = Department.query.filter_by(role="examination").all()
+    exam_dept_ids = [d.id for d in exam_depts] if exam_depts else ([exam_dept.id] if exam_dept else [])
 
-    # Applications pending examination clearance (ready to generate admit card)
-    ready_apps = (
-        db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
-        .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
+    # Fetch all submitted or in_review applications
+    apps_query = (
+        db.session.query(NoDuesApplication, Student, User)
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
         .filter(
-            ApplicationDepartment.department_id == exam_dept.id,
-            ApplicationDepartment.status == "pending",
             NoDuesApplication.status.in_(["submitted", "in_review"]),
             NoDuesApplication.deleted_at.is_(None),
         )
@@ -74,11 +94,32 @@ def dashboard_data():
     )
 
     ready_list = []
-    for app_dept, app, student, user in ready_apps:
-        # Strictly verify that all preceding departments (Hostel/Mess/Transport/Scholarship/HOD/Accounts) have APPROVED
-        if _is_preceding_clearance_complete(app.id, exam_dept.id):
+    for app, student, user in apps_query:
+        # If admit card already issued, skip from pending list
+        if app.admit_card:
+            continue
+
+        # Find examination approval row
+        exam_ad = next(
+            (ad for ad in app.department_approvals if str(ad.department_id) in [str(i) for i in exam_dept_ids]),
+            None
+        )
+        if not exam_ad:
+            for ad in app.department_approvals:
+                dept = Department.query.get(ad.department_id)
+                if dept and dept.role == "examination":
+                    exam_ad = ad
+                    break
+
+        # If exam approval already approved, skip
+        if exam_ad and exam_ad.status == "approved":
+            continue
+
+        # Check that all prior departments (HOD, Accounts, Hostel, etc.) are approved
+        target_exam_dept_id = exam_ad.department_id if exam_ad else (exam_dept.id if exam_dept else None)
+        if _is_preceding_clearance_complete(app.id, target_exam_dept_id):
             ready_list.append({
-                "app_dept_id": str(app_dept.id),
+                "app_dept_id": str(exam_ad.id) if exam_ad else str(app.id),
                 "application_id": str(app.id),
                 "application_number": app.application_number,
                 "student_name": user.full_name,
@@ -88,6 +129,7 @@ def dashboard_data():
                 "semester": student.current_semester,
                 "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
                 "completed_at": app.completed_at.isoformat() if app.completed_at else None,
+                "category": student.category,
             })
 
     approved = NoDuesApplication.query.filter_by(
@@ -117,6 +159,9 @@ def dashboard_data():
 def list_applications():
     """List approved applications for the examination department."""
     exam_dept = _get_exam_dept()
+    exam_depts = Department.query.filter_by(role="examination").all()
+    exam_dept_ids = [d.id for d in exam_depts] if exam_depts else ([exam_dept.id] if exam_dept else [])
+
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     status_filter = request.args.get("status", "approved")
@@ -127,7 +172,7 @@ def list_applications():
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
         .filter(
-            ApplicationDepartment.department_id == exam_dept.id,
+            ApplicationDepartment.department_id.in_(exam_dept_ids),
         )
         .order_by(ApplicationDepartment.created_at.desc())
     )
@@ -423,10 +468,18 @@ def generate_admit_card(application_id):
         }), 400
 
     # Find the examination approval row for this application
-    exam_approval = ApplicationDepartment.query.filter_by(
-        application_id=application.id,
-        department_id=exam_dept.id if exam_dept else None,
-    ).first()
+    exam_approval = None
+    if exam_dept:
+        exam_approval = next(
+            (ad for ad in application.department_approvals if str(ad.department_id) == str(exam_dept.id)),
+            None
+        )
+    if not exam_approval:
+        for ad in application.department_approvals:
+            dept = Department.query.get(ad.department_id)
+            if dept and dept.role == "examination":
+                exam_approval = ad
+                break
 
     # If there is no explicit examination step, allow generation if the application
     # has no pending required departments.
