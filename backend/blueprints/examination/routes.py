@@ -33,36 +33,35 @@ def _get_exam_dept():
 
 
 def _is_preceding_clearance_complete(application_id, exam_dept_id=None) -> bool:
-    """Verify that all department clearances prior to Examination are approved."""
+    """
+    Verify that all department clearances prior to Examination are approved.
+    All required non-examination department approvals (e.g. HOD, Accounts, Hostel, Mess, etc.)
+    must have status == 'approved'.
+    """
     approvals = ApplicationDepartment.query.filter_by(application_id=application_id).all()
     if not approvals:
         return False
 
-    # Find the examination step
-    exam_app = None
-    if exam_dept_id:
-        exam_app = next((a for a in approvals if str(a.department_id) == str(exam_dept_id)), None)
-    if not exam_app:
-        for a in approvals:
-            dept = Department.query.get(a.department_id)
-            if dept and dept.role == "examination":
-                exam_app = a
-                break
-
-    if exam_app:
-        preceding = [
-            a for a in approvals
-            if a.is_required and str(a.id) != str(exam_app.id) and a.display_order < exam_app.display_order
-        ]
-        return all(a.status == "approved" for a in preceding)
-
-    # If no explicit examination step, check that all non-examination required steps are approved
-    non_exam = []
+    # Identify all required approvals that are NOT the examination department
+    non_exam_required = []
     for a in approvals:
+        if not a.is_required:
+            continue
+        # Check if this step is examination by ID
+        if exam_dept_id and str(a.department_id) == str(exam_dept_id):
+            continue
+        # Check if this step is examination by department role
         dept = Department.query.get(a.department_id)
-        if (not dept or dept.role != "examination") and a.is_required:
-            non_exam.append(a)
-    return all(a.status == "approved" for a in non_exam) if non_exam else True
+        if dept and dept.role == "examination":
+            continue
+        non_exam_required.append(a)
+
+    # If there are preceding required steps, all must be approved
+    if non_exam_required:
+        return all(a.status == "approved" for a in non_exam_required)
+
+    # If no preceding steps exist, clearance is ready
+    return True
 
 
 @exam_bp.route("/dashboard")
@@ -78,15 +77,15 @@ def dashboard_data():
     """Get examination dashboard data — applications ready for admit cards."""
     exam_dept = _get_exam_dept()
     exam_depts = Department.query.filter_by(role="examination").all()
-    exam_dept_ids = [d.id for d in exam_depts] if exam_depts else ([exam_dept.id] if exam_dept else [])
+    exam_dept_ids = [str(d.id) for d in exam_depts] if exam_depts else ([str(exam_dept.id)] if exam_dept else [])
 
-    # Fetch all submitted or in_review applications
+    # Fetch all applications that are not rejected or soft-deleted
     apps_query = (
         db.session.query(NoDuesApplication, Student, User)
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
         .filter(
-            NoDuesApplication.status.in_(["submitted", "in_review"]),
+            NoDuesApplication.status.notin_(["rejected"]),
             NoDuesApplication.deleted_at.is_(None),
         )
         .order_by(NoDuesApplication.created_at.desc())
@@ -99,9 +98,13 @@ def dashboard_data():
         if app.admit_card:
             continue
 
+        existing_card = AdmitCard.query.filter_by(application_id=app.id).first()
+        if existing_card:
+            continue
+
         # Find examination approval row
         exam_ad = next(
-            (ad for ad in app.department_approvals if str(ad.department_id) in [str(i) for i in exam_dept_ids]),
+            (ad for ad in app.department_approvals if str(ad.department_id) in exam_dept_ids),
             None
         )
         if not exam_ad:
@@ -127,7 +130,7 @@ def dashboard_data():
                 "course_name": student.course_name,
                 "branch": student.branch,
                 "semester": student.current_semester,
-                "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
+                "submitted_at": app.submitted_at.isoformat() if app.submitted_at else (app.created_at.isoformat() if app.created_at else None),
                 "completed_at": app.completed_at.isoformat() if app.completed_at else None,
                 "category": student.category,
             })

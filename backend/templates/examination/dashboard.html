@@ -202,7 +202,7 @@
                         tbody.innerHTML = data.data.pending_applications.map(app => `<tr>
                             <td><strong>${app.application_number || 'N/A'}</strong></td><td>${app.student_name}</td><td>${app.roll_number}</td>
                             <td>${app.course_name || 'N/A'}</td><td>Sem ${app.semester || 'N/A'}</td>
-                            <td style="font-size:0.8rem;color:var(--text-muted);">${app.completed_at ? new Date(app.completed_at).toLocaleDateString() : 'N/A'}</td>
+                            <td style="font-size:0.8rem;color:var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : (app.completed_at ? new Date(app.completed_at).toLocaleDateString() : 'Recent')}</td>
                             <td>
                                 <button class="btn btn-outline btn-sm" onclick="openExamDocsModal('${app.application_id}', '${app.student_name}', '${app.roll_number}', '${app.course_name||''}', '${app.semester||''}')" style="margin-right:0.3rem;">👁️ Docs</button>
                                 <button class="btn btn-primary btn-sm" onclick="generateAdmitCard('${app.application_id}')">🎫 Generate Card</button>
