@@ -420,6 +420,15 @@ def submit_application(app_id):
     if not application.can_submit() and application.status != "draft":
         return jsonify({"success": False, "message": "Application cannot be submitted"}), 400
 
+    # Strictly enforce mandatory fee receipts check before submission
+    uploaded_docs = Document.query.filter_by(application_id=application.id).all()
+    uploaded_types = {d.document_type for d in uploaded_docs}
+    if "exam_fee_receipt" not in uploaded_types or "next_sem_fee_receipt" not in uploaded_types:
+        return jsonify({
+            "success": False,
+            "message": "Both Examination Fee Receipt and Next Semester Fee Receipt are strictly compulsory! Please upload both receipts to proceed with submission.",
+        }), 400
+
     application.status = "submitted"
     application.submitted_at = datetime.now(timezone.utc)
 

@@ -142,20 +142,20 @@
                             </div>
                         </div>
 
-                        <!-- STEP 3: Document Upload (Optional) -->
+                        <!-- STEP 3: Document Upload (Strictly Compulsory) -->
                         <div class="card" id="step3" style="padding: 2rem; display: none;">
                             <div class="form-section">
                                 <h3 class="form-section-title">
-                                    📎 Step 3: Fee Receipts & Documents (Optional)
+                                    📎 Step 3: Required Fee Receipts <span class="req-tag">* COMPULSORY</span>
                                 </h3>
                                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
-                                    Upload your examination fee receipt or next semester fee receipt if available. You can also proceed directly to submit without uploading now.
+                                    Both Examination Fee Receipt and Next Semester Fee Receipt are <strong>STRICTLY MANDATORY</strong>. You cannot proceed to review or submit without uploading both receipts.
                                 </p>
                                 
                                 <!-- Exam Fee Receipt -->
                                 <div class="form-group" style="margin-bottom: 1.5rem;">
                                     <label class="form-label" style="font-weight: 600;">
-                                        📄 Examination Fee Receipt <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Optional)</span>
+                                        📄 Examination Fee Receipt <span class="req-tag">* COMPULSORY</span>
                                     </label>
                                     <div class="file-upload-zone" id="examFeeZone" onclick="document.getElementById('examFeeInput').click()">
                                         <div id="examFeePlaceholder">
@@ -171,7 +171,7 @@
                                 <!-- Next Sem Fee Receipt -->
                                 <div class="form-group" style="margin-bottom: 1.5rem;">
                                     <label class="form-label" style="font-weight: 600;">
-                                        📄 Next Semester Fee Receipt <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Optional)</span>
+                                        📄 Next Semester Fee Receipt <span class="req-tag">* COMPULSORY</span>
                                     </label>
                                     <div class="file-upload-zone" id="nextSemFeeZone" onclick="document.getElementById('nextSemFeeInput').click()">
                                         <div id="nextSemFeePlaceholder">
@@ -271,8 +271,24 @@
             }
 
             if (step === 3) {
-                // Documents are optional - allow proceeding to review without blocking
-                return true;
+                let valid = true;
+                if (!uploadedFiles.examFee) {
+                    showError('⚠️ Examination Fee Receipt is COMPULSORY! Please upload your exam fee receipt.');
+                    const zone = document.getElementById('examFeeZone');
+                    if (zone) zone.classList.add('error-border');
+                    valid = false;
+                }
+                if (!uploadedFiles.nextSemFee) {
+                    if (valid) {
+                        showError('⚠️ Next Semester Fee Receipt is COMPULSORY! Please upload your next semester fee receipt.');
+                    } else {
+                        showError('⚠️ Both Examination Fee Receipt and Next Semester Fee Receipt are COMPULSORY! Please upload both receipts to proceed.');
+                    }
+                    const zone = document.getElementById('nextSemFeeZone');
+                    if (zone) zone.classList.add('error-border');
+                    valid = false;
+                }
+                return valid;
             }
 
             return true;
@@ -548,10 +564,10 @@
             const studentName = studentData.first_name ? (studentData.first_name + ' ' + (studentData.last_name || '')) : (studentData.student_name || '');
             const examFeeText = uploadedFiles.examFee 
                 ? `<span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.examFee.name})</span>` 
-                : `<span style="color: var(--text-muted);">⚪ Not Uploaded (Optional)</span>`;
+                : `<span style="color: var(--crimson); font-weight: 700;">❌ Missing (* COMPULSORY)</span>`;
             const nextSemFeeText = uploadedFiles.nextSemFee 
                 ? `<span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.nextSemFee.name})</span>` 
-                : `<span style="color: var(--text-muted);">⚪ Not Uploaded (Optional)</span>`;
+                : `<span style="color: var(--crimson); font-weight: 700;">❌ Missing (* COMPULSORY)</span>`;
 
             document.getElementById('reviewContent').innerHTML = `
                 <div style="display: grid; gap: 0.85rem; font-size: 0.9rem;">
@@ -602,6 +618,13 @@
                 return;
             }
 
+            // Enforce compulsory document upload check
+            if (!uploadedFiles.examFee || !uploadedFiles.nextSemFee) {
+                showError('⚠️ Both Examination Fee Receipt and Next Semester Fee Receipt are strictly compulsory! Please upload both documents.');
+                goToStep(3);
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.innerHTML = '⏳ Submitting Application...';
@@ -627,26 +650,29 @@
 
                 const appId = appData.data.application.id;
 
-                // 2. Upload documents if provided (optional)
+                // 2. Upload mandatory documents
                 const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt' };
                 for (const [key, docType] of Object.entries(docTypes)) {
-                    if (uploadedFiles[key]) {
-                        const formData = new FormData();
-                        formData.append('file', uploadedFiles[key]);
-                        formData.append('document_type', docType);
-                        const upRes = await fetch(`/student/api/upload-document/${appId}`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        const upData = await upRes.json();
-                        if (!upData.success) {
-                            showError('Error uploading ' + docType + ': ' + upData.message);
-                            btn.disabled = false;
-                            btn.innerHTML = '🚀 Submit Application For Clearance';
-                            return;
-                        }
+                    if (!uploadedFiles[key]) {
+                        showError('Missing mandatory document: ' + docType);
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 Submit Application For Clearance';
+                        return;
                     }
+                    const formData = new FormData();
+                    formData.append('file', uploadedFiles[key]);
+                    formData.append('document_type', docType);
+                    const upRes = await fetch(`/student/api/upload-document/${appId}`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const upData = await upRes.json();
+                    if (!upData.success) {
+                        showError('Error uploading ' + docType + ': ' + upData.message);
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 Submit Application For Clearance';
+                        return;
                 }
 
                 // 3. Final Submit application
