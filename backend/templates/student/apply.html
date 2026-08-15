@@ -7,40 +7,46 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .form-section { margin-bottom: 2.5rem; }
-        .form-section-title { font-size: 1rem; font-family: var(--font-display); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
-        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+        .form-section { margin-bottom: 2rem; }
+        .form-section-title { font-size: 1.05rem; font-family: var(--font-display); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
         .checkbox-card { 
             display: flex; align-items: center; gap: 0.75rem; 
             padding: 1rem; border: 1.5px solid var(--border-light); 
             border-radius: var(--radius-lg); cursor: pointer;
             transition: all var(--transition-fast);
+            background: var(--bg-card);
         }
         .checkbox-card:hover { border-color: var(--accent); background: rgba(99,102,241,0.03); }
-        .checkbox-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.08); }
-        .checkbox-card input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+        .checkbox-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.08); box-shadow: 0 2px 8px rgba(99,102,241,0.12); }
+        .checkbox-card input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
         .signature-pad { 
-            border: 1.5px dashed var(--border-medium); border-radius: var(--radius-lg);
-            width: 100%; height: 200px; cursor: crosshair;
-            background: var(--bg-secondary);
+            border: 2px dashed var(--border-medium); border-radius: var(--radius-lg);
+            width: 100%; height: 190px; cursor: crosshair;
+            background: #ffffff;
             position: relative; overflow: hidden;
+            touch-action: none;
         }
+        .signature-pad.error-border { border-color: var(--crimson); background: rgba(239,68,68,0.02); }
         .signature-pad canvas { width: 100%; height: 100%; display: block; }
         .file-upload-zone {
-            border: 1.5px dashed var(--border-medium); border-radius: var(--radius-lg);
-            padding: 2rem; text-align: center; cursor: pointer;
+            border: 2px dashed var(--border-medium); border-radius: var(--radius-lg);
+            padding: 1.75rem 1rem; text-align: center; cursor: pointer;
             transition: all var(--transition-fast);
+            background: var(--bg-card);
         }
         .file-upload-zone:hover { border-color: var(--accent); background: rgba(99,102,241,0.03); }
         .file-upload-zone.has-file { border-color: var(--emerald); background: rgba(16,185,129,0.05); }
+        .file-upload-zone.error-border { border-color: var(--crimson); background: rgba(239,68,68,0.02); }
         .uploaded-file { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-top: 0.5rem; }
         .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
-        .step-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; border: 2px solid var(--border-light); color: var(--text-muted); }
-        .step-dot.active { border-color: var(--accent); background: var(--accent); color: white; }
+        .step-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border: 2px solid var(--border-light); color: var(--text-muted); background: var(--bg-card); }
+        .step-dot.active { border-color: var(--accent); background: var(--accent); color: white; box-shadow: 0 0 12px rgba(99,102,241,0.4); }
         .step-dot.completed { border-color: var(--emerald); background: var(--emerald); color: white; }
-        .step-line { flex: 1; height: 2px; background: var(--border-light); align-self: center; }
+        .step-line { flex: 1; height: 3px; background: var(--border-light); align-self: center; border-radius: 2px; }
         .step-line.active { background: var(--accent); }
         .step-line.completed { background: var(--emerald); }
+        .req-tag { font-size: 0.72rem; color: var(--crimson); background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 12px; font-weight: 700; margin-left: 6px; }
     </style>
 </head>
 <body>
@@ -84,9 +90,9 @@
             <main class="main-content" style="margin-left: 0; margin-top: 64px; padding: 1.5rem; min-height: calc(100vh - 64px); background: var(--bg-secondary);">
                 <div style="max-width: 900px; margin: 0 auto;">
                     <!-- Header -->
-                    <div class="reveal visible" style="margin-bottom: 2rem;">
+                    <div style="margin-bottom: 2rem;">
                         <h1 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;">New No-Dues Application</h1>
-                        <p style="color: var(--text-muted);">Fill in all required details and submit for clearance.</p>
+                        <p style="color: var(--text-muted);">Complete all steps and submit your institutional clearance request.</p>
                     </div>
 
                     <!-- Step Indicator -->
@@ -100,40 +106,40 @@
                         <div class="step-dot" id="step4Dot">4</div>
                     </div>
 
-                    <!-- Error/Success Messages -->
-                    <div id="errorMsg" style="display: none; background: rgba(239,68,68,0.1); color: var(--crimson); padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.875rem;"></div>
-                    <div id="successMsg" style="display: none; background: rgba(16,185,129,0.1); color: var(--emerald); padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.875rem;"></div>
+                    <!-- Global Alert Messages -->
+                    <div id="errorMsg" style="display: none; background: rgba(239,68,68,0.12); color: var(--crimson); padding: 1rem 1.25rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 600; border-left: 4px solid var(--crimson);"></div>
+                    <div id="successMsg" style="display: none; background: rgba(16,185,129,0.12); color: var(--emerald); padding: 1rem 1.25rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 600; border-left: 4px solid var(--emerald);"></div>
 
                     <form id="applicationForm" novalidate>
-                        <!-- STEP 1: Personal Information -->
+                        <!-- STEP 1: Personal Information (Instant Pre-Rendered) -->
                         <div class="card" id="step1" style="padding: 2rem;">
                             <div class="form-section">
-                                <h3 class="form-section-title">📋 Personal Information</h3>
+                                <h3 class="form-section-title">📋 Step 1: Personal Information</h3>
                                 <div id="personalInfo">
-                                    <div class="skeleton" style="height: 200px; border-radius: var(--radius-lg);"></div>
+                                    <div class="skeleton" style="height: 180px; border-radius: var(--radius-lg);"></div>
                                 </div>
                             </div>
                             <div class="form-section" id="hodSection" style="display: none;">
-                                <h3 class="form-section-title">🎯 Your HOD Department</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Your academic HOD department will be auto-assigned from your profile.</p>
+                                <h3 class="form-section-title">🎯 Academic HOD Clearance Department</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Your academic department will be automatically routed for clearance:</p>
                                 <div class="form-group">
-                                    <input type="text" class="form-input" id="hodDeptDisplay" readonly style="background:var(--bg-secondary);" placeholder="Auto-detected from profile">
+                                    <input type="text" class="form-input" id="hodDeptDisplay" readonly style="background:var(--bg-secondary); font-weight: 600;" placeholder="Auto-detected from profile">
                                 </div>
                             </div>
-                            <div style="display: flex; justify-content: flex-end;">
-                                <button type="button" class="btn btn-primary" onclick="goToStep(2)">Continue →</button>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-primary btn-lg" onclick="goToStep(2)">Continue to Facilities →</button>
                             </div>
                         </div>
 
-                        <!-- STEP 2: Department Selection -->
+                        <!-- STEP 2: Clearance Facility Selection -->
                         <div class="card" id="step2" style="padding: 2rem; display: none;">
                             <div class="form-section">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-                                    <h3 class="form-section-title" style="margin-bottom: 0; border-bottom: none;" id="step2Title">🏛️ Select Clearance Facilities</h3>
-                                    <span id="studentCategoryBadge" class="badge badge-primary" style="text-transform: capitalize; font-size: 0.8rem;"></span>
+                                    <h3 class="form-section-title" style="margin-bottom: 0; border-bottom: none;" id="step2Title">🏛️ Step 2: Select Clearance Facilities</h3>
+                                    <span id="studentCategoryBadge" class="badge badge-primary" style="text-transform: capitalize; font-size: 0.85rem;"></span>
                                 </div>
                                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;" id="step2Subtitle">
-                                    Select the facilities you availed for institutional clearance.
+                                    Select the facilities you availed for institutional clearance:
                                 </p>
                                 <div class="checkbox-grid" id="deptCheckboxes">
                                     <!-- Populated dynamically based on student category (Day Scholar vs Hosteller) -->
@@ -141,24 +147,30 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
                                 <button type="button" class="btn btn-ghost" onclick="goToStep(1)">← Back</button>
-                                <button type="button" class="btn btn-primary" onclick="goToStep(3)">Continue →</button>
+                                <button type="button" class="btn btn-primary btn-lg" onclick="goToStep(3)">Continue to Documents →</button>
                             </div>
                         </div>
 
-                        <!-- STEP 3: Document Upload & Signature -->
+                        <!-- STEP 3: Mandatory Document Upload & Signature -->
                         <div class="card" id="step3" style="padding: 2rem; display: none;">
                             <div class="form-section">
-                                <h3 class="form-section-title">📎 Required Documents</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Upload the following documents (PDF, JPG, PNG).</p>
+                                <h3 class="form-section-title">
+                                    📎 Step 3: Required Fee Receipts & Digital Signature
+                                </h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+                                    Both fee receipts and your digital signature are <strong>STRICTLY MANDATORY</strong>. All files will be verified with SHA-256 integrity checksums.
+                                </p>
                                 
                                 <!-- Exam Fee Receipt -->
-                                <div class="form-group">
-                                    <label class="form-label">📄 Examination Fee Receipt *</label>
+                                <div class="form-group" style="margin-bottom: 1.5rem;">
+                                    <label class="form-label" style="font-weight: 600;">
+                                        📄 Examination Fee Receipt <span class="req-tag">* COMPULSORY</span>
+                                    </label>
                                     <div class="file-upload-zone" id="examFeeZone" onclick="document.getElementById('examFeeInput').click()">
                                         <div id="examFeePlaceholder">
-                                            <span style="font-size: 2rem;">📄</span>
-                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Exam Fee Receipt</p>
-                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
+                                            <span style="font-size: 2.2rem;">📄</span>
+                                            <p style="margin-top: 0.5rem; font-weight: 600; color: var(--text-primary);">Click to upload Examination Fee Receipt</p>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG format (Max 16MB)</p>
                                         </div>
                                         <div id="examFeeFile" class="uploaded-file" style="display: none;"></div>
                                         <input type="file" id="examFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'examFee')">
@@ -166,13 +178,15 @@
                                 </div>
 
                                 <!-- Next Sem Fee Receipt -->
-                                <div class="form-group">
-                                    <label class="form-label">📄 Next Semester Fee Receipt *</label>
+                                <div class="form-group" style="margin-bottom: 1.5rem;">
+                                    <label class="form-label" style="font-weight: 600;">
+                                        📄 Next Semester Fee Receipt <span class="req-tag">* COMPULSORY</span>
+                                    </label>
                                     <div class="file-upload-zone" id="nextSemFeeZone" onclick="document.getElementById('nextSemFeeInput').click()">
                                         <div id="nextSemFeePlaceholder">
-                                            <span style="font-size: 2rem;">📄</span>
-                                            <p style="margin-top: 0.5rem; font-weight: 500;">Click to upload Next Semester Fee Receipt</p>
-                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG (max 16MB)</p>
+                                            <span style="font-size: 2.2rem;">📄</span>
+                                            <p style="margin-top: 0.5rem; font-weight: 600; color: var(--text-primary);">Click to upload Next Semester Fee Receipt</p>
+                                            <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, JPG or PNG format (Max 16MB)</p>
                                         </div>
                                         <div id="nextSemFeeFile" class="uploaded-file" style="display: none;"></div>
                                         <input type="file" id="nextSemFeeInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(this, 'nextSemFee')">
@@ -180,36 +194,40 @@
                                 </div>
                             </div>
 
+                            <!-- Digital Signature -->
                             <div class="form-section">
-                                <h3 class="form-section-title">✍️ Digital Signature</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Sign below using your mouse or touch.</p>
+                                <label class="form-label" style="font-weight: 600;">
+                                    ✍️ Student Digital Signature <span class="req-tag">* COMPULSORY</span>
+                                </label>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">Please draw your signature below using mouse, pen, or touch:</p>
                                 <div class="signature-pad" id="signaturePad">
                                     <canvas id="sigCanvas"></canvas>
                                 </div>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                                    <button type="button" class="btn btn-ghost btn-sm" onclick="clearSignature()">🗑️ Clear</button>
-                                    <span id="sigStatus" style="font-size: 0.8rem; color: var(--text-muted); align-self: center;">Not signed yet</span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem;">
+                                    <button type="button" class="btn btn-ghost btn-sm" onclick="clearSignature()">🗑️ Clear Signature</button>
+                                    <span id="sigStatus" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">⚠️ Not signed yet (Required)</span>
                                 </div>
                             </div>
 
                             <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
                                 <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Back</button>
-                                <button type="button" class="btn btn-primary" onclick="goToStep(4)">Review & Submit →</button>
+                                <button type="button" class="btn btn-primary btn-lg" onclick="goToStep(4)">Review Application →</button>
                             </div>
                         </div>
 
-                        <!-- STEP 4: Review & Submit -->
+                        <!-- STEP 4: Review & Final Submit -->
                         <div class="card" id="step4" style="padding: 2rem; display: none;">
                             <div class="form-section">
-                                <h3 class="form-section-title">✅ Review Your Application</h3>
-                                <div id="reviewContent" style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
-                                    <div class="skeleton" style="height: 300px;"></div>
+                                <h3 class="form-section-title">✅ Step 4: Final Application Review</h3>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Please review your institutional details, clearance path, and uploaded receipts before submitting:</p>
+                                <div id="reviewContent" style="padding: 1.25rem; background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                                    <div class="skeleton" style="height: 280px;"></div>
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
                                 <button type="button" class="btn btn-ghost" onclick="goToStep(3)">← Back</button>
-                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                    📤 Submit Application
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="padding: 0.85rem 2rem;">
+                                    🚀 Submit Application For Clearance
                                 </button>
                             </div>
                         </div>
@@ -219,32 +237,33 @@
         </div>
     </div>
 
+    <!-- Server-Side Pre-Rendered Data Injection for 0ms Instant Loading -->
+    <script>
+        const PRELOADED_STUDENT = {{ student_data|tojson|safe }};
+    </script>
+
     <script>
         // ───────────────────────────────
         // GLOBALS
         // ───────────────────────────────
-        let studentData = null;
+        let studentData = PRELOADED_STUDENT || null;
         let uploadedFiles = { examFee: null, nextSemFee: null };
         let signatureData = null;
         let sigCanvas = null;
         let sigCtx = null;
         let isDrawing = false;
+        let currentStep = 1;
 
         // ───────────────────────────────
-        // TOGGLE THEME
+        // TOGGLE THEME & SIDEBAR
         // ───────────────────────────────
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
             const bd = document.getElementById('sidebarBackdrop');
             if (!sb || !bd) return;
             const isOpen = show !== undefined ? show : !sb.classList.contains('open');
-            if (isOpen) {
-                sb.classList.add('open');
-                bd.classList.add('active');
-            } else {
-                sb.classList.remove('open');
-                bd.classList.remove('active');
-            }
+            if (isOpen) { sb.classList.add('open'); bd.classList.add('active'); }
+            else { sb.classList.remove('open'); bd.classList.remove('active'); }
         }
         function toggleTheme() {
             const html = document.documentElement;
@@ -253,55 +272,164 @@
         }
 
         // ───────────────────────────────
-        // STEP NAVIGATION
+        // STEP VALIDATION ENGINE
         // ───────────────────────────────
-        let currentStep = 1;
+        function validateStep(step) {
+            hideError();
 
-        function goToStep(step) {
-            [1,2,3,4].forEach(s => {
-                document.getElementById(`step${s}`).style.display = s === step ? 'block' : 'none';
+            if (step === 1) {
+                if (!studentData || !studentData.roll_number) {
+                    showError('Student profile data is loading. Please wait a moment.');
+                    return false;
+                }
+                return true;
+            }
+
+            if (step === 2) {
+                const isHosteller = (studentData?.category || '').toLowerCase() === 'hosteller';
+                const checkedBoxes = document.querySelectorAll('#deptCheckboxes input[type="checkbox"]:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    showError(isHosteller 
+                        ? 'Please select your Hosteller clearance facilities (Hostel and/or Mess).' 
+                        : 'Please select an option (Transport, Scholarship, or Nothing).');
+                    return false;
+                }
+                return true;
+            }
+
+            if (step === 3) {
+                if (!uploadedFiles.examFee) {
+                    showError('⚠️ Examination Fee Receipt is COMPULSORY! Please click and upload your receipt.');
+                    document.getElementById('examFeeZone').classList.add('error-border');
+                    return false;
+                }
+                if (!uploadedFiles.nextSemFee) {
+                    showError('⚠️ Next Semester Fee Receipt is COMPULSORY! Please click and upload your receipt.');
+                    document.getElementById('nextSemFeeZone').classList.add('error-border');
+                    return false;
+                }
+                if (!signatureData || signatureData.length < 50) {
+                    showError('⚠️ Digital Signature is COMPULSORY! Please draw your signature in the signature pad.');
+                    document.getElementById('signaturePad').classList.add('error-border');
+                    return false;
+                }
+                return true;
+            }
+
+            return true;
+        }
+
+        function goToStep(targetStep) {
+            if (targetStep > currentStep) {
+                for (let s = currentStep; s < targetStep; s++) {
+                    if (!validateStep(s)) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+                }
+            }
+
+            [1, 2, 3, 4].forEach(s => {
+                document.getElementById(`step${s}`).style.display = s === targetStep ? 'block' : 'none';
                 const dot = document.getElementById(`step${s}Dot`);
                 dot.className = 'step-dot';
-                if (s < step) dot.classList.add('completed');
-                if (s === step) dot.classList.add('active');
+                if (s < targetStep) dot.classList.add('completed');
+                if (s === targetStep) dot.classList.add('active');
                 const line = document.getElementById(`step${s}Line`);
                 if (line) {
                     line.className = 'step-line';
-                    if (s < step) line.classList.add('completed');
+                    if (s < targetStep) line.classList.add('completed');
                 }
             });
-            currentStep = step;
-            if (step === 4) renderReview();
+
+            currentStep = targetStep;
+            if (targetStep === 3) {
+                setTimeout(initSignaturePad, 200);
+            }
+            if (targetStep === 4) {
+                renderReview();
+            }
+            hideError();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // ───────────────────────────────
-        // INIT: Load Profile (HOD auto-detected from profile branch/course)
+        // INIT: Instant Profile Render + API Fallback
         // ───────────────────────────────
         async function init() {
-            const token = localStorage.getItem('access_token');
-            if (!token) { window.location.href = '/auth/login'; return; }
-
-            try {
-                // Load student profile
-                const profileRes = await fetch('/student/api/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const profileData = await profileRes.json();
-                if (profileData.success) {
-                    studentData = profileData.data;
-                    renderPersonalInfo();
-                    renderFacilityOptions();
-                    
-                    // Auto-detect HOD department directly from student profile data
-                    const hodDisplay = document.getElementById('hodDeptDisplay');
-                    const detectedDept = studentData.branch || studentData.course_name || 'Academic HOD Department';
-                    hodDisplay.value = detectedDept.includes('HOD') ? detectedDept : detectedDept + ' HOD Department';
-                    document.getElementById('hodSection').style.display = 'block';
+            // If preloaded student data is present, render immediately with 0ms delay
+            if (studentData && studentData.roll_number) {
+                renderPersonalInfo();
+                renderFacilityOptions();
+                autoDetectHOD();
+            } else {
+                // Asynchronous fetch fallback
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    try {
+                        const profileRes = await fetch('/student/api/profile', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const profileData = await profileRes.json();
+                        if (profileData.success && profileData.data) {
+                            studentData = profileData.data;
+                            renderPersonalInfo();
+                            renderFacilityOptions();
+                            autoDetectHOD();
+                        }
+                    } catch(e) {
+                        console.error('Init error:', e);
+                    }
                 }
-            } catch(e) {
-                console.error('Init error:', e);
             }
+        }
+
+        function autoDetectHOD() {
+            const hodDisplay = document.getElementById('hodDeptDisplay');
+            const detectedDept = studentData.branch || studentData.course_name || 'Academic HOD Department';
+            hodDisplay.value = detectedDept.includes('HOD') ? detectedDept : detectedDept + ' HOD Department';
+            document.getElementById('hodSection').style.display = 'block';
+        }
+
+        function renderPersonalInfo() {
+            const s = studentData;
+            document.getElementById('personalInfo').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">FULL NAME</label>
+                        <input class="form-input" value="${s.first_name ? (s.first_name + ' ' + (s.last_name || '')) : (s.student_name || '')}" readonly style="background:var(--bg-secondary); font-weight: 600;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ROLL NUMBER</label>
+                        <input class="form-input" value="${s.roll_number || ''}" readonly style="background:var(--bg-secondary); font-weight: 600; font-family: monospace;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ENROLLMENT NUMBER</label>
+                        <input class="form-input" value="${s.enrollment_number || '—'}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">COURSE</label>
+                        <input class="form-input" value="${s.course_name || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">BRANCH</label>
+                        <input class="form-input" value="${s.branch || ''}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">CURRENT SEMESTER</label>
+                        <input class="form-input" value="Semester ${s.current_semester || '6'}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">REGISTERED CATEGORY</label>
+                        <input class="form-input" value="${(s.category || 'day_scholar').replace(/_/g, ' ').toUpperCase()}" readonly style="background:var(--bg-secondary); font-weight: 700; color: var(--accent);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">GUARDIAN PHONE</label>
+                        <input class="form-input" value="${s.guardian_phone || s.phone || '—'}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                </div>
+            `;
         }
 
         function renderFacilityOptions() {
@@ -313,52 +441,52 @@
             badge.textContent = isHosteller ? '🏠 Hosteller' : '🚶 Day Scholar';
 
             if (isHosteller) {
-                subtitle.textContent = 'As a Hosteller, clearance from Hostel and Mess is included. You may also select Scholarship clearance:';
+                subtitle.textContent = 'As a registered Hosteller, select your hostel accommodation, mess, and any scholarship clearance:';
                 container.innerHTML = `
                     <div class="checkbox-card selected" data-dept="hostel" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="hostel" id="dept-hostel" checked onchange="updateCardState(this)">
                         <label for="dept-hostel" style="cursor: pointer; flex:1;">
-                            <strong>🏠 Hostel Department</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel accommodation & room clearance</span>
+                            <strong style="color: var(--text-primary);">🏠 Hostel Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel room clearance & inventory audit</span>
                         </label>
                     </div>
                     <div class="checkbox-card selected" data-dept="mess" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="mess" id="dept-mess" checked onchange="updateCardState(this)">
                         <label for="dept-mess" style="cursor: pointer; flex:1;">
-                            <strong>🍽️ Mess Department</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues & food billing clearance</span>
+                            <strong style="color: var(--text-primary);">🍽️ Mess Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues & cafeteria billing clearance</span>
                         </label>
                     </div>
                     <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="updateCardState(this)">
                         <label for="dept-scholarship" style="cursor: pointer; flex:1;">
-                            <strong>🎓 Scholarship Department</strong>
+                            <strong style="color: var(--text-primary);">🎓 Scholarship Department</strong>
                             <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
                         </label>
                     </div>
                 `;
             } else {
-                // Day Scholar: Transport, Scholarship, Nothing
+                // Day Scholar Options: Transport, Scholarship, None
                 subtitle.textContent = 'As a Day Scholar, select if you availed Transport or Scholarship, or select "Nothing":';
                 container.innerHTML = `
                     <div class="checkbox-card" data-dept="transport" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="transport" id="dept-transport" onchange="handleDayScholarSelection(this)">
                         <label for="dept-transport" style="cursor: pointer; flex:1;">
-                            <strong>🚌 Transport Department</strong>
+                            <strong style="color: var(--text-primary);">🚌 Transport Clearance</strong>
                             <br><span style="font-size:0.75rem;color:var(--text-muted);">College bus route fee & transport pass clearance</span>
                         </label>
                     </div>
                     <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="handleDayScholarSelection(this)">
                         <label for="dept-scholarship" style="cursor: pointer; flex:1;">
-                            <strong>🎓 Scholarship Department</strong>
+                            <strong style="color: var(--text-primary);">🎓 Scholarship Clearance</strong>
                             <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
                         </label>
                     </div>
                     <div class="checkbox-card selected" data-dept="none" onclick="toggleDeptCard(this, event)">
                         <input type="checkbox" value="none" id="dept-none" checked onchange="handleDayScholarSelection(this)">
                         <label for="dept-none" style="cursor: pointer; flex:1;">
-                            <strong>⚪ Nothing / None (Standard Day Scholar)</strong>
+                            <strong style="color: var(--text-primary);">⚪ Nothing / None (Standard Day Scholar)</strong>
                             <br><span style="font-size:0.75rem;color:var(--text-muted);">No transport or scholarship clearance needed (Core academic clearance only)</span>
                         </label>
                     </div>
@@ -384,7 +512,7 @@
             }
             updateCardState(checkbox);
 
-            // If both transport and scholarship are unchecked, auto-check "none"
+            // If neither transport nor scholarship is checked, auto-select "none"
             if (!transportCb?.checked && !scholarshipCb?.checked && noneCb) {
                 noneCb.checked = true;
                 updateCardState(noneCb);
@@ -407,26 +535,34 @@
         // FILE UPLOAD HANDLER
         // ───────────────────────────────
         function handleFileUpload(input, type) {
+            const zone = document.getElementById(`${type}Zone`);
+            zone.classList.remove('error-border');
+            hideError();
+
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 uploadedFiles[type] = file;
-                const zone = document.getElementById(`${type}Zone`);
                 const placeholder = document.getElementById(`${type}Placeholder`);
                 const fileDiv = document.getElementById(`${type}File`);
                 placeholder.style.display = 'none';
                 fileDiv.style.display = 'flex';
                 fileDiv.innerHTML = `
-                    <span>📄</span>
-                    <span style="flex:1; font-size: 0.85rem;">${file.name}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">${(file.size / 1024).toFixed(1)} KB</span>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="removeFile('${type}')">✕</button>
+                    <span style="font-size: 1.5rem;">📄</span>
+                    <div style="flex:1; text-align: left;">
+                        <strong style="font-size: 0.85rem; color: var(--emerald);">✓ ${file.name}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${(file.size / 1024).toFixed(1)} KB (Attached)</div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="removeFile('${type}', event)" style="color: var(--crimson);">✕ Remove</button>
                 `;
                 zone.classList.add('has-file');
             }
         }
 
-        function removeFile(type) {
+        function removeFile(type, event) {
+            if (event) event.stopPropagation();
             uploadedFiles[type] = null;
+            const input = document.getElementById(`${type}Input`);
+            if (input) input.value = '';
             const zone = document.getElementById(`${type}Zone`);
             const placeholder = document.getElementById(`${type}Placeholder`);
             const fileDiv = document.getElementById(`${type}File`);
@@ -440,22 +576,42 @@
         // ───────────────────────────────
         function initSignaturePad() {
             const canvas = document.getElementById('sigCanvas');
+            if (!canvas) return;
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
             sigCanvas = canvas;
             sigCtx = canvas.getContext('2d');
-            sigCtx.strokeStyle = '#1a1a1a';
-            sigCtx.lineWidth = 2;
+            sigCtx.strokeStyle = '#1e1b4b';
+            sigCtx.lineWidth = 2.5;
             sigCtx.lineCap = 'round';
             sigCtx.lineJoin = 'round';
 
+            // Desktop events
             canvas.addEventListener('mousedown', startDraw);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDraw);
             canvas.addEventListener('mouseleave', stopDraw);
-            canvas.addEventListener('touchstart', startDrawTouch);
-            canvas.addEventListener('touchmove', drawTouch);
+
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const r = canvas.getBoundingClientRect();
+                isDrawing = true;
+                sigCtx.beginPath();
+                sigCtx.moveTo(touch.clientX - r.left, touch.clientY - r.top);
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!isDrawing) return;
+                const touch = e.touches[0];
+                const r = canvas.getBoundingClientRect();
+                sigCtx.lineTo(touch.clientX - r.left, touch.clientY - r.top);
+                sigCtx.stroke();
+            }, { passive: false });
+
             canvas.addEventListener('touchend', stopDraw);
         }
 
@@ -471,38 +627,25 @@
             sigCtx.stroke();
         }
 
-        function startDrawTouch(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = sigCanvas.getBoundingClientRect();
-            isDrawing = true;
-            sigCtx.beginPath();
-            sigCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-        }
-
-        function drawTouch(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            const touch = e.touches[0];
-            const rect = sigCanvas.getBoundingClientRect();
-            sigCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-            sigCtx.stroke();
-        }
-
         function stopDraw() {
             if (isDrawing) {
                 isDrawing = false;
                 signatureData = sigCanvas.toDataURL('image/png');
-                document.getElementById('sigStatus').textContent = '✓ Signed';
-                document.getElementById('sigStatus').style.color = 'var(--emerald)';
+                document.getElementById('signaturePad').classList.remove('error-border');
+                const statusSpan = document.getElementById('sigStatus');
+                statusSpan.textContent = '✓ Signature captured (Valid)';
+                statusSpan.style.color = 'var(--emerald)';
+                hideError();
             }
         }
 
         function clearSignature() {
+            if (!sigCanvas || !sigCtx) return;
             sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
             signatureData = null;
-            document.getElementById('sigStatus').textContent = 'Not signed yet';
-            document.getElementById('sigStatus').style.color = 'var(--text-muted)';
+            const statusSpan = document.getElementById('sigStatus');
+            statusSpan.textContent = '⚠️ Not signed yet (Required)';
+            statusSpan.style.color = 'var(--text-muted)';
         }
 
         // ───────────────────────────────
@@ -511,11 +654,9 @@
         function renderReview() {
             const selectedDepts = [];
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
-                if (cb.value !== 'none') {
-                    selectedDepts.push(cb.value);
-                }
+                if (cb.value !== 'none') selectedDepts.push(cb.value);
             });
-            const hodDept = document.getElementById('hodDeptDisplay').value || 'Auto-detected';
+            const hodDept = document.getElementById('hodDeptDisplay').value || 'Auto-detected HOD';
             const deptLabels = {
                 hostel: '🏠 Hostel',
                 mess: '🍽️ Mess',
@@ -526,54 +667,81 @@
                 ? selectedDepts.map(d => deptLabels[d] || d).join(', ') 
                 : 'None (Standard Clearance: Academic HOD, Accounts, Examination)';
 
+            const studentName = studentData.first_name ? (studentData.first_name + ' ' + (studentData.last_name || '')) : (studentData.student_name || '');
+
             document.getElementById('reviewContent').innerHTML = `
-                <div style="display: grid; gap: 0.75rem;">
-                    <div style="display:flex; justify-content:space-between;"><strong>Student:</strong> <span>${studentData.student_name}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Roll No:</strong> <span>${studentData.roll_number}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Course:</strong> <span>${studentData.course_name}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Category:</strong> <span style="text-transform: capitalize;">${(studentData.category || 'day_scholar').replace(/_/g, ' ')}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Father's Name:</strong> <span>${studentData.father_name || '—'}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Father's Phone:</strong> <span>${studentData.guardian_phone || '—'}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>HOD Department:</strong> <span>${hodDept}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Selected Facilities:</strong> <span>${formattedDepts}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Exam Fee Receipt:</strong> <span>${uploadedFiles.examFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Next Sem Fee Receipt:</strong> <span>${uploadedFiles.nextSemFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Digital Signature:</strong> <span>${signatureData ? '✅ Signed' : '❌ Not signed'}</span></div>
+                <div style="display: grid; gap: 0.85rem; font-size: 0.9rem;">
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Student Name:</strong> <span>👤 ${studentName}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Roll Number:</strong> <span style="font-family: monospace; font-weight:700;">🆔 ${studentData.roll_number}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Course & Branch:</strong> <span>📚 ${studentData.course_name} (${studentData.branch || '—'})</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Registered Category:</strong> <span style="text-transform: capitalize; font-weight: 700; color: var(--accent);">📍 ${(studentData.category || 'day_scholar').replace(/_/g, ' ')}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Academic Clearance HOD:</strong> <span>🎯 ${hodDept}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Selected Facilities:</strong> <span style="font-weight: 600;">${formattedDepts}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Exam Fee Receipt:</strong> <span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.examFee?.name || 'File attached'})</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.4rem;">
+                        <strong>Next Sem Fee Receipt:</strong> <span style="color: var(--emerald); font-weight: 700;">✅ Uploaded (${uploadedFiles.nextSemFee?.name || 'File attached'})</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items: center; padding-top: 0.4rem;">
+                        <strong>Digital Signature:</strong> 
+                        <span style="color: var(--emerald); font-weight: 700;">✅ Signed & Verified</span>
+                    </div>
                 </div>
             `;
         }
 
         // ───────────────────────────────
-        // FORM SUBMIT
+        // FORM SUBMIT HANDLER
         // ───────────────────────────────
         document.getElementById('applicationForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const err = document.getElementById('errorMsg');
-            const suc = document.getElementById('successMsg');
-            err.style.display = 'none';
-            suc.style.display = 'none';
+            hideError();
 
-            // Validate
-            if (!uploadedFiles.examFee) { showError('Please upload Examination Fee Receipt.'); return; }
-            if (!uploadedFiles.nextSemFee) { showError('Please upload Next Semester Fee Receipt.'); return; }
-            
+            // Final Comprehensive Strict Validation
+            if (!uploadedFiles.examFee) {
+                showError('⚠️ Examination Fee Receipt is mandatory! Please upload receipt in Step 3.');
+                goToStep(3);
+                return;
+            }
+            if (!uploadedFiles.nextSemFee) {
+                showError('⚠️ Next Semester Fee Receipt is mandatory! Please upload receipt in Step 3.');
+                goToStep(3);
+                return;
+            }
+            if (!signatureData || signatureData.length < 50) {
+                showError('⚠️ Digital Signature is mandatory! Please draw your signature in Step 3.');
+                goToStep(3);
+                return;
+            }
 
             const selectedDepts = [];
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
-                if (cb.value !== 'none') {
-                    selectedDepts.push(cb.value);
-                }
+                if (cb.value !== 'none') selectedDepts.push(cb.value);
             });
 
             const isHosteller = (studentData.category || '').toLowerCase() === 'hosteller';
             if (isHosteller && selectedDepts.length === 0) {
-                showError('Please select your hosteller clearance facilities (Hostel and/or Mess).');
+                showError('⚠️ Please select your Hosteller clearance facilities (Hostel and/or Mess).');
+                goToStep(2);
                 return;
             }
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '⏳ Submitting...';
+            btn.innerHTML = '⏳ Submitting Application & Encrypting Documents...';
 
             try {
                 const token = localStorage.getItem('access_token');
@@ -588,57 +756,81 @@
                     })
                 });
                 const appData = await appRes.json();
-                if (!appData.success) { showError(appData.message); btn.disabled = false; btn.innerHTML = '📤 Submit Application'; return; }
+                if (!appData.success) {
+                    showError(appData.message || 'Failed to initialize application.');
+                    btn.disabled = false;
+                    btn.innerHTML = '🚀 Submit Application For Clearance';
+                    return;
+                }
 
                 const appId = appData.data.application.id;
 
-                // 2. Upload documents
+                // 2. Upload mandatory documents
                 const docTypes = { examFee: 'exam_fee_receipt', nextSemFee: 'next_sem_fee_receipt' };
                 for (const [key, docType] of Object.entries(docTypes)) {
                     if (uploadedFiles[key]) {
                         const formData = new FormData();
                         formData.append('file', uploadedFiles[key]);
                         formData.append('document_type', docType);
-                        await fetch(`/student/api/upload-document/${appId}`, {
+                        const upRes = await fetch(`/student/api/upload-document/${appId}`, {
                             method: 'POST',
                             headers: { 'Authorization': `Bearer ${token}` },
                             body: formData
                         });
+                        const upData = await upRes.json();
+                        if (!upData.success) {
+                            showError('Error uploading ' + docType + ': ' + upData.message);
+                            btn.disabled = false;
+                            btn.innerHTML = '🚀 Submit Application For Clearance';
+                            return;
+                        }
                     }
                 }
 
-                // 3. Submit application
-                await fetch(`/student/api/submit/${appId}`, {
+                // 3. Final Submit application
+                const subRes = await fetch(`/student/api/submit/${appId}`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                const subData = await subRes.json();
+                if (!subData.success) {
+                    showError(subData.message || 'Failed to finalize submission.');
+                    btn.disabled = false;
+                    btn.innerHTML = '🚀 Submit Application For Clearance';
+                    return;
+                }
 
-                suc.innerHTML = '✅ Application submitted successfully! Redirecting to dashboard...';
+                const suc = document.getElementById('successMsg');
+                suc.innerHTML = '🎉 Application submitted successfully! All clearance approvals initiated. Redirecting to your dashboard...';
                 suc.style.display = 'block';
-                setTimeout(() => window.location.href = '/student/dashboard', 2000);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => window.location.href = '/student/dashboard', 2200);
 
             } catch(e) {
                 console.error('Submission error:', e);
                 showError('Error: ' + (e.message || 'Network error. Please try again.'));
                 btn.disabled = false;
-                btn.innerHTML = '📤 Submit Application';
+                btn.innerHTML = '🚀 Submit Application For Clearance';
             }
         });
 
         function showError(msg) {
             const err = document.getElementById('errorMsg');
-            err.textContent = '⚠️ ' + msg;
+            err.innerHTML = '⚠️ ' + msg;
             err.style.display = 'block';
         }
 
+        function hideError() {
+            const err = document.getElementById('errorMsg');
+            if (err) err.style.display = 'none';
+        }
+
         // ───────────────────────────────
-        // INIT
+        // INIT ON DOM LOAD
         // ───────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             init();
-            setTimeout(initSignaturePad, 500);
         });
     </script>
 </body>
 </html>
-

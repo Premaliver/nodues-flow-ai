@@ -41,8 +41,12 @@ def dashboard():
 @login_required
 @student_only
 def apply_page():
-    """Render student application form page."""
-    return render_template("student/apply.html")
+    """Render student application form page with pre-fetched student data for instant loading."""
+    student_data = {}
+    if current_user and current_user.student_profile:
+        student_data = current_user.to_dict()
+        student_data.update(current_user.student_profile.to_dict())
+    return render_template("student/apply.html", student_data=student_data)
 
 
 @student_bp.route("/api/profile")
@@ -187,6 +191,13 @@ def create_application():
     data = request.validated_data
     selected_depts = data.get("selected_departments", [])
     signature_data = data.get("signature", "")
+
+    # Strict Signature Mandatory Check
+    if not signature_data or len(str(signature_data).strip()) < 50:
+        return jsonify({
+            "success": False,
+            "message": "Digital Signature is strictly mandatory! Please provide your signature on the signature pad."
+        }), 400
 
     # Hosteller default facilities if none passed
     if student.category == "hosteller" and not selected_depts:
@@ -387,6 +398,15 @@ def submit_application(app_id):
 
     if not application.can_submit():
         return jsonify({"success": False, "message": "Application cannot be submitted"}), 400
+
+    # Strict Mandatory Document Verification (Both Receipts are Mandatory)
+    uploaded_docs = Document.query.filter_by(application_id=application.id).all()
+    uploaded_types = {d.document_type for d in uploaded_docs}
+    if "exam_fee_receipt" not in uploaded_types or "next_sem_fee_receipt" not in uploaded_types:
+        return jsonify({
+            "success": False,
+            "message": "Mandatory documents missing! Both Examination Fee Receipt and Next Semester Fee Receipt must be uploaded before submission."
+        }), 400
 
     application.status = "submitted"
     application.submitted_at = datetime.now(timezone.utc)
