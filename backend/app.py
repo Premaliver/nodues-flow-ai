@@ -4,8 +4,14 @@ Enterprise-grade Flask application with modular blueprint architecture.
 """
 
 import os
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
+
+# Ensure backend directory is present in sys.path for cloud WSGI servers (Render/Gunicorn)
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 from flask import Flask
 from flask_cors import CORS

@@ -6,7 +6,11 @@ Handles automatic schema creation, self-healing table columns, PostgreSQL extens
 import logging
 from sqlalchemy import text, inspect
 from flask_migrate import Migrate
-from models import db
+
+try:
+    from models import db
+except ImportError:
+    from backend.models import db
 
 logger = logging.getLogger(__name__)
 migrate = Migrate()
