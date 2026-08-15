@@ -24,8 +24,9 @@ from flask_limiter.util import get_remote_address
 from flask_socketio import SocketIO
 from flask_wtf.csrf import CSRFProtect
 
+from datetime import datetime, timezone
 from config import config_by_name
-from models import db
+from models import db, User, Student, Department, Semester, WorkflowConfig
 
 # Initialize extensions
 bcrypt = Bcrypt()
@@ -142,14 +143,6 @@ def create_app(config_name: str = "default") -> Flask:
 
 def _auto_seed(app):
     """Auto-seed database with default users if empty."""
-    from datetime import datetime
-    from models import db
-    from models.user import User
-    from models.student import Student
-    from models.department import Department
-    from models.semester import Semester
-    from models.workflow import WorkflowConfig
-
     try:
         # Ensure tables exist first
         db.create_all()
