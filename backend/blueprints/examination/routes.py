@@ -229,14 +229,18 @@ def _generate_admit_card_pdf(card: AdmitCard, student: Student, semester: Semest
     from reportlab.lib.enums import TA_CENTER
     import qrcode
 
-    # Build QR code image in memory
+    # Build QR code image in memory (embeds public web verification URL)
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=6,
         border=2,
     )
-    qr.add_data(card.qr_code_data)
+    try:
+        verify_url = request.host_url.rstrip('/') + card.verification_url if request else f"http://127.0.0.1:5000{card.verification_url}"
+    except Exception:
+        verify_url = card.verification_url
+    qr.add_data(verify_url)
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
@@ -581,4 +585,38 @@ def download_admit_card(card_number):
         mimetype="application/pdf",
         as_attachment=False,
         download_name=f"{card.card_number}.pdf",
+    )
+
+
+@exam_bp.route("/verify-clearance/<card_number>", methods=["GET"])
+def public_verify_clearance(card_number):
+    """Public webpage route when scanning Admit Card QR code."""
+    card = AdmitCard.query.filter_by(card_number=card_number).first()
+    if not card:
+        return render_template("examination/verify_clearance.html", success=False), 404
+
+    student = Student.query.get(card.student_id)
+    semester = Semester.query.get(card.semester_id)
+    application = NoDuesApplication.query.get(card.application_id)
+    student_user = User.query.get(student.user_id) if student and student.user_id else None
+
+    department_approvals = []
+    if application:
+        department_approvals = [
+            {
+                "department_name": ad.department_name or "Department",
+                "status": ad.status,
+            }
+            for ad in application.department_approvals
+        ]
+
+    return render_template(
+        "examination/verify_clearance.html",
+        success=True,
+        card=card,
+        student=student,
+        student_name=student_user.full_name if student_user else (student.student_name if student else "Student"),
+        semester=semester,
+        application=application,
+        department_approvals=department_approvals,
     )

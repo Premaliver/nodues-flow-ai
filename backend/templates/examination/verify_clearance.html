@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearance & Admit Card Verification — Smart NoDues AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { min-height: 100vh; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+        .verify-card { width: 100%; max-width: 650px; background: var(--bg-card); border-radius: var(--radius-2xl); border: 1px solid var(--border-medium); box-shadow: var(--shadow-xl); padding: 2rem; position: relative; overflow: hidden; }
+        .verify-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.5rem 1.25rem; border-radius: var(--radius-full); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .info-box { background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light); }
+        .info-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+        .info-val { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <div class="verify-card">
+        <!-- Top Verified Badge Header -->
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.8rem; margin: 0 auto 1rem; font-family: 'DM Serif Display', serif;">S</div>
+            <div class="verify-badge">
+                <span>✅</span> ALL DEPARTMENTS CLEARED & VERIFIED
+            </div>
+            <h2 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; margin-top: 1rem;">
+                Official Digital Clearance Pass
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                Rayat Bahra University — Smart NoDues Verification Portal
+            </p>
+        </div>
+
+        {% if success and card %}
+        <!-- Card Number & Status Banner -->
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px dashed var(--accent); border-radius: var(--radius-xl); padding: 1rem; text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Admit Card Reference Number</div>
+            <div style="font-size: 1.25rem; font-weight: 800; font-family: monospace; color: var(--accent); margin-top: 0.25rem;">
+                {{ card.card_number }}
+            </div>
+        </div>
+
+        <!-- Student Meta Data -->
+        <div class="info-grid">
+            <div class="info-box">
+                <div class="info-label">Student Name</div>
+                <div class="info-val">👤 {{ student_name }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Roll Number</div>
+                <div class="info-val" style="font-family: monospace;">🆔 {{ student.roll_number }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Enrollment Number</div>
+                <div class="info-val">{{ student.enrollment_number or 'N/A' }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Course / Degree</div>
+                <div class="info-val">📚 {{ student.course_name }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Branch / Specialization</div>
+                <div class="info-val">{{ student.branch or 'N/A' }}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Semester & Academic Year</div>
+                <div class="info-val">🎓 Sem {{ student.current_semester }} ({{ semester.academic_year if semester else '2025-2026' }})</div>
+            </div>
+        </div>
+
+        <!-- Department Approvals Verification List -->
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+            <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                🏛️ Institutional Department Clearance Status
+            </h4>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">
+                {% for dept in department_approvals %}
+                <div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: var(--radius-md); border-left: 3px solid var(--emerald); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: 700; font-size: 0.85rem;">{{ dept.department_name }}</span>
+                    <span style="color: var(--emerald); font-size: 0.9rem;">✅</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Download Action Button -->
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="/examination/api/admit-card/{{ card.card_number }}/pdf" target="_blank" class="btn btn-success btn-lg" style="width: 100%; padding: 0.9rem; font-size: 1rem; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);">
+                📥 Download Official Hall Ticket / Admit Card (PDF)
+            </a>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem;">
+                🔒 Digitally verified & signed by Controller of Examinations
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Error State -->
+        <div style="text-align: center; padding: 2rem; color: var(--crimson);">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">❌</div>
+            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--text-primary);">Verification Record Not Found</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                The scanned QR code or Admit Card number could not be validated in the university database.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -47,23 +47,26 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/student/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)">
-                    <span class="nav-icon">📊</span> Dashboard
+                <a href="#" class="sidebar-nav-item active" data-panel="overview" onclick="switchToPanel('panelOverview'); toggleSidebar(false); return false;">
+                    <span class="nav-icon">📊</span> Dashboard Overview
                 </a>
                 <a href="/student/apply" class="sidebar-nav-item" onclick="toggleSidebar(false)">
                     <span class="nav-icon">📝</span> New Application
                 </a>
-                <a href="#activeClearanceSection" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                <a href="#" class="sidebar-nav-item" data-panel="overview" onclick="switchToPanel('panelOverview'); document.getElementById('activeClearanceSection').scrollIntoView({behavior:'smooth'}); toggleSidebar(false); return false;">
                     <span class="nav-icon">⚡</span> Clearance Status
                 </a>
-                <a href="#applicationsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
-                    <span class="nav-icon">📋</span> Applications
+                <a href="#" class="sidebar-nav-item" data-panel="applications" onclick="switchToPanel('panelApplications'); toggleSidebar(false); return false;">
+                    <span class="nav-icon">📋</span> Application History
                 </a>
-                <a href="#admitCardsCard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
-                    <span class="nav-icon">🎓</span> Admit Cards
+                <a href="#" class="sidebar-nav-item" data-panel="admitCards" onclick="switchToPanel('panelAdmitCards'); toggleSidebar(false); return false;">
+                    <span class="nav-icon">🎓</span> Admit Cards & Digital Pass
                 </a>
                 <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); showStudentProfileModal(); return false;">
                     <span class="nav-icon">👤</span> My Profile
+                </a>
+                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); showUploadModal(); return false;">
+                    <span class="nav-icon">📤</span> Upload Receipts
                 </a>
                 <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)">
                     <span class="nav-icon">🔑</span> Security & Password
@@ -152,157 +155,132 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions Shortcuts -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <a href="/student/apply" class="quick-action-pill">
-                        <div class="dept-icon-box" style="background: rgba(99, 102, 241, 0.15); color: #6366f1;">✨</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9rem;">New Application</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Apply for clearance</div>
+                <!-- PANEL 1: DASHBOARD OVERVIEW & ACTIVE CLEARANCE STATUS -->
+                <div id="panelOverview" class="dashboard-panel">
+                    <!-- KPI Metric Cards Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;" id="statsGrid">
+                        <div class="stat-card-v2 reveal">
+                            <div class="stat-glow-bar" style="background: var(--gradient-primary);"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Total Applications</div>
+                                <span style="font-size: 1.3rem;">📋</span>
+                            </div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="totalApps">0</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Overall clearance history</div>
                         </div>
-                    </a>
-                    <div class="quick-action-pill" onclick="document.getElementById('admitCardsCard').scrollIntoView({behavior: 'smooth'})">
-                        <div class="dept-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📄</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9rem;">Admit Cards</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Download exam pass</div>
+
+                        <div class="stat-card-v2 reveal" style="transition-delay: 0.1s;">
+                            <div class="stat-glow-bar" style="background: var(--gradient-success);"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: var(--emerald); text-transform: uppercase;">Approved</div>
+                                <span style="font-size: 1.3rem;">✅</span>
+                            </div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="approvedApps">0</div>
+                            <div style="font-size: 0.75rem; color: var(--emerald); margin-top: 0.25rem;">Fully cleared applications</div>
+                        </div>
+
+                        <div class="stat-card-v2 reveal" style="transition-delay: 0.2s;">
+                            <div class="stat-glow-bar" style="background: var(--gradient-warning);"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: var(--amber); text-transform: uppercase;">Pending</div>
+                                <span style="font-size: 1.3rem;">⏳</span>
+                            </div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="pendingApps">0</div>
+                            <div style="font-size: 0.75rem; color: var(--amber); margin-top: 0.25rem;">Under department review</div>
+                        </div>
+
+                        <div class="stat-card-v2 reveal" style="transition-delay: 0.3s;">
+                            <div class="stat-glow-bar" style="background: var(--gradient-danger);"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: var(--crimson); text-transform: uppercase;">Rejected</div>
+                                <span style="font-size: 1.3rem;">❌</span>
+                            </div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="rejectedApps">0</div>
+                            <div style="font-size: 0.75rem; color: var(--crimson); margin-top: 0.25rem;">Requires student action</div>
                         </div>
                     </div>
-                    <div class="quick-action-pill" onclick="showStudentProfileModal()">
-                        <div class="dept-icon-box" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">👤</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9rem;">My Profile</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Academic details</div>
+
+                    <!-- Active Clearance Workflow & Department Cards Section -->
+                    <div class="card reveal" style="margin-bottom: 2rem;" id="activeClearanceSection">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
+                                    ⚡ Active Application Clearance Status
+                                </h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="activeAppHeaderSub">
+                                    Real-time clearance pipeline tracking across all institutional departments.
+                                </p>
+                            </div>
+                            <span id="activeAppBadgeSlot"><span class="badge badge-secondary">No Active App</span></span>
                         </div>
-                    </div>
-                    <div class="quick-action-pill" onclick="showUploadModal()">
-                        <div class="dept-icon-box" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">📤</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.9rem;">Upload Receipt</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">Submit fee proof</div>
+
+                        <div class="card-body" id="activeClearanceBody">
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+                                <p style="font-weight: 600;">No active clearance process found.</p>
+                                <p style="font-size: 0.85rem; max-width: 400px; margin: 0.5rem auto 1.25rem auto;">Start a new clearance application to trigger department verification for this semester.</p>
+                                <a href="/student/apply" class="btn btn-primary">+ Create Clearance Application</a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- KPI Metric Cards Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;" id="statsGrid">
-                    <div class="stat-card-v2 reveal">
-                        <div class="stat-glow-bar" style="background: var(--gradient-primary);"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Total Applications</div>
-                            <span style="font-size: 1.3rem;">📋</span>
+                <!-- PANEL 2: DEDICATED APPLICATION HISTORY PANEL -->
+                <div id="panelApplications" class="dashboard-panel" style="display: none;">
+                    <div class="card reveal" style="margin-bottom: 2rem;" id="applicationsCard">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                            <div>
+                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; font-weight: 400;">📋 Application History</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted);">View all past and current no-dues requests in a single panel view</p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+                                <a href="/student/apply" class="btn btn-primary btn-sm">+ New Request</a>
+                            </div>
                         </div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="totalApps">0</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Overall clearance history</div>
-                    </div>
-
-                    <div class="stat-card-v2 reveal" style="transition-delay: 0.1s;">
-                        <div class="stat-glow-bar" style="background: var(--gradient-success);"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--emerald); text-transform: uppercase;">Approved</div>
-                            <span style="font-size: 1.3rem;">✅</span>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-container">
+                                <table id="applicationsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Application #</th>
+                                            <th>Category</th>
+                                            <th>Status</th>
+                                            <th>Clearance Progress</th>
+                                            <th>Submitted On</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="applicationsTableBody">
+                                        <tr>
+                                            <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                                <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
+                                                Loading application records...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="approvedApps">0</div>
-                        <div style="font-size: 0.75rem; color: var(--emerald); margin-top: 0.25rem;">Fully cleared applications</div>
-                    </div>
-
-                    <div class="stat-card-v2 reveal" style="transition-delay: 0.2s;">
-                        <div class="stat-glow-bar" style="background: var(--gradient-warning);"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--amber); text-transform: uppercase;">Pending</div>
-                            <span style="font-size: 1.3rem;">⏳</span>
-                        </div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="pendingApps">0</div>
-                        <div style="font-size: 0.75rem; color: var(--amber); margin-top: 0.25rem;">Under department review</div>
-                    </div>
-
-                    <div class="stat-card-v2 reveal" style="transition-delay: 0.3s;">
-                        <div class="stat-glow-bar" style="background: var(--gradient-danger);"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--crimson); text-transform: uppercase;">Rejected</div>
-                            <span style="font-size: 1.3rem;">❌</span>
-                        </div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);" id="rejectedApps">0</div>
-                        <div style="font-size: 0.75rem; color: var(--crimson); margin-top: 0.25rem;">Requires student action</div>
                     </div>
                 </div>
 
-                <!-- Active Clearance Workflow & Department Cards Section -->
-                <div class="card reveal" style="margin-bottom: 2rem;" id="activeClearanceSection">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
-                        <div>
-                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
-                                ⚡ Active Application Clearance Roadmap
+                <!-- PANEL 3: DEDICATED ADMIT CARDS & DIGITAL PASS PANEL -->
+                <div id="panelAdmitCards" class="dashboard-panel" style="display: none;">
+                    <div class="card reveal" id="admitCardsCard">
+                        <div class="card-header" style="border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
+                                🎓 Official Examination Admit Cards & Digital Clearance Pass
                             </h3>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="activeAppHeaderSub">
-                                Real-time clearance pipeline tracking across all institutional departments.
+                            <p style="font-size: 0.8rem; color: var(--text-muted);">
+                                Once all department approvals reach 100%, your exam admit card will automatically unlock below for instant download and verification.
                             </p>
                         </div>
-                        <span id="activeAppBadgeSlot"><span class="badge badge-secondary">No Active App</span></span>
-                    </div>
-
-                    <div class="card-body" id="activeClearanceBody">
-                        <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
-                            <p style="font-weight: 600;">No active clearance process found.</p>
-                            <p style="font-size: 0.85rem; max-width: 400px; margin: 0.5rem auto 1.25rem auto;">Start a new clearance application to trigger department verification for this semester.</p>
-                            <a href="/student/apply" class="btn btn-primary">+ Create Clearance Application</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- My Applications Table -->
-                <div class="card reveal" style="margin-bottom: 2rem;" id="applicationsCard">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
-                        <div>
-                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;">📋 Application History</h3>
-                            <p style="font-size: 0.8rem; color: var(--text-muted);">View all past and current no-dues requests</p>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
-                            <a href="/student/apply" class="btn btn-primary btn-sm">+ New Request</a>
-                        </div>
-                    </div>
-                    <div class="card-body" style="padding: 0;">
-                        <div class="table-container">
-                            <table id="applicationsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Application #</th>
-                                        <th>Category</th>
-                                        <th>Status</th>
-                                        <th>Clearance Progress</th>
-                                        <th>Submitted On</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="applicationsTableBody">
-                                    <tr>
-                                        <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-                                            <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
-                                            Loading application records...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Issued Admit Cards & Digital Passes Showcase -->
-                <div class="card reveal" id="admitCardsCard">
-                    <div class="card-header" style="border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
-                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
-                            🎓 Official Examination Admit Cards & Digital Clearance Pass
-                        </h3>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">
-                            Once all department approvals reach 100%, your exam admit card will automatically unlock below for instant download.
-                        </p>
-                    </div>
-                    <div class="card-body" id="admitCardsBody">
-                        <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                            <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
-                            Loading admit cards...
+                        <div class="card-body" id="admitCardsBody">
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                <div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>
+                                Loading admit cards...
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -408,6 +386,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
         });
+
+        function switchToPanel(panelId) {
+            document.querySelectorAll('.dashboard-panel').forEach(p => p.style.display = 'none');
+            const target = document.getElementById(panelId);
+            if (target) target.style.display = 'block';
+
+            // Highlight sidebar item
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => item.classList.remove('active'));
+            if (panelId === 'panelOverview') {
+                const navItem = document.querySelector('.sidebar-nav-item[data-panel="overview"]');
+                if (navItem) navItem.classList.add('active');
+            } else if (panelId === 'panelApplications') {
+                const navItem = document.querySelector('.sidebar-nav-item[data-panel="applications"]');
+                if (navItem) navItem.classList.add('active');
+            } else if (panelId === 'panelAdmitCards') {
+                const navItem = document.querySelector('.sidebar-nav-item[data-panel="admitCards"]');
+                if (navItem) navItem.classList.add('active');
+            }
+        }
 
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
@@ -613,7 +610,25 @@
                             </div>
                         `;
 
+                        const isFullyApproved = app.status === 'approved' || pct === 100;
+                        const approvalBanner = isFullyApproved ? `
+                            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1)); border: 1.5px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: var(--shadow-md);">
+                                <div>
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--emerald); display: flex; align-items: center; gap: 0.5rem;">
+                                        🎉 All Departments Cleared!
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.25rem;">
+                                        Your application is approved from every department! Please download your admit card.
+                                    </p>
+                                </div>
+                                <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                                    🎓 Download Admit Card
+                                </button>
+                            </div>
+                        ` : '';
+
                         document.getElementById('activeClearanceBody').innerHTML = `
+                            ${approvalBanner}
                             <div style="margin-bottom: 1.5rem;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                                     <div style="font-weight: 700; font-size: 1rem;">Overall Clearance Progress (${pct}%)</div>
@@ -624,7 +639,7 @@
                                 </div>
                             </div>
                             ${stepperHtml}
-                            <h4 style="font-weight: 700; font-size: 0.95rem; margin: 1.5rem 0 1rem 0; color: var(--text-secondary);">Department Verification Cards</h4>
+                            <h4 style="font-weight: 700; font-size: 0.95rem; margin: 1.5rem 0 1rem 0; color: var(--text-secondary);">Department Verification Status</h4>
                             ${cardsHtml}
                         `;
                     } else {

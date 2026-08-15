@@ -33,7 +33,7 @@
         <a class="super-sidebar-item" data-section="applications" onclick="switchSection('applications')"><span class="icon">📋</span> Applications</a>
         <div class="super-sidebar-label" style="margin-top: 1rem;">System</div>
         <a class="super-sidebar-item" data-section="departments" onclick="switchSection('departments')"><span class="icon">🏢</span> Departments</a>
-        <a class="super-sidebar-item" data-section="semesters" onclick="switchSection('semesters')"><span class="icon">📅</span> Semesters</a>
+        <a class="super-sidebar-item" data-section="dbInspector" onclick="switchSection('dbInspector')"><span class="icon">🗄️</span> Database Inspector</a>
         <a class="super-sidebar-item" data-section="analytics" onclick="switchSection('analytics')"><span class="icon">📈</span> Analytics</a>
         <a class="super-sidebar-item" data-section="audit" onclick="switchSection('audit')"><span class="icon">📜</span> Audit Logs</a>
         <div class="super-sidebar-label" style="margin-top: 1rem;">Configuration</div>
@@ -106,13 +106,28 @@
         </div>
         <!-- DEPARTMENTS -->
         <div class="section" id="section-departments">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">🏢 Departments</h2><p style="color:var(--text-muted);font-size:0.85rem;">Manage clearance departments</p></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <div><h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">🏢 Department Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create, edit, and maintain permanent department IDs</p></div>
+                <button class="btn btn-primary" onclick="openCreateDeptModal()">➕ New Department ID</button>
+            </div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Orders</th><th>Active</th><th>Actions</th></tr></thead><tbody id="deptTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
         </div>
-        <!-- SEMESTERS -->
-        <div class="section" id="section-semesters">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><div><h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">📅 Semesters</h2><p style="color:var(--text-muted);font-size:0.85rem;">Manage academic semesters</p></div><button class="btn btn-primary" onclick="openCreateSemesterModal()">➕ New Semester</button></div>
-            <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>#</th><th>Name</th><th>Academic Year</th><th>Start</th><th>End</th><th>Current</th><th>Clearance</th><th>Actions</th></tr></thead><tbody id="semesterTableBody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
+        <!-- DATABASE INSPECTOR -->
+        <div class="section" id="section-dbInspector">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                <div><h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">🗄️ System Database Inspector</h2><p style="color:var(--text-muted);font-size:0.85rem;">Live inspection of persistent SQLite database records & tables</p></div>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <select class="form-select" id="dbTableSelector" onchange="loadDatabaseInspector()" style="padding:0.4rem 0.8rem;font-size:0.85rem;">
+                        <option value="users">👤 Users Table</option>
+                        <option value="departments">🏢 Departments Table</option>
+                        <option value="students">🎓 Students Table</option>
+                        <option value="applications">📋 No-Dues Applications Table</option>
+                        <option value="admit_cards">📄 Admit Cards Table</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm" onclick="loadDatabaseInspector()">🔄 Refresh</button>
+                </div>
+            </div>
+            <div class="glass-panel"><div class="glass-panel-body" style="padding:0;overflow-x:auto;"><table class="glass-table" id="dbInspectorTable"><thead id="dbInspectorHeader"></thead><tbody id="dbInspectorBody"><tr><td style="text-align:center;color:var(--text-muted);">Loading database records...</td></tr></tbody></table></div></div>
         </div>
         <!-- ANALYTICS -->
         <div class="section" id="section-analytics">
@@ -257,7 +272,7 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function confirmAction(title, msg, cb) { document.getElementById('confirmTitle').textContent = title; document.getElementById('confirmMessage').textContent = msg; confirmCallback = cb; openModal('confirmModal'); }
 function executeConfirm() { if (confirmCallback) confirmCallback(); confirmCallback = null; closeModal('confirmModal'); }
 function getToken() { return localStorage.getItem('access_token'); }
-const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', departments:'🏢 Departments', semesters:'📅 Semesters', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
+const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
 function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
@@ -265,7 +280,7 @@ function switchSection(name) {
     document.querySelector('.super-sidebar-item[data-section="' + name + '"]')?.classList.add('active');
     document.getElementById('pageTitle').textContent = sectionLabels[name] || name;
     toggleSuperSidebar(false);
-    const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, departments: loadDepartments, semesters: loadSemesters, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
+    const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, departments: loadDepartments, dbInspector: loadDatabaseInspector, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
     if (loaders[name]) loaders[name]();
 }
 let chartDailyApps = null, chartRoleDist = null, chartStatusDist = null, chartMonthlyApps = null;
@@ -297,7 +312,93 @@ async function loadStaff() {
 }
 function openCreateStaffModal() { document.getElementById('createStaffForm').reset(); document.getElementById('staffResultBox').style.display = 'none'; document.getElementById('staffModalError').style.display = 'none'; document.getElementById('createStaffBtn').textContent = 'Create Account'; document.getElementById('createStaffBtn').disabled = false; openModal('createStaffModal'); }
 async function createStaff(e) { e.preventDefault(); const data = Object.fromEntries(new FormData(document.getElementById('createStaffForm'))); const btn = document.getElementById('createStaffBtn'); const errEl = document.getElementById('staffModalError'); const resultBox = document.getElementById('staffResultBox'); errEl.style.display = 'none'; resultBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'Creating...'; try { const res = await fetch('/superadmin/api/users/staff', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify(data) }); const resp = await res.json(); if (resp.success) { resultBox.innerHTML = '<div class="password">🔑 Temporary Password: <strong>' + resp.data.temporary_password + '</strong></div><div class="note">User: ' + resp.data.user.email + ' | Share this securely with the staff member.</div>'; resultBox.style.display = 'block'; showToast(resp.message); loadStaff(); btn.textContent = '✅ Created'; } else { errEl.textContent = resp.message; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } } catch(e) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } return false; }
-async function resetStaffPassword(userId) { if (!confirm('Reset password? A new temporary password will be generated.')) return; try { const res = await fetch('/superadmin/api/users/' + userId + '/reset-password', { method:'POST', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) showToast('Password reset! New: ' + d.data.temporary_password); else showToast(d.message, 'error'); } catch(e) { showToast('Error', 'error'); } }
+let currentRegenPass = "";
+async function resetStaffPassword(userId) {
+    if (!confirm('Reset password for this staff account? A new temporary password will be generated.')) return;
+    try {
+        const res = await fetch('/superadmin/api/users/' + userId + '/reset-password', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const d = await res.json();
+        if (d.success && d.data) {
+            currentRegenPass = d.data.temporary_password;
+            document.getElementById('persistentPassText').textContent = currentRegenPass;
+            openModal('persistentPasswordModal');
+        } else {
+            showToast(d.message, 'error');
+        }
+    } catch(e) {
+        showToast('Error resetting password', 'error');
+    }
+}
+
+function copyPersistentPass() {
+    if (!currentRegenPass) return;
+    navigator.clipboard.writeText(currentRegenPass);
+    showToast('Password copied to clipboard!');
+}
+
+function openCreateDeptModal() {
+    document.getElementById('createDeptForm').reset();
+    document.getElementById('deptModalError').style.display = 'none';
+    openModal('createDeptModal');
+}
+
+async function createDepartment(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(document.getElementById('createDeptForm')));
+    const errEl = document.getElementById('deptModalError');
+    errEl.style.display = 'none';
+
+    try {
+        const res = await fetch('/superadmin/api/departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify(data)
+        });
+        const resp = await res.json();
+        if (resp.success) {
+            showToast(resp.message);
+            loadDepartments();
+            closeModal('createDeptModal');
+        } else {
+            errEl.textContent = resp.message;
+            errEl.style.display = 'block';
+        }
+    } catch(e) {
+        errEl.textContent = 'Error creating department';
+        errEl.style.display = 'block';
+    }
+    return false;
+}
+
+async function loadDatabaseInspector() {
+    const table = document.getElementById('dbTableSelector')?.value || 'users';
+    try {
+        const res = await fetch('/superadmin/api/database-inspector?table=' + table, {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const resp = await res.json();
+        if (!resp.success || !resp.rows) return;
+
+        const headerEl = document.getElementById('dbInspectorHeader');
+        const bodyEl = document.getElementById('dbInspectorBody');
+
+        if (!resp.rows.length) {
+            headerEl.innerHTML = '';
+            bodyEl.innerHTML = '<tr><td style="text-align:center;color:var(--text-muted);padding:2rem;">No records found in table "' + table + '"</td></tr>';
+            return;
+        }
+
+        const cols = Object.keys(resp.rows[0]);
+        headerEl.innerHTML = '<tr>' + cols.map(c => '<th>' + c.toUpperCase().replace(/_/g, ' ') + '</th>').join('') + '</tr>';
+        bodyEl.innerHTML = resp.rows.map(r => '<tr>' + cols.map(c => '<td>' + (r[c] !== null && r[c] !== undefined ? r[c] : '-') + '</td>').join('') + '</tr>').join('');
+    } catch(e) {
+        console.error('Database Inspector error:', e);
+    }
+}
+
 async function toggleStaffStatus(userId, currentStatus) { const newStatus = currentStatus === 'active' ? 'inactive' : 'active'; confirmAction('Change Status', 'Set this user to "' + newStatus + '"?', async () => { try { const res = await fetch('/superadmin/api/users/' + userId + '/status', { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({status:newStatus}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
 function confirmDeleteStaff(userId, name) { confirmAction('Delete Staff', 'Permanently delete "' + name + '"? This cannot be undone.', async () => { try { const res = await fetch('/superadmin/api/users/' + userId, { method:'DELETE', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
 let studentPage = 1;
@@ -307,10 +408,6 @@ async function loadApplications() { const status = document.getElementById('appS
 async function viewAppDetail(appId) { try { const res = await fetch('/superadmin/api/applications/' + appId, { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) { showToast('Could not load details', 'error'); return; } const app = d.application || {}; const student = d.student || {}; const approvals = d.department_approvals || []; document.getElementById('appDetailBody').innerHTML = '<div class="student-review-card"><div class="student-info-item"><span class="info-label">Application #</span><span class="info-val">📋 ' + (app.application_number || (app.id ? app.id.slice(0,8) : 'N/A')) + '</span></div><div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ' + (student.student_name || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ' + (student.roll_number || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Course / Sem</span><span class="info-val">🎓 ' + (student.course_name || 'N/A') + ' (Sem ' + (student.current_semester || app.total_steps || 'N/A') + ')</span></div><div class="student-info-item"><span class="info-label">Status</span><span class="info-val"><span class="badge badge-' + (app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning') + '">' + app.status + '</span></span></div><div class="student-info-item"><span class="info-label">Submitted</span><span class="info-val">' + (app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted') + '</span></div></div><hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Department Approvals</h4>' + (approvals.length ? approvals.map(ad => '<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border-light);"><span>' + (ad.department_name || 'Department') + '</span><span class="badge badge-' + (ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending') + '">' + ad.status + '</span></div>').join('') : '<p style="color:var(--text-muted);">No approvals yet</p>') + '<hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Uploaded Documents (' + (d.documents || []).length + ')</h4>' + ((d.documents || []).length ? d.documents.map(doc => '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;font-size:0.85rem;border-bottom:1px dashed var(--border-light);"><div><span>📄 <strong>' + (doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT') + ':</strong> ' + (doc.file_name || 'File') + '</span> <span class="badge badge-' + (doc.status === 'verified' ? 'success' : 'pending') + '">' + doc.status + '</span></div><a href="' + (doc.file_url || '/api/documents/file/' + doc.id) + '" target="_blank" class="btn btn-sm btn-outline" style="padding:0.2rem 0.6rem;font-size:0.75rem;">👁️ View Document</a></div>').join('') : '<p style="color:var(--text-muted);">No documents uploaded</p>'); openModal('appDetailModal'); } catch(e) { showToast('Error loading details', 'error'); } }
 async function loadDepartments() { try { const res = await fetch('/superadmin/api/departments', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d || []; const tbody = document.getElementById('deptTableBody'); if (items.length) { tbody.innerHTML = items.map(d => '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--accent);">' + d.role + '</span></td><td>' + d.display_order + '</td><td><span class="badge badge-' + (d.is_active ? 'success' : 'danger') + '">' + (d.is_active ? 'Active' : 'Inactive') + '</span></td><td><button class="btn btn-sm btn-outline" onclick="toggleDeptStatus(\'' + d.id + '\',' + d.is_active + ')">' + (d.is_active ? '⏸️' : '▶️') + '</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No departments</td></tr>'; } } catch(e) { console.error(e); } }
 async function toggleDeptStatus(deptId, current) { try { const res = await fetch('/superadmin/api/departments/' + deptId, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({is_active:!current}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadDepartments(); } catch(e) { showToast('Error', 'error'); } }
-async function loadSemesters() { try { const res = await fetch('/superadmin/api/semesters', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d || []; const tbody = document.getElementById('semesterTableBody'); if (items.length) { tbody.innerHTML = items.map(s => '<tr><td>' + s.semester_number + '</td><td><strong>' + s.semester_name + '</strong></td><td>' + s.academic_year + '</td><td style="font-size:0.8rem;">' + (s.start_date || '-') + '</td><td style="font-size:0.8rem;">' + (s.end_date || '-') + '</td><td>' + (s.is_current ? '✅' : '-') + '</td><td>' + (s.is_clearance_open ? '✅' : '❌') + '</td><td><button class="btn btn-sm btn-outline" onclick="deleteSemester(\'' + s.id + '\')">🗑️</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No semesters</td></tr>'; } } catch(e) { console.error(e); } }
-function openCreateSemesterModal() { document.getElementById('createSemesterForm').reset(); document.getElementById('semesterModalError').style.display = 'none'; openModal('createSemesterModal'); }
-async function createSemester(e) { e.preventDefault(); const data = Object.fromEntries(new FormData(document.getElementById('createSemesterForm'))); data.is_current = !!data.is_current; data.is_clearance_open = !!data.is_clearance_open; const errEl = document.getElementById('semesterModalError'); errEl.style.display = 'none'; try { const res = await fetch('/superadmin/api/semesters', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify(data) }); const resp = await res.json(); if (resp.success) { showToast(resp.message); loadSemesters(); closeModal('createSemesterModal'); } else { errEl.textContent = resp.message; errEl.style.display = 'block'; } } catch(e) { errEl.textContent = 'Error'; errEl.style.display = 'block'; } return false; }
-async function deleteSemester(id) { if (!confirm('Delete this semester?')) return; try { const res = await fetch('/superadmin/api/semesters/' + id, { method:'DELETE', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadSemesters(); } catch(e) { showToast('Error', 'error'); } }
 let chartAnalyticsApps = null, chartAnalyticsReg = null, chartAnalyticsRoles = null, chartAnalyticsStatus = null, chartAnalyticsDept = null;
 async function loadAnalytics() {
     const days = document.getElementById('analyticsDays')?.value || 30;
@@ -385,8 +482,62 @@ async function initDefaultSettings() { try { const res = await fetch('/superadmi
 async function loadProfile() { try { const res = await fetch('/auth/profile', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; document.getElementById('profileInfo').innerHTML = '<div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:400;margin:0 auto 1rem;font-family:\'DM Serif Display\',serif;">' + (d.first_name || 'A')[0] + '' + (d.last_name || 'D')[0] + '</div><h3 style="font-size:1.1rem;font-weight:400;font-family:\'DM Serif Display\',serif;">' + (d.full_name || d.first_name + ' ' + d.last_name) + '</h3><p style="color:var(--text-muted);">' + d.email + '</p><p><span class="badge badge-purple">' + d.role + '</span> <span class="badge badge-' + (d.status === 'active' ? 'success' : 'danger') + '">' + d.status + '</span></p><p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Member since ' + (d.created_at ? new Date(d.created_at).toLocaleDateString() : '') + '</p>'; } catch(e) { console.error(e); } }
 function paginateHtml(current, total, onClick) { if (total <= 1) return ''; let html = '<button class="page-btn" onclick="(' + onClick + ')(' + (current - 1) + ')" ' + (current <= 1 ? 'disabled' : '') + '>◀</button>'; const start = Math.max(1, current - 2); const end = Math.min(total, current + 2); for (let i = start; i <= end; i++) { html += '<button class="page-btn ' + (i === current ? 'active' : '') + '" onclick="(' + onClick + ')(' + i + ')">' + i + '</button>'; } html += '<button class="page-btn" onclick="(' + onClick + ')(' + (current + 1) + ')" ' + (current >= total ? 'disabled' : '') + '>▶</button><span class="page-info">Page ' + current + ' of ' + total + '</span>'; return html; }
 function updateClock() { document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString(); }
-setInterval(updateClock, 1000);
 document.addEventListener('DOMContentLoaded', () => { if (!getToken()) { window.location.href = '/auth/login'; return; } loadOverview(); updateClock(); });
 </script>
+
+<!-- PERSISTENT PASSWORD RESET MODAL (Task #9) -->
+<div class="modal-overlay" id="persistentPasswordModal">
+    <div class="modal-box" style="max-width: 440px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔑</div>
+        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; margin-bottom: 0.5rem;">Staff Password Regenerated</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Please record this temporary password. This window will remain open until you click Done.
+        </p>
+        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-lg); margin-bottom: 1.25rem; font-family: monospace; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em; color: var(--accent); user-select: all;" id="persistentPassText">
+            - - - - - -
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+            <button class="btn btn-secondary" onclick="copyPersistentPass()">📋 Copy Password</button>
+            <button class="btn btn-primary" onclick="closeModal('persistentPasswordModal')">Done / OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE DEPARTMENT ID MODAL (Task #8) -->
+<div class="modal-overlay" id="createDeptModal">
+    <div class="modal-box" style="max-width: 480px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem;">🏢 Create New Department ID</h3>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal('createDeptModal')">✕</button>
+        </div>
+        <div class="error-msg" id="deptModalError" style="display:none; color:var(--crimson); margin-bottom:1rem;"></div>
+        <form id="createDeptForm" onsubmit="return createDepartment(event)">
+            <div class="form-group">
+                <label class="form-label">Department Code (e.g., ACC, LIB, LAB)</label>
+                <input type="text" class="form-input" name="code" placeholder="EXM" required style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Department Full Name</label>
+                <input type="text" class="form-input" name="name" placeholder="Library Department" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Role Identifier</label>
+                <input type="text" class="form-input" name="role" placeholder="library" required style="text-transform: lowercase;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" name="description" rows="2" placeholder="Clearance description..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Display Step Order</label>
+                <input type="number" class="form-input" name="display_order" value="8" min="1" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createDeptModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Department ID</button>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>

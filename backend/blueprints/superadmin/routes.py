@@ -599,20 +599,154 @@ def list_departments():
     return jsonify({"success": True, "data": [d.to_dict() for d in depts]})
 
 
-@superadmin_bp.route("/api/departments/<dept_id>", methods=["PUT"])
+@superadmin_bp.route("/api/departments", methods=["POST"])
 @jwt_required()
 @admin_only
-@validate_json()
-def update_department(dept_id):
+@validate_json("code", "name", "role")
+def create_department():
+    """Create a new custom department ID."""
+    data = request.validated_data
+    code = data.get("code", "").strip().upper()
+    name = data.get("name", "").strip()
+    role = data.get("role", "").strip().lower()
+    description = data.get("description", "").strip()
+    display_order = int(data.get("display_order", 10))
+
+    if Department.query.filter_by(code=code).first():
+        return jsonify({"success": False, "message": f"Department with code '{code}' already exists"}), 409
+
+    dept = Department(
+        code=code,
+        name=name,
+        description=description,
+        role=role,
+        display_order=display_order,
+        is_active=True,
+    )
+    db.session.add(dept)
+
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="create",
+        resource_type="department",
+        details={"code": code, "name": name, "role": role},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": f"Department '{name}' created successfully", "data": dept.to_dict()}), 201
+
+
+@superadmin_bp.route("/api/departments/<dept_id>", methods=["DELETE"])
+@jwt_required()
+@admin_only
+def delete_department(dept_id):
+    """Delete or deactivate a department."""
     dept = Department.query.get(dept_id)
     if not dept:
         return jsonify({"success": False, "message": "Department not found"}), 404
-    data = request.validated_data
-    for field in ("name", "description", "is_active", "display_order"):
-        if field in data:
-            setattr(dept, field, data[field])
+
+    dept.is_active = False
+    audit = AuditLog(
+        user_id=get_jwt_identity(),
+        action="delete",
+        resource_type="department",
+        details={"dept_id": str(dept.id), "code": dept.code},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
     db.session.commit()
-    return jsonify({"success": True, "message": "Department updated", "data": dept.to_dict()})
+    return jsonify({"success": True, "message": f"Department '{dept.name}' deactivated"})
+
+
+# ──────────────────────────────────────
+# API: Database Inspector (Task #13)
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/database-inspector", methods=["GET"])
+@jwt_required()
+@admin_only
+def database_inspector():
+    """Returns real-time database table snapshot for Super Admin inspection."""
+    table = request.args.get("table", "users").strip().lower()
+
+    if table == "users":
+        rows = User.query.order_by(User.created_at.desc()).limit(100).all()
+        data = [
+            {
+                "id": str(u.id),
+                "email": u.email,
+                "role": u.role,
+                "name": u.full_name,
+                "status": u.status,
+                "verified": u.is_email_verified,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+                "last_login": u.last_login_at.isoformat() if u.last_login_at else "Never",
+            }
+            for u in rows
+        ]
+    elif table == "departments":
+        rows = Department.query.order_by(Department.display_order).all()
+        data = [
+            {
+                "id": str(d.id),
+                "code": d.code,
+                "name": d.name,
+                "role": d.role,
+                "display_order": d.display_order,
+                "is_active": d.is_active,
+                "created_at": d.created_at.isoformat() if d.created_at else None,
+            }
+            for d in rows
+        ]
+    elif table == "students":
+        rows = Student.query.limit(100).all()
+        data = [
+            {
+                "id": str(s.id),
+                "user_id": str(s.user_id),
+                "roll_number": s.roll_number,
+                "enrollment_number": s.enrollment_number,
+                "course": s.course_name,
+                "branch": s.branch,
+                "semester": s.current_semester,
+                "category": s.category,
+            }
+            for s in rows
+        ]
+    elif table == "applications":
+        rows = NoDuesApplication.query.order_by(NoDuesApplication.created_at.desc()).limit(100).all()
+        data = [
+            {
+                "id": str(a.id),
+                "application_number": a.application_number,
+                "student_id": str(a.student_id),
+                "status": a.status,
+                "progress": f"{a.progress_percentage}%",
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            }
+            for a in rows
+        ]
+    elif table == "admit_cards":
+        rows = AdmitCard.query.order_by(AdmitCard.created_at.desc()).limit(100).all()
+        data = [
+            {
+                "id": str(ac.id),
+                "card_number": ac.card_number,
+                "application_id": str(ac.application_id),
+                "student_id": str(ac.student_id),
+                "downloads": ac.download_count,
+                "created_at": ac.created_at.isoformat() if ac.created_at else None,
+            }
+            for ac in rows
+        ]
+    else:
+        return jsonify({"success": False, "message": "Invalid table requested"}), 400
+
+    return jsonify({"success": True, "table": table, "total_records": len(data), "rows": data})
+
 
 
 # ──────────────────────────────────────

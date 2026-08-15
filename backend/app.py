@@ -67,6 +67,9 @@ def create_app(config_name: str = "default") -> Flask:
 
     # Initialize extensions
     db.init_app(app)
+    from utils.db_manager import init_db_manager
+    init_db_manager(app)
+
     bcrypt.init_app(app)
     jwt.init_app(app)
     login_manager.init_app(app)
@@ -89,6 +92,11 @@ def create_app(config_name: str = "default") -> Flask:
 
     # Register blueprints
     register_blueprints(app)
+
+    @app.route("/verify-clearance/<card_number>")
+    def root_verify_clearance(card_number):
+        from blueprints.examination.routes import public_verify_clearance
+        return public_verify_clearance(card_number)
 
     # Register error handlers
     register_error_handlers(app)
@@ -128,12 +136,8 @@ def _auto_seed(app):
     # Ensure tables exist first
     db.create_all()
 
-    # Only seed if NO DEFAULT users exist (check by known emails)
-    default_emails = ["kprem@rayatbahra.edu", "accounts@rayatbahra.edu", "hostel@rayatbahra.edu", 
-                      "mess@rayatbahra.edu", "transport@rayatbahra.edu", "scholarship@rayatbahra.edu", 
-                      "hod.cse@rayatbahra.edu", "examination@rayatbahra.edu", "student@rayatbahra.edu"]
-    existing_default = User.query.filter(User.email.in_(default_emails)).first()
-    if existing_default:
+    # Only seed if database is completely empty (no users exist at all)
+    if User.query.first() or Department.query.first():
         return
 
     print("[*] Auto-seeding database with default data...")

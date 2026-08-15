@@ -25,10 +25,10 @@
             font-size: 0.8rem; color: var(--text-muted); pointer-events: none;
         }
         .error-msg { color: var(--crimson); font-size: 0.85rem; text-align: center; margin-bottom: 1.25rem; display: none; padding: 0.75rem; background: var(--crimson-soft); border-radius: var(--radius-md); }
-        .form-input-icon { position: relative; }
-        .form-input-icon .icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; }
-        .form-input-icon .form-input { padding-left: 2.75rem; }
-        .floating-label { position: absolute; left: 2.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none; transition: all var(--transition-fast); background: var(--bg-card); padding: 0 4px; }
+        .form-input-icon { position: relative; width: 100%; display: flex; align-items: center; }
+        .form-input-icon .icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.1rem; z-index: 5; pointer-events: none; display: flex; align-items: center; justify-content: center; height: 100%; }
+        .form-input-icon .form-input { width: 100% !important; padding-left: 2.6rem !important; padding-right: 1rem !important; box-sizing: border-box !important; text-indent: 0 !important; font-size: 0.92rem !important; height: 46px !important; line-height: normal !important; }
+        .floating-label { position: absolute; left: 2.6rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none; transition: all var(--transition-fast); background: var(--bg-card); padding: 0 4px; z-index: 4; }
         .form-input-icon .form-input:focus + .floating-label,
         .form-input-icon .form-input:not(:placeholder-shown) + .floating-label { top: 0; transform: translateY(-50%); font-size: 0.7rem; color: var(--accent); }
         .input-focused .floating-label { top: 0; transform: translateY(-50%); font-size: 0.7rem; color: var(--accent); }
@@ -40,8 +40,10 @@
         .del-4 { animation-delay: 0.4s; }
         .del-5 { animation-delay: 0.5s; }
         @media (max-width: 480px) {
-            .login-container { padding: 1rem; }
-            .login-card .card { padding: 1.5rem !important; border-radius: var(--radius-xl) !important; }
+            .login-container { padding: 0.75rem; }
+            .login-card .card { padding: 1.25rem !important; border-radius: var(--radius-xl) !important; }
+            .form-input-icon .form-input { font-size: 0.9rem !important; padding-left: 2.5rem !important; height: 44px !important; }
+            .form-input-icon .icon { left: 0.75rem; font-size: 1rem; }
         }
     </style>
 </head>
