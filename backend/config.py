@@ -52,8 +52,8 @@ class BaseConfig:
     SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
-    RATELIMIT_ENABLED = True
-    RATELIMIT_DEFAULT = "100/hour"
+    RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "true").lower() == "true"
+    RATELIMIT_DEFAULT = os.environ.get("RATELIMIT_DEFAULT", "2000 per hour; 300 per minute")
     RATELIMIT_STORAGE_URL = os.environ.get("RATELIMIT_STORAGE_URL", "memory://")
 
     SOCKETIO_CORS_ALLOWED_ORIGINS = os.environ.get(

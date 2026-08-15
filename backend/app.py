@@ -93,7 +93,14 @@ def create_app(config_name: str = "default") -> Flask:
     # Register blueprints
     register_blueprints(app)
 
+    @app.route("/health")
+    @app.route("/api/health")
+    @limiter.exempt
+    def health_check():
+        return {"status": "healthy", "service": "nodues-flow-ai"}, 200
+
     @app.route("/verify-clearance/<card_number>")
+    @limiter.exempt
     def root_verify_clearance(card_number):
         from blueprints.examination.routes import public_verify_clearance
         return public_verify_clearance(card_number)
