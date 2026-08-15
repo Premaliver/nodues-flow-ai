@@ -188,9 +188,9 @@ def create_application():
     selected_depts = data.get("selected_departments", [])
     signature_data = data.get("signature", "")
 
-    # Validate selections
-    if not selected_depts:
-        return jsonify({"success": False, "message": "Please select at least one department"}), 400
+    # Hosteller default facilities if none passed
+    if student.category == "hosteller" and not selected_depts:
+        selected_depts = ["hostel", "mess"]
 
     # Find HOD department (auto-assigned matching student's branch/course)
     hod_dept = None
@@ -252,22 +252,22 @@ def create_application():
             "is_required": True,
         })
 
-    # Compute category based on selected departments
+    # Compute category based on student profile and selected departments
     category = "day_scholar"
-    if "hostel" in selected_depts and "transport" in selected_depts and "scholarship" in selected_depts:
-        category = "hosteller_scholarship_transport"
-    elif "hostel" in selected_depts and "transport" in selected_depts:
-        category = "hosteller_transport"
-    elif "hostel" in selected_depts and "scholarship" in selected_depts:
-        category = "scholarship_hosteller"
-    elif "transport" in selected_depts and "scholarship" in selected_depts:
-        category = "scholarship_transport"
-    elif "hostel" in selected_depts:
-        category = "hosteller"
-    elif "transport" in selected_depts:
-        category = "transport_user"
-    elif "scholarship" in selected_depts:
-        category = "scholarship"
+    if student.category == "hosteller" or "hostel" in selected_depts:
+        if "scholarship" in selected_depts:
+            category = "scholarship_hosteller"
+        else:
+            category = "hosteller"
+    else:
+        if "transport" in selected_depts and "scholarship" in selected_depts:
+            category = "scholarship_transport"
+        elif "transport" in selected_depts:
+            category = "transport_user"
+        elif "scholarship" in selected_depts:
+            category = "scholarship"
+        else:
+            category = "day_scholar"
 
     # Compute signature hash
     sig_hash = hashlib.sha256(signature_data.encode("utf-8")).hexdigest() if signature_data else ""

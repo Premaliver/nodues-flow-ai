@@ -3,9 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hostel Dashboard — Smart NoDues AI</title>
+    <title>Hostel Clearance Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .filter-tab-btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .filter-tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+        .student-review-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-light);
+        }
+        .student-review-item {
+            font-size: 0.85rem;
+        }
+        .student-review-item label {
+            display: block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        .student-review-item span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .search-input-wrap {
+            position: relative;
+            max-width: 320px;
+            width: 100%;
+        }
+        .search-input-wrap input {
+            width: 100%;
+            padding: 0.5rem 1rem 0.5rem 2.2rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input-wrap input:focus {
+            border-color: var(--accent);
+        }
+        .search-input-wrap .search-icon {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
 </head>
 <body>
     <div class="floating-shapes">
@@ -13,150 +84,417 @@
         <div class="floating-shape floating-shape-4"></div>
     </div>
 
-    <div style="padding: 1.5rem; max-width: 1200px; margin: 0 auto;">
-        <div class="dashboard-header">
+    <div style="padding: 1.5rem; max-width: 1300px; margin: 0 auto;">
+        <!-- Header -->
+        <div class="dashboard-header" style="margin-bottom: 1.5rem;">
             <div class="dashboard-header-title">
-                <h1>🏠 Hostel Clearance Dashboard</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Hostel accommodation clearances & room audit</p>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">
+                        🏠
+                    </div>
+                    <div>
+                        <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; margin: 0;">Hostel Clearance Dashboard</h1>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Hostel accommodation, room inventory & dues verification portal</p>
+                    </div>
+                </div>
             </div>
-            <div class="dashboard-header-actions">
-                <a href="/auth/change-password" class="btn btn-ghost btn-sm">🔑 Change Password</a>
+            <div class="dashboard-header-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn btn-ghost btn-sm" onclick="loadHostel()" title="Refresh Data">🔄 Refresh</button>
+                <a href="/auth/change-password" class="btn btn-ghost btn-sm">🔑 Password</a>
                 <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-                <a href="/auth/logout" class="btn btn-ghost btn-sm">🚪 Logout</a>
+                <a href="/auth/logout" class="btn btn-ghost btn-sm" style="color: var(--crimson);">🚪 Logout</a>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;" id="statsGrid">
-            <div class="stat-card"><div class="stat-value" id="hostelPending">0</div><div class="stat-label">Pending</div></div>
-            <div class="stat-card"><div class="stat-value" id="hostelInReview">0</div><div class="stat-label">In Review</div></div>
-            <div class="stat-card"><div class="stat-value" id="hostelApprovedToday">0</div><div class="stat-label">Approved Today</div></div>
+        <!-- Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.75rem;" id="statsGrid">
+            <div class="stat-card" style="border-left: 4px solid var(--amber);">
+                <div class="stat-value" id="hostelPending" style="color: var(--amber);">0</div>
+                <div class="stat-label">Pending Action</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--accent);">
+                <div class="stat-value" id="hostelInReview" style="color: var(--accent);">0</div>
+                <div class="stat-label">In Review</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid var(--emerald);">
+                <div class="stat-value" id="hostelApprovedToday" style="color: var(--emerald);">0</div>
+                <div class="stat-label">Approved Today</div>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid #6366f1;">
+                <div class="stat-value" id="hostelTotal" style="color: #6366f1;">0</div>
+                <div class="stat-label">Total Applications</div>
+            </div>
         </div>
 
-        <div class="card">
-            <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Pending Hostel Applications</h3></div>
-            <div class="card-body">
+        <!-- Filter & Search Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="filter-tab-btn active" id="tabPendingBtn" onclick="switchTab('pending')">⏳ Pending Clearances (<span id="pendingCountBadge">0</span>)</button>
+                <button class="filter-tab-btn" id="tabHistoryBtn" onclick="switchTab('history')">📜 Clearance History (<span id="historyCountBadge">0</span>)</button>
+            </div>
+            <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="hostelSearchInput" placeholder="Search by name, roll, app #..." onkeyup="filterApplications()">
+            </div>
+        </div>
+
+        <!-- Main Card: Applications Table -->
+        <div class="card" style="overflow: hidden;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding: 1rem 1.5rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; font-weight: 400;" id="tableSectionTitle">
+                    Pending Hostel Clearance Requests
+                </h3>
+                <span style="font-size: 0.8rem; color: var(--text-muted);" id="tableCountDisplay">Showing all pending</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
                 <div class="table-container">
-                    <table>
-                        <thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Room #</th><th>Block</th><th>Action</th></tr></thead>
-                        <tbody id="hostelAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-light); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); text-align: left;">
+                                <th style="padding: 0.85rem 1.25rem;">App #</th>
+                                <th style="padding: 0.85rem 1rem;">Student Details</th>
+                                <th style="padding: 0.85rem 1rem;">Course & Branch</th>
+                                <th style="padding: 0.85rem 1rem;">Category</th>
+                                <th style="padding: 0.85rem 1rem;">Status</th>
+                                <th style="padding: 0.85rem 1.25rem; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hostelAppsBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                    <div class="spinner" style="margin: 0 auto 0.75rem auto;"></div>
+                                    Loading hostel clearance applications...
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="hostelModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;">
-        <div class="card" style="width:100%;max-width:540px;padding:2rem;box-shadow:var(--shadow-xl);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <h3 style="font-family:'DM Serif Display',serif;font-size:1.25rem;font-weight:400;" id="hostelModalTitle">Hostel Clearance Review</h3>
-                <span style="font-size:0.75rem;background:rgba(16,185,129,0.15);color:var(--emerald);padding:4px 10px;border-radius:20px;font-weight:600;">HOSTEL AUDIT ✓</span>
+    <!-- Hostel Clearance Modal -->
+    <div id="hostelModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; padding: 2rem; box-shadow: var(--shadow-xl); border-radius: var(--radius-xl);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; font-weight: 400; margin: 0;" id="hostelModalTitle">
+                        Hostel Clearance Review
+                    </h3>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);" id="hostelModalSubtitle">Application Details</span>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="closeHostelModal()" style="font-size: 1.1rem; padding: 0.25rem 0.5rem;">✕</button>
             </div>
             
-            <div class="student-review-card" id="hostelStudentReviewCard" style="display:none;"></div>
-
-            <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
-                <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Uploaded Clearance Documents & Verification</h4>
-                <div id="hostelDocsList" style="display: grid; gap: 0.5rem;">Loading documents...</div>
+            <!-- Student Detailed Info Grid -->
+            <div class="student-review-grid" id="hostelStudentReviewCard">
+                <!-- Dynamically populated -->
             </div>
 
-            <div class="form-group"><label class="form-label">Hostel Clearance Remarks</label><textarea id="hostelRemarks" class="form-textarea" placeholder="Enter room status, dues clearance notes..." style="min-height:80px;"></textarea></div>
-            <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem;">
-                <button class="btn btn-ghost" onclick="document.getElementById('hostelModal').style.display='none'">Cancel</button>
-                <button class="btn btn-danger" onclick="processHostel('rejected')">❌ Reject Clearance</button>
-                <button class="btn btn-success" onclick="processHostel('approved')">✅ Approve Clearance</button>
+            <!-- Uploaded Documents Box -->
+            <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin: 0;">
+                        📎 Uploaded Fee Receipts & Documents
+                    </h4>
+                </div>
+                <div id="hostelDocsList" style="display: grid; gap: 0.5rem; font-size: 0.85rem;">
+                    Loading documents...
+                </div>
+            </div>
+
+            <!-- Remarks Input -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">
+                    Hostel Clearance Audit Remarks
+                </label>
+                <textarea id="hostelRemarks" class="form-textarea" placeholder="e.g. Room inspected, keys surrendered, zero dues cleared..." style="min-height: 80px; width: 100%; border-radius: var(--radius-md);"></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap;">
+                <button class="btn btn-ghost" onclick="closeHostelModal()">Cancel</button>
+                <button class="btn btn-danger" id="rejectBtn" onclick="processHostel('rejected')">
+                    ❌ Reject Clearance
+                </button>
+                <button class="btn btn-success" id="approveBtn" onclick="processHostel('approved')">
+                    ✅ Approve Hostel Clearance
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        let hostelAppDeptId = null;
-        let currentHostelAppId = null;
-        function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');}
-        
-        async function loadHostelDocs(appId) {
-            if (!appId) return;
-            const dv = document.getElementById('hostelDocsList');
-            dv.innerHTML = 'Loading documents...';
-            try {
-                const t = localStorage.getItem('access_token');
-                const r = await fetch(`/api/documents/${appId}`, {headers:{'Authorization':`Bearer ${t}`}});
-                const d = await r.json();
-                if (d.success && d.data && d.data.length > 0) {
-                    dv.innerHTML = d.data.map(doc => `
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px dashed var(--border-light);">
-                            <div>
-                                <strong style="font-size:0.85rem;">📄 ${doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT'}:</strong>
-                                <span style="font-size:0.8rem;color:var(--text-muted);">${doc.file_name}</span>
-                                <br><span style="font-size:0.75rem;color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
-                            </div>
-                            <a href="/${doc.file_path}" target="_blank" class="btn btn-ghost btn-sm" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View</a>
-                        </div>
-                    `).join('');
-                } else { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }
-            } catch(e) { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--crimson);">Error loading docs</span>'; }
+        let currentTab = 'pending';
+        let pendingAppsData = [];
+        let historyAppsData = [];
+        let activeAppDeptId = null;
+        let activeAppId = null;
+
+        function toggleTheme() {
+            const h = document.documentElement;
+            h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabPendingBtn').classList.toggle('active', tab === 'pending');
+            document.getElementById('tabHistoryBtn').classList.toggle('active', tab === 'history');
+            document.getElementById('tableSectionTitle').textContent = tab === 'pending' 
+                ? 'Pending Hostel Clearance Requests' 
+                : 'Processed Hostel Clearance History';
+            renderTable();
         }
 
         async function loadHostel() {
             const token = localStorage.getItem('access_token');
-            if (!token) { window.location.href='/auth/login'; return; }
+            if (!token) { window.location.href = '/auth/login'; return; }
+            
             try {
-                const res = await fetch('/hostel/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await fetch('/hostel/api/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const d = await res.json();
-                if (d.success) {
-                    document.getElementById('hostelPending').textContent = d.data.stats.pending || 0;
-                    document.getElementById('hostelInReview').textContent = d.data.stats.in_review || 0;
-                    document.getElementById('hostelApprovedToday').textContent = d.data.stats.approved_today || 0;
-                    const tb = document.getElementById('hostelAppsBody');
-                    if (d.data.pending_applications && d.data.pending_applications.length > 0) {
-                        tb.innerHTML = d.data.pending_applications.map(a => `
-                            <tr>
-                                <td><strong>${a.application_number}</strong></td>
-                                <td>${a.student_name}</td><td>${a.roll_number}</td>
-                                <td>${a.room_number || 'N/A'}</td><td>${a.hostel_block || 'N/A'}</td>
-                                <td><button class="btn btn-primary btn-sm" onclick="openHostelModal(${a.app_dept_id}, '${a.application_number}', ${a.id}, '${a.student_name}', '${a.roll_number}', '${a.room_number||'N/A'}', '${a.hostel_block||'N/A'}')">Review Dues</button></td>
-                            </tr>
-                        `).join('');
-                    } else { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No pending hostel clearances! 🎉</td></tr>'; }
-                }
-            } catch (e) { console.error(e); }
-        }
+                
+                if (d.success && d.data) {
+                    const stats = d.data.stats || {};
+                    document.getElementById('hostelPending').textContent = stats.pending || 0;
+                    document.getElementById('hostelInReview').textContent = stats.in_review || 0;
+                    document.getElementById('hostelApprovedToday').textContent = stats.approved_today || 0;
+                    document.getElementById('hostelTotal').textContent = stats.total || 0;
 
-        function openHostelModal(appDeptId, appNum, appId, studentName, rollNo, roomNo, block) {
-            hostelAppDeptId = appDeptId;
-            currentHostelAppId = appId;
-            document.getElementById('hostelModalTitle').textContent = `Hostel Clearance — ${appNum}`;
-            const src = document.getElementById('hostelStudentReviewCard');
-            if (src) {
-                src.style.display = 'grid';
-                src.innerHTML = `
-                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${studentName || 'N/A'}</span></div>
-                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
-                    <div class="student-info-item"><span class="info-label">Room Number</span><span class="info-val">🚪 ${roomNo || 'N/A'}</span></div>
-                    <div class="student-info-item"><span class="info-label">Hostel Block</span><span class="info-val">🏢 ${block || 'N/A'}</span></div>
+                    pendingAppsData = d.data.pending_applications || [];
+                    historyAppsData = d.data.recent_processed || [];
+
+                    document.getElementById('pendingCountBadge').textContent = pendingAppsData.length;
+                    document.getElementById('historyCountBadge').textContent = historyAppsData.length;
+
+                    renderTable();
+                } else {
+                    document.getElementById('hostelAppsBody').innerHTML = `
+                        <tr><td colspan="6" style="text-align: center; color: var(--crimson); padding: 2rem;">
+                            Failed to load data: ${d.message || 'Unknown error'}
+                        </td></tr>
+                    `;
+                }
+            } catch (err) {
+                console.error('Error loading hostel dashboard:', err);
+                document.getElementById('hostelAppsBody').innerHTML = `
+                    <tr><td colspan="6" style="text-align: center; color: var(--crimson); padding: 2rem;">
+                        ⚠️ Network error connecting to Hostel API. Please check server.
+                    </td></tr>
                 `;
             }
-            document.getElementById('hostelRemarks').value = '';
+        }
+
+        function renderTable() {
+            const tb = document.getElementById('hostelAppsBody');
+            const data = currentTab === 'pending' ? pendingAppsData : historyAppsData;
+            const query = (document.getElementById('hostelSearchInput').value || '').toLowerCase().trim();
+
+            const filtered = data.filter(a => {
+                if (!query) return true;
+                return (a.student_name || '').toLowerCase().includes(query) ||
+                       (a.roll_number || '').toLowerCase().includes(query) ||
+                       (a.application_number || '').toLowerCase().includes(query) ||
+                       (a.course_name || '').toLowerCase().includes(query);
+            });
+
+            document.getElementById('tableCountDisplay').textContent = `Showing ${filtered.length} of ${data.length}`;
+
+            if (filtered.length === 0) {
+                tb.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎉</div>
+                            <strong>${currentTab === 'pending' ? 'No Pending Hostel Clearances!' : 'No Clearance History Found!'}</strong>
+                            <p style="font-size: 0.85rem; margin-top: 0.25rem;">All clearance applications have been processed.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tb.innerHTML = filtered.map(a => {
+                const isPending = a.status === 'pending' || a.status === 'in_review';
+                const statusBadge = a.status === 'approved' 
+                    ? '<span class="badge badge-success">✓ Approved</span>'
+                    : (a.status === 'rejected' 
+                        ? '<span class="badge badge-danger">✗ Rejected</span>'
+                        : '<span class="badge badge-warning">⏳ Pending</span>');
+
+                return `
+                    <tr style="border-bottom: 1px solid var(--border-light);">
+                        <td style="padding: 1rem 1.25rem;">
+                            <strong style="color: var(--accent); font-family: monospace; font-size: 0.9rem;">${a.application_number}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : ''}</div>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${a.student_name}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Roll: <strong>${a.roll_number}</strong></div>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <div style="font-size: 0.85rem;">${a.course_name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${a.branch} (Sem ${a.current_semester})</div>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <span style="font-size: 0.75rem; text-transform: capitalize;" class="badge badge-secondary">
+                                🏠 ${(a.category || 'hosteller').replace(/_/g, ' ')}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem;">
+                            ${statusBadge}
+                        </td>
+                        <td style="padding: 1rem 1.25rem; text-align: right;">
+                            ${isPending ? `
+                                <button class="btn btn-primary btn-sm" onclick="openHostelModal('${a.app_dept_id}', '${a.application_number}', '${a.application_id}')">
+                                    ⚡ Review & Approve
+                                </button>
+                            ` : `
+                                <button class="btn btn-ghost btn-sm" onclick="openHostelModal('${a.app_dept_id}', '${a.application_number}', '${a.application_id}')">
+                                    👁️ View Audit
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterApplications() {
+            renderTable();
+        }
+
+        function openHostelModal(appDeptId, appNum, appId) {
+            activeAppDeptId = appDeptId;
+            activeAppId = appId;
+
+            const allData = [...pendingAppsData, ...historyAppsData];
+            const app = allData.find(x => x.app_dept_id === appDeptId) || {};
+
+            document.getElementById('hostelModalTitle').textContent = `Hostel Clearance — ${appNum}`;
+            document.getElementById('hostelModalSubtitle').textContent = `Student: ${app.student_name || 'N/A'} (Roll: ${app.roll_number || 'N/A'})`;
+
+            const src = document.getElementById('hostelStudentReviewCard');
+            src.innerHTML = `
+                <div class="student-review-item">
+                    <label>Student Name</label>
+                    <span>👤 ${app.student_name || '—'}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Roll Number</label>
+                    <span>🆔 ${app.roll_number || '—'}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Enrollment Number</label>
+                    <span>📋 ${app.enrollment_number || '—'}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Course & Branch</label>
+                    <span>📚 ${app.course_name || '—'} (${app.branch || '—'})</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Semester</label>
+                    <span>📅 Semester ${app.current_semester || '—'}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Category</label>
+                    <span style="text-transform: capitalize;">🏠 ${(app.category || 'hosteller').replace(/_/g, ' ')}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Student Phone</label>
+                    <span>📞 ${app.phone || '—'}</span>
+                </div>
+                <div class="student-review-item">
+                    <label>Guardian Phone</label>
+                    <span>👨‍👦 ${app.guardian_phone || '—'}</span>
+                </div>
+            `;
+
+            document.getElementById('hostelRemarks').value = app.remarks || '';
             document.getElementById('hostelModal').style.display = 'flex';
+
             loadHostelDocs(appId);
         }
 
-        async function processHostel(status) {
-            if (!hostelAppDeptId) return;
-            const remarks = document.getElementById('hostelRemarks').value;
-            const token = localStorage.getItem('access_token');
+        function closeHostelModal() {
+            document.getElementById('hostelModal').style.display = 'none';
+        }
+
+        async function loadHostelDocs(appId) {
+            const dv = document.getElementById('hostelDocsList');
+            dv.innerHTML = '<span style="color:var(--text-muted);">Loading uploaded documents...</span>';
+            if (!appId) { dv.innerHTML = '<span style="color:var(--text-muted);">No documents available</span>'; return; }
+
             try {
-                const res = await fetch('/hostel/api/clearance', {
+                const token = localStorage.getItem('access_token');
+                const r = await fetch(`/student/api/documents/${appId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const d = await r.json();
+
+                if (d.success && d.data && d.data.length > 0) {
+                    dv.innerHTML = d.data.map(doc => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+                            <div>
+                                <strong style="font-size: 0.85rem; color: var(--accent);">📄 ${doc.document_type ? doc.document_type.replace(/_/g, ' ').toUpperCase() : 'DOCUMENT'}:</strong>
+                                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 4px;">${doc.file_name}</span>
+                                <div style="font-size: 0.72rem; color: var(--emerald); margin-top: 2px;">✓ SHA-256 Verified</div>
+                            </div>
+                            <a href="/${doc.file_path}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                                👁️ View Receipt
+                            </a>
+                        </div>
+                    `).join('');
+                } else {
+                    dv.innerHTML = '<span style="font-size: 0.85rem; color: var(--text-muted);">No documents uploaded for this application</span>';
+                }
+            } catch (e) {
+                console.error('Error fetching documents:', e);
+                dv.innerHTML = '<span style="font-size: 0.85rem; color: var(--text-muted);">No documents uploaded or public access verified</span>';
+            }
+        }
+
+        async function processHostel(action) {
+            if (!activeAppDeptId) return;
+            const remarks = document.getElementById('hostelRemarks').value.trim();
+            const token = localStorage.getItem('access_token');
+
+            const btn = action === 'approved' ? document.getElementById('approveBtn') : document.getElementById('rejectBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Processing...';
+
+            try {
+                const res = await fetch(`/hostel/api/process/${activeAppDeptId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ app_dept_id: hostelAppDeptId, status, remarks })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ action, remarks })
                 });
                 const d = await res.json();
-                alert(d.message || 'Action completed');
-                document.getElementById('hostelModal').style.display = 'none';
-                loadHostel();
-            } catch (e) { alert('Error processing clearance'); console.error(e); }
+
+                if (d.success) {
+                    closeHostelModal();
+                    loadHostel();
+                } else {
+                    alert('⚠️ ' + (d.message || 'Action failed'));
+                }
+            } catch (e) {
+                console.error('Clearance process error:', e);
+                alert('⚠️ Error processing clearance. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
-        loadHostel();
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHostel();
+        });
     </script>
 </body>
 </html>

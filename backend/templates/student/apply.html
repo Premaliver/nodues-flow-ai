@@ -128,37 +128,15 @@
                         <!-- STEP 2: Department Selection -->
                         <div class="card" id="step2" style="padding: 2rem; display: none;">
                             <div class="form-section">
-                                <h3 class="form-section-title">🏛️ Select Departments for Clearance</h3>
-                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Tick the departments you need clearance from. Hostel, Mess, Transport, and Scholarship are facility-based.</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                                    <h3 class="form-section-title" style="margin-bottom: 0; border-bottom: none;" id="step2Title">🏛️ Select Clearance Facilities</h3>
+                                    <span id="studentCategoryBadge" class="badge badge-primary" style="text-transform: capitalize; font-size: 0.8rem;"></span>
+                                </div>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;" id="step2Subtitle">
+                                    Select the facilities you availed for institutional clearance.
+                                </p>
                                 <div class="checkbox-grid" id="deptCheckboxes">
-                                    <div class="checkbox-card" data-dept="hostel">
-                                        <input type="checkbox" value="hostel" id="dept-hostel">
-                                        <label for="dept-hostel" style="cursor: pointer; flex:1;">
-                                            <strong>🏠 Hostel</strong>
-                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel accommodation clearance</span>
-                                        </label>
-                                    </div>
-                                    <div class="checkbox-card" data-dept="mess">
-                                        <input type="checkbox" value="mess" id="dept-mess">
-                                        <label for="dept-mess" style="cursor: pointer; flex:1;">
-                                            <strong>🍽️ Mess</strong>
-                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues clearance</span>
-                                        </label>
-                                    </div>
-                                    <div class="checkbox-card" data-dept="transport">
-                                        <input type="checkbox" value="transport" id="dept-transport">
-                                        <label for="dept-transport" style="cursor: pointer; flex:1;">
-                                            <strong>🚌 Transport</strong>
-                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Transport fee clearance</span>
-                                        </label>
-                                    </div>
-                                    <div class="checkbox-card" data-dept="scholarship">
-                                        <input type="checkbox" value="scholarship" id="dept-scholarship">
-                                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
-                                            <strong>📜 Scholarship</strong>
-                                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship verification</span>
-                                        </label>
-                                    </div>
+                                    <!-- Populated dynamically based on student category (Day Scholar vs Hosteller) -->
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
@@ -313,6 +291,7 @@
                 if (profileData.success) {
                     studentData = profileData.data;
                     renderPersonalInfo();
+                    renderFacilityOptions();
                     
                     // Auto-detect HOD department directly from student profile data
                     const hodDisplay = document.getElementById('hodDeptDisplay');
@@ -325,62 +304,104 @@
             }
         }
 
-        function renderPersonalInfo() {
-            const s = studentData;
-            document.getElementById('personalInfo').innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input class="form-input" value="${s.student_name || ''}" readonly style="background:var(--bg-secondary);">
+        function renderFacilityOptions() {
+            const container = document.getElementById('deptCheckboxes');
+            const badge = document.getElementById('studentCategoryBadge');
+            const subtitle = document.getElementById('step2Subtitle');
+            const isHosteller = (studentData.category || '').toLowerCase() === 'hosteller';
+
+            badge.textContent = isHosteller ? '🏠 Hosteller' : '🚶 Day Scholar';
+
+            if (isHosteller) {
+                subtitle.textContent = 'As a Hosteller, clearance from Hostel and Mess is included. You may also select Scholarship clearance:';
+                container.innerHTML = `
+                    <div class="checkbox-card selected" data-dept="hostel" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="hostel" id="dept-hostel" checked onchange="updateCardState(this)">
+                        <label for="dept-hostel" style="cursor: pointer; flex:1;">
+                            <strong>🏠 Hostel Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel accommodation & room clearance</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Roll Number</label>
-                        <input class="form-input" value="${s.roll_number || ''}" readonly style="background:var(--bg-secondary);">
+                    <div class="checkbox-card selected" data-dept="mess" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="mess" id="dept-mess" checked onchange="updateCardState(this)">
+                        <label for="dept-mess" style="cursor: pointer; flex:1;">
+                            <strong>🍽️ Mess Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues & food billing clearance</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Enrollment Number</label>
-                        <input class="form-input" value="${s.enrollment_number || ''}" readonly style="background:var(--bg-secondary);">
+                    <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="updateCardState(this)">
+                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
+                            <strong>🎓 Scholarship Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Course</label>
-                        <input class="form-input" value="${s.course_name || ''}" readonly style="background:var(--bg-secondary);">
+                `;
+            } else {
+                // Day Scholar: Transport, Scholarship, Nothing
+                subtitle.textContent = 'As a Day Scholar, select if you availed Transport or Scholarship, or select "Nothing":';
+                container.innerHTML = `
+                    <div class="checkbox-card" data-dept="transport" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="transport" id="dept-transport" onchange="handleDayScholarSelection(this)">
+                        <label for="dept-transport" style="cursor: pointer; flex:1;">
+                            <strong>🚌 Transport Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">College bus route fee & transport pass clearance</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Branch</label>
-                        <input class="form-input" value="${s.branch || ''}" readonly style="background:var(--bg-secondary);">
+                    <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="handleDayScholarSelection(this)">
+                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
+                            <strong>🎓 Scholarship Department</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Current Semester</label>
-                        <input class="form-input" value="${s.current_semester || ''}" readonly style="background:var(--bg-secondary);">
+                    <div class="checkbox-card selected" data-dept="none" onclick="toggleDeptCard(this, event)">
+                        <input type="checkbox" value="none" id="dept-none" checked onchange="handleDayScholarSelection(this)">
+                        <label for="dept-none" style="cursor: pointer; flex:1;">
+                            <strong>⚪ Nothing / None (Standard Day Scholar)</strong>
+                            <br><span style="font-size:0.75rem;color:var(--text-muted);">No transport or scholarship clearance needed (Core academic clearance only)</span>
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Father's Name</label>
-                        <input class="form-input" value="${s.father_name || ''}" readonly style="background:var(--bg-secondary);">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone</label>
-                        <input class="form-input" value="${s.phone || ''}" readonly style="background:var(--bg-secondary);">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input class="form-input" value="${s.email || ''}" readonly style="background:var(--bg-secondary);">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <input class="form-input" value="${s.category || 'day_scholar'}" readonly style="background:var(--bg-secondary); text-transform:capitalize;">
-                    </div>
-                </div>
-            `;
+                `;
+            }
         }
 
-        // ───────────────────────────────
-        // CHECKBOX SELECTION TOGGLE
-        // ───────────────────────────────
-        document.querySelectorAll('.checkbox-card input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', function() {
-                this.closest('.checkbox-card').classList.toggle('selected', this.checked);
-            });
-        });
+        function handleDayScholarSelection(checkbox) {
+            const noneCb = document.getElementById('dept-none');
+            const transportCb = document.getElementById('dept-transport');
+            const scholarshipCb = document.getElementById('dept-scholarship');
+
+            if (checkbox.id === 'dept-none') {
+                if (checkbox.checked) {
+                    if (transportCb) { transportCb.checked = false; updateCardState(transportCb); }
+                    if (scholarshipCb) { scholarshipCb.checked = false; updateCardState(scholarshipCb); }
+                }
+            } else {
+                if (checkbox.checked && noneCb) {
+                    noneCb.checked = false;
+                    updateCardState(noneCb);
+                }
+            }
+            updateCardState(checkbox);
+
+            // If both transport and scholarship are unchecked, auto-check "none"
+            if (!transportCb?.checked && !scholarshipCb?.checked && noneCb) {
+                noneCb.checked = true;
+                updateCardState(noneCb);
+            }
+        }
+
+        function updateCardState(checkbox) {
+            checkbox.closest('.checkbox-card').classList.toggle('selected', checkbox.checked);
+        }
+
+        function toggleDeptCard(card, event) {
+            const cb = card.querySelector('input[type="checkbox"]');
+            if (!cb) return;
+            if (event && event.target === cb) return;
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event('change'));
+        }
 
         // ───────────────────────────────
         // FILE UPLOAD HANDLER
@@ -490,19 +511,31 @@
         function renderReview() {
             const selectedDepts = [];
             document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
-                selectedDepts.push(cb.value);
+                if (cb.value !== 'none') {
+                    selectedDepts.push(cb.value);
+                }
             });
             const hodDept = document.getElementById('hodDeptDisplay').value || 'Auto-detected';
+            const deptLabels = {
+                hostel: '🏠 Hostel',
+                mess: '🍽️ Mess',
+                transport: '🚌 Transport',
+                scholarship: '🎓 Scholarship'
+            };
+            const formattedDepts = selectedDepts.length 
+                ? selectedDepts.map(d => deptLabels[d] || d).join(', ') 
+                : 'None (Standard Clearance: Academic HOD, Accounts, Examination)';
 
             document.getElementById('reviewContent').innerHTML = `
                 <div style="display: grid; gap: 0.75rem;">
                     <div style="display:flex; justify-content:space-between;"><strong>Student:</strong> <span>${studentData.student_name}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Roll No:</strong> <span>${studentData.roll_number}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Course:</strong> <span>${studentData.course_name}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Category:</strong> <span style="text-transform: capitalize;">${(studentData.category || 'day_scholar').replace(/_/g, ' ')}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Father's Name:</strong> <span>${studentData.father_name || '—'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Father's Phone:</strong> <span>${studentData.guardian_phone || '—'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>HOD Department:</strong> <span>${hodDept}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><strong>Selected Departments:</strong> <span>${selectedDepts.length ? selectedDepts.join(', ') : 'None selected'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Selected Facilities:</strong> <span>${formattedDepts}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Exam Fee Receipt:</strong> <span>${uploadedFiles.examFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Next Sem Fee Receipt:</strong> <span>${uploadedFiles.nextSemFee ? '✅ Uploaded' : '❌ Missing'}</span></div>
                     <div style="display:flex; justify-content:space-between;"><strong>Digital Signature:</strong> <span>${signatureData ? '✅ Signed' : '❌ Not signed'}</span></div>
@@ -526,8 +559,17 @@
             
 
             const selectedDepts = [];
-            document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => selectedDepts.push(cb.value));
-            if (selectedDepts.length === 0) { showError('Please select at least one department for clearance.'); return; }
+            document.querySelectorAll('#deptCheckboxes input:checked').forEach(cb => {
+                if (cb.value !== 'none') {
+                    selectedDepts.push(cb.value);
+                }
+            });
+
+            const isHosteller = (studentData.category || '').toLowerCase() === 'hosteller';
+            if (isHosteller && selectedDepts.length === 0) {
+                showError('Please select your hosteller clearance facilities (Hostel and/or Mess).');
+                return;
+            }
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
