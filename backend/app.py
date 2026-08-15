@@ -122,6 +122,10 @@ def create_app(config_name: str = "default") -> Flask:
         with app.app_context():
             _auto_seed(app)
 
+    # Initialize keep-alive self ping worker for cloud deployments (Render free tier)
+    from utils.keep_alive import start_keep_alive
+    start_keep_alive(app)
+
     app.logger.info(
         "Smart NoDues AI started in %s mode",
         config_name,
