@@ -5,7 +5,11 @@ Handles automatic schema creation, self-healing table columns, PostgreSQL extens
 
 import logging
 from sqlalchemy import text, inspect
-from flask_migrate import Migrate
+try:
+    from flask_migrate import Migrate
+    migrate = Migrate()
+except Exception:
+    migrate = None
 
 try:
     from models import db
@@ -13,12 +17,15 @@ except ImportError:
     from backend.models import db
 
 logger = logging.getLogger(__name__)
-migrate = Migrate()
 
 
 def init_db_manager(app):
     """Initialize Flask-Migrate and execute self-building database schema logic."""
-    migrate.init_app(app, db)
+    if migrate:
+        try:
+            migrate.init_app(app, db)
+        except Exception as err:
+            logger.warning(f"Migrate init notice: {err}")
     
     with app.app_context():
         try:

@@ -81,7 +81,9 @@ class DevelopmentConfig(BaseConfig):
 class ProductionConfig(BaseConfig):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
-    SQLALCHEMY_DATABASE_URI = _get_db_uri("postgresql://postgres:postgres@localhost:5432/nodues_ai")
+    db_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "nodues_ai_prod.db")).replace("\\", "/")
+    SQLALCHEMY_DATABASE_URI = _get_db_uri("sqlite:///" + db_file_path)
+    SQLALCHEMY_ENGINE_OPTIONS = BaseConfig.SQLALCHEMY_ENGINE_OPTIONS if os.environ.get("DATABASE_URL") else {}
 
 
 class TestingConfig(BaseConfig):
