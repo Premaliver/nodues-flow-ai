@@ -1,4 +1,4 @@
-`<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -7,12 +7,116 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .error-msg { color: var(--crimson); font-size: 0.85rem; text-align: center; display: none; padding: 0.75rem; background: var(--crimson-soft); border-radius: var(--radius-md); margin-bottom: 1.25rem; }
-        .success-msg { color: var(--emerald); font-size: 0.85rem; text-align: center; display: none; padding: 0.75rem; background: var(--emerald-soft); border-radius: var(--radius-md); margin-bottom: 1.25rem; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* Password wrapper and toggle button */
+        .password-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .password-input-wrap .form-input {
+            padding-right: 3rem !important;
+            width: 100%;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            z-index: 5;
+            line-height: 1;
+        }
+        .password-toggle-btn:hover {
+            color: var(--accent);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .password-toggle-btn:focus {
+            outline: none;
+            color: var(--accent);
+        }
+
+        /* Sophisticated Bottom Status Alert */
+        .status-alert-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.95rem 1.15rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1.5px solid transparent;
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            backdrop-filter: blur(12px);
+        }
+        .status-alert-box.error {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.28);
+            color: #b91c1c;
+            animation: alertShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        .status-alert-box.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #047857;
+            animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .status-alert-box .alert-icon {
+            font-size: 1.25rem;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .status-alert-box .alert-content {
+            flex: 1;
+        }
+        .status-alert-box .alert-title {
+            font-weight: 700;
+            font-size: 0.88rem;
+            margin-bottom: 0.15rem;
+            letter-spacing: -0.01em;
+        }
+        .status-alert-box .alert-desc {
+            font-size: 0.825rem;
+            opacity: 0.95;
+            line-height: 1.45;
+        }
+
+        /* Field Invalid state */
+        .form-input.is-invalid, .form-select.is-invalid {
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.02) !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        }
+
+        @keyframes alertShake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
         .animate-in { animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
-        .del-1 { animation-delay: 0.1s; } .del-2 { animation-delay: 0.2s; } .del-3 { animation-delay: 0.3s; }
-        .del-4 { animation-delay: 0.4s; } .del-5 { animation-delay: 0.5s; }
+        .del-1 { animation-delay: 0.1s; } 
+        .del-2 { animation-delay: 0.2s; } 
+        .del-3 { animation-delay: 0.3s; }
+        .del-4 { animation-delay: 0.4s; } 
+        .del-5 { animation-delay: 0.5s; }
+
         @media (max-width: 480px) {
             body > div[style*="padding: 2rem"] { padding: 1rem !important; }
             .card { padding: 1.5rem !important; border-radius: var(--radius-xl) !important; }
@@ -35,63 +139,69 @@
                     <p style="color: var(--text-muted); font-size: 0.875rem;">Register as a student</p>
                 </div>
 
-                <div id="errorMsg" class="error-msg animate-in del-2"></div>
-                <div id="successMsg" class="success-msg animate-in del-2"></div>
-
-                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm" class="animate-in del-3">
+                <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm" class="animate-in del-3" novalidate>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="first_name">First Name</label>
+                            <label class="form-label" for="first_name">First Name *</label>
                             <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Your first name" autocomplete="given-name" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="last_name">Last Name</label>
+                            <label class="form-label" for="last_name">Last Name *</label>
                             <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Your last name" autocomplete="family-name" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="email">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="you@rayatbahra.edu" autocomplete="email" required>
+                        <label class="form-label" for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="example@gmail.com" autocomplete="email" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="form-input" placeholder="+91-XXXXXXXXXX" autocomplete="tel">
+                        <input type="tel" id="phone" name="phone" class="form-input" placeholder="e.g. +91-9876543210" autocomplete="tel">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password">Password</label>
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" required>
+                        <label class="form-label" for="password">Password *</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="password" name="password" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" required>
+                            <button type="button" class="password-toggle-btn" id="togglePasswordBtn" onclick="togglePasswordVisibility('password', this)" title="Show / Hide Password" aria-label="Show password">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <small style="display: block; margin-top: 0.35rem; font-size: 0.76rem; color: var(--text-muted);">Must be at least 8 characters</small>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="father_name">Father's Name</label>
-                            <input type="text" id="father_name" name="father_name" class="form-input" placeholder="Your father's full name" autocomplete="off">
+                            <input type="text" id="father_name" name="father_name" class="form-input" placeholder="Father's full name" autocomplete="off">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="father_phone">Father's Phone No</label>
-                            <input type="tel" id="father_phone" name="father_phone" class="form-input" placeholder="+91-XXXXXXXXXX" autocomplete="tel">
+                            <input type="tel" id="father_phone" name="father_phone" class="form-input" placeholder="e.g. +91-9876543210" autocomplete="tel">
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
-                            <label class="form-label" for="roll_number">Roll Number</label>
-                            <input type="text" id="roll_number" name="roll_number" class="form-input" placeholder="e.g. RBU/22CSE/0142" required>
+                            <label class="form-label" for="roll_number">Roll Number *</label>
+                            <input type="text" id="roll_number" name="roll_number" class="form-input" placeholder="e.g. 123456789" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="enrollment_number">Enrollment Number</label>
-                            <input type="text" id="enrollment_number" name="enrollment_number" class="form-input" placeholder="e.g. ENR/2022/4257" required>
+                            <label class="form-label" for="enrollment_number">Enrollment Number *</label>
+                            <input type="text" id="enrollment_number" name="enrollment_number" class="form-input" placeholder="e.g. RBU12345678" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="course_name">Course</label>
-                        <select class="form-select" id="course_name" name="course_name" onchange="updateSemesters()">
+                        <label class="form-label" for="course_name">Course *</label>
+                        <select class="form-select" id="course_name" name="course_name" onchange="updateSemesters()" required>
                             <option value="">— Select your course —</option>
                             <option value="B.Tech Computer Science Engineering">B.Tech CSE</option>
                             <option value="B.Tech Electronics & Communication Engineering">B.Tech ECE</option>
@@ -123,8 +233,8 @@
                             <input type="text" id="branch" name="branch" class="form-input" placeholder="e.g. CSE">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="current_semester">Current Semester</label>
-                            <select class="form-select" id="current_semester" name="current_semester">
+                            <label class="form-label" for="current_semester">Current Semester *</label>
+                            <select class="form-select" id="current_semester" name="current_semester" required>
                                 <option value="1">Semester 1</option>
                                 <option value="2">Semester 2</option>
                                 <option value="3">Semester 3</option>
@@ -157,7 +267,17 @@
                             <option value="hosteller">Hosteller</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; margin-top: 0.5rem;">
+
+                    <!-- Sophisticated Status & Warning Notification Area at the Bottom -->
+                    <div id="bottomAlert" class="status-alert-box" style="display: none;" role="alert">
+                        <div class="alert-icon" id="alertIcon">⚠️</div>
+                        <div class="alert-content">
+                            <div class="alert-title" id="alertTitle">Action Required</div>
+                            <div class="alert-desc" id="alertMessage">Please review and complete the highlighted details.</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; margin-top: 0.5rem;">
                         Create Account
                     </button>
                 </form>
@@ -173,6 +293,76 @@
     </div>
 
     <script>
+        // Password Visibility Toggle
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+            btn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+            
+            if (isPassword) {
+                // Eye slash icon (hide)
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                `;
+            } else {
+                // Eye icon (show)
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                `;
+            }
+        }
+
+        // Show sophisticated bottom warning/success alert
+        function showBottomAlert(type, title, message) {
+            const alertBox = document.getElementById('bottomAlert');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertTitle = document.getElementById('alertTitle');
+            const alertMessage = document.getElementById('alertMessage');
+
+            alertBox.className = 'status-alert-box ' + type;
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+
+            if (type === 'error') {
+                alertIcon.textContent = '⚠️';
+            } else if (type === 'success') {
+                alertIcon.textContent = '✅';
+            } else {
+                alertIcon.textContent = 'ℹ️';
+            }
+
+            alertBox.style.display = 'flex';
+
+            // Auto-scroll directly to the alert box so user never has to scroll up
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideBottomAlert() {
+            const alertBox = document.getElementById('bottomAlert');
+            alertBox.style.display = 'none';
+        }
+
+        // Remove invalid highlights on typing/selection
+        document.querySelectorAll('.form-input, .form-select').forEach(el => {
+            el.addEventListener('input', () => {
+                el.classList.remove('is-invalid');
+                hideBottomAlert();
+            });
+            el.addEventListener('change', () => {
+                el.classList.remove('is-invalid');
+                hideBottomAlert();
+            });
+        });
+
         function updateSemesters() {
             const course = document.getElementById('course_name').value;
             const semSelect = document.getElementById('current_semester');
@@ -198,51 +388,94 @@
 
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const err = document.getElementById('errorMsg');
-            const success = document.getElementById('successMsg');
-            err.style.display = 'none';
-            success.style.display = 'none';
-            const btn = this.querySelector('button[type="submit"]');
+            hideBottomAlert();
+
+            // Client-side pre-validation
+            const firstName = document.getElementById('first_name');
+            const lastName = document.getElementById('last_name');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            const rollNumber = document.getElementById('roll_number');
+            const enrollmentNumber = document.getElementById('enrollment_number');
+            const courseName = document.getElementById('course_name');
+
+            let firstInvalidField = null;
+
+            function markInvalid(field) {
+                field.classList.add('is-invalid');
+                if (!firstInvalidField) firstInvalidField = field;
+            }
+
+            if (!firstName.value.trim()) markInvalid(firstName);
+            if (!lastName.value.trim()) markInvalid(lastName);
+            if (!email.value.trim() || !email.value.includes('@')) markInvalid(email);
+            if (!password.value || password.value.length < 8) markInvalid(password);
+            if (!rollNumber.value.trim()) markInvalid(rollNumber);
+            if (!enrollmentNumber.value.trim()) markInvalid(enrollmentNumber);
+            if (!courseName.value) markInvalid(courseName);
+
+            if (firstInvalidField) {
+                if (firstInvalidField === password && password.value.length > 0 && password.value.length < 8) {
+                    showBottomAlert('error', 'Weak Password', 'Password must be at least 8 characters long.');
+                } else if (firstInvalidField === email && email.value.trim()) {
+                    showBottomAlert('error', 'Invalid Email', 'Please provide a valid email address.');
+                } else {
+                    showBottomAlert('error', 'Missing Information', 'Please fill in all the required fields highlighted in red.');
+                }
+                firstInvalidField.focus();
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Creating account...';
+            btn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 0.5rem;">Creating account...</span>';
+
             try {
                 const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
                 const res = await fetch(this.action, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({
-                        first_name: document.getElementById('first_name').value,
-                        last_name: document.getElementById('last_name').value,
-                        email: document.getElementById('email').value,
-                        phone: document.getElementById('phone').value,
-                        password: document.getElementById('password').value,
-                        roll_number: document.getElementById('roll_number').value,
-                        enrollment_number: document.getElementById('enrollment_number').value,
-                        course_name: document.getElementById('course_name').value,
-                        branch: document.getElementById('branch').value,
+                        first_name: firstName.value.trim(),
+                        last_name: lastName.value.trim(),
+                        email: email.value.trim(),
+                        phone: document.getElementById('phone').value.trim(),
+                        password: password.value,
+                        roll_number: rollNumber.value.trim(),
+                        enrollment_number: enrollmentNumber.value.trim(),
+                        course_name: courseName.value,
+                        branch: document.getElementById('branch').value.trim(),
                         current_semester: parseInt(document.getElementById('current_semester').value),
-                        batch_year: document.getElementById('batch_year').value,
+                        batch_year: document.getElementById('batch_year').value.trim(),
                         admission_year: parseInt(document.getElementById('admission_year').value) || new Date().getFullYear(),
                         category: document.getElementById('category').value,
-                        father_name: document.getElementById('father_name').value,
-                        father_phone: document.getElementById('father_phone').value,
+                        father_name: document.getElementById('father_name').value.trim(),
+                        father_phone: document.getElementById('father_phone').value.trim(),
                     })
                 });
+
                 const data = await res.json();
+
                 if (data.success) {
-                    success.textContent = '✅ Account created! Redirecting to login...';
-                    success.style.display = 'block';
-setTimeout(() => window.location.href = '/auth/login', 2000);
+                    showBottomAlert('success', 'Account Created Successfully! 🎉', 'Your registration is complete. Redirecting you to sign in...');
+                    btn.textContent = 'Redirecting...';
+                    setTimeout(() => window.location.href = '/auth/login', 1800);
                 } else {
-                    err.textContent = '⚠️ ' + (data.message || 'Registration failed');
-                    err.style.display = 'block';
+                    const errorMsg = data.message || 'Registration failed. Please check your details.';
+                    showBottomAlert('error', 'Registration Notice', errorMsg);
+
+                    // Highlight related field if message hints at it
+                    const lowerMsg = errorMsg.toLowerCase();
+                    if (lowerMsg.includes('email')) markInvalid(email);
+                    if (lowerMsg.includes('roll')) markInvalid(rollNumber);
+                    if (lowerMsg.includes('password')) markInvalid(password);
+
                     btn.disabled = false;
                     btn.textContent = originalText;
                 }
             } catch (error) {
-                err.textContent = '⚠️ Network error. Please try again.';
-                err.style.display = 'block';
+                showBottomAlert('error', 'Network Connection Error', 'Unable to connect to the server. Please check your connection and try again.');
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
