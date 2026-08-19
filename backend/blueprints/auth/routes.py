@@ -448,10 +448,50 @@ def forgot_password_request():
     }), 200
 
 
+@auth_bp.route("/forgot-password/verify-otp", methods=["POST"])
+def forgot_password_verify_otp():
+    """Verify 6-digit OTP before revealing the New Password form."""
+    data = request.get_json(silent=True) or request.form
+    email = data.get("email", "").strip().lower()
+    otp = data.get("otp", "").strip()
+
+    if not email or not otp:
+        return jsonify({
+            "success": False,
+            "message": "Email and 6-digit OTP code are required."
+        }), 400
+
+    if len(otp) != 6 or not otp.isdigit():
+        return jsonify({
+            "success": False,
+            "message": "Please enter a valid 6-digit numeric OTP code."
+        }), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found."}), 404
+
+    if not user.verify_reset_otp(otp):
+        return jsonify({
+            "success": False,
+            "message": "Invalid or expired OTP code. Please check and try again."
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "message": "OTP verified successfully! You can now create your new password.",
+        "data": {
+            "email": email,
+            "verified": True
+        }
+    }), 200
+
+
 @auth_bp.route("/forgot-password/reset", methods=["POST"])
+@auth_bp.route("/forgot-password/reset-password", methods=["POST"])
 @auth_bp.route("/forgot-password/verify-reset", methods=["POST"])
 def forgot_password_reset():
-    """Verify OTP and update user's password."""
+    """Update user's password after OTP verification."""
     data = request.get_json(silent=True) or request.form
     email = data.get("email", "").strip().lower()
     otp = data.get("otp", "").strip()

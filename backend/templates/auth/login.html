@@ -229,13 +229,13 @@
                 </form>
             </div>
 
-            <!-- STEP 2: Enter OTP & New Password -->
+            <!-- STEP 2: Enter & Verify 6-Digit OTP ONLY -->
             <div id="fpStep2" style="display: none;">
                 <div style="text-align: center; margin-bottom: 1.25rem;">
                     <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
                         📩
                     </div>
-                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">Enter 6-Digit OTP</h3>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">Verify 6-Digit OTP</h3>
                     <p style="font-size: 0.85rem; color: var(--text-muted);">
                         Sent to <strong id="fpSentEmailDisplay" style="color: var(--text-primary);"></strong>
                         <a href="javascript:void(0)" onclick="goToFpStep1()" style="color: var(--accent); margin-left: 4px; font-size: 0.8rem;">(Change)</a>
@@ -244,9 +244,9 @@
 
                 <div id="fpAlert2" class="modal-alert"></div>
 
-                <form id="fpResetForm" onsubmit="handleResetPassword(event)">
+                <form id="fpVerifyOtpForm" onsubmit="handleVerifyOtp(event)">
                     <!-- 6 Digit OTP Inputs -->
-                    <label class="form-label" id="otpMainLabel" for="otp_digit_0" style="text-align: center; display: block; margin-bottom: 0.25rem;">6-Digit OTP Code</label>
+                    <label class="form-label" id="otpMainLabel" for="otp_digit_0" style="text-align: center; display: block; margin-bottom: 0.25rem;">Enter Verification Code</label>
                     <div class="otp-inputs-wrap" id="otpContainer" role="group" aria-labelledby="otpMainLabel">
                         <input type="text" id="otp_digit_0" name="otp_digit_0" aria-label="OTP Digit 1" maxlength="1" inputmode="numeric" class="otp-digit" data-index="0" autocomplete="off" autofocus>
                         <input type="text" id="otp_digit_1" name="otp_digit_1" aria-label="OTP Digit 2" maxlength="1" inputmode="numeric" class="otp-digit" data-index="1" autocomplete="off">
@@ -265,6 +265,25 @@
                         </a>
                     </div>
 
+                    <button type="submit" id="fpVerifyOtpBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
+                        Verify OTP & Continue ➔
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 3: Set New Password (Revealed ONLY after OTP is Verified!) -->
+            <div id="fpStep3" style="display: none;">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
+                        🛡️
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">Create New Password</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Choose a strong new password with at least 8 characters.</p>
+                </div>
+
+                <div id="fpAlert3" class="modal-alert"></div>
+
+                <form id="fpResetForm" onsubmit="handleResetPassword(event)">
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <label class="form-label" for="fpNewPassword">New Password</label>
                         <div class="form-input-icon" style="position: relative;">
@@ -288,13 +307,13 @@
                     </div>
 
                     <button type="submit" id="fpResetSubmitBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
-                        Reset Password
+                        Save Password & Log In
                     </button>
                 </form>
             </div>
 
-            <!-- STEP 3: Success Screen -->
-            <div id="fpStep3" style="display: none; text-align: center; padding: 1rem 0;">
+            <!-- STEP 4: Success Screen -->
+            <div id="fpStep4" style="display: none; text-align: center; padding: 1rem 0;">
                 <div style="width: 56px; height: 56px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 1rem;">
                     ✓
                 </div>
@@ -474,12 +493,17 @@
             }
         }
 
+        let verifiedOtp = '';
+
         function goToFpStep1() {
             document.getElementById('fpStep1').style.display = 'block';
             document.getElementById('fpStep2').style.display = 'none';
             document.getElementById('fpStep3').style.display = 'none';
+            document.getElementById('fpStep4').style.display = 'none';
             hideAlert('fpAlert1');
             hideAlert('fpAlert2');
+            hideAlert('fpAlert3');
+            verifiedOtp = '';
         }
 
         function showAlert(elemId, type, message) {
@@ -529,6 +553,8 @@
                     document.getElementById('fpSentEmailDisplay').textContent = email;
                     document.getElementById('fpStep1').style.display = 'none';
                     document.getElementById('fpStep2').style.display = 'block';
+                    document.getElementById('fpStep3').style.display = 'none';
+                    document.getElementById('fpStep4').style.display = 'none';
                     showAlert('fpAlert2', 'success', '✓ ' + (data.message || 'OTP code sent! Please check your inbox.'));
                     startResendCountdown(60);
                     setupOtpInputs();
@@ -581,6 +607,11 @@
                     this.value = val ? val[val.length - 1] : '';
                     if (this.value && index < inputs.length - 1) {
                         inputs[index + 1].focus();
+                    } else if (this.value && index === inputs.length - 1) {
+                        const fullOtp = getEnteredOtp();
+                        if (fullOtp.length === 6) {
+                            handleVerifyOtp(null);
+                        }
                     }
                 };
 
@@ -596,6 +627,7 @@
                     if (/^\d{6}$/.test(pasteData)) {
                         inputs.forEach((inp, i) => { inp.value = pasteData[i] || ''; });
                         inputs[inputs.length - 1].focus();
+                        handleVerifyOtp(null);
                     }
                 };
             });
@@ -609,29 +641,74 @@
             return otp;
         }
 
-        async function handleResetPassword(e) {
-            e.preventDefault();
+        async function handleVerifyOtp(e) {
+            if (e) e.preventDefault();
             const email = document.getElementById('fpEmail').value.trim();
             const otp = getEnteredOtp();
-            const newPassword = document.getElementById('fpNewPassword').value;
-            const confirmPassword = document.getElementById('fpConfirmPassword').value;
 
             if (otp.length !== 6) {
                 showAlert('fpAlert2', 'error', '⚠️ Please enter the complete 6-digit OTP code.');
                 return;
             }
 
+            hideAlert('fpAlert2');
+            const btn = document.getElementById('fpVerifyOtpBtn');
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Verifying OTP...';
+
+            try {
+                const res = await fetch('/auth/forgot-password/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    verifiedOtp = otp;
+                    if (resendTimerInterval) clearInterval(resendTimerInterval);
+                    document.getElementById('fpStep2').style.display = 'none';
+                    document.getElementById('fpStep3').style.display = 'block';
+                    hideAlert('fpAlert3');
+                    setTimeout(() => {
+                        const pwd = document.getElementById('fpNewPassword');
+                        if (pwd) pwd.focus();
+                    }, 100);
+                } else {
+                    showAlert('fpAlert2', 'error', '⚠️ ' + (data.message || 'Invalid OTP code. Please try again.'));
+                }
+            } catch (err) {
+                showAlert('fpAlert2', 'error', '⚠️ Network error during verification. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = orig;
+            }
+        }
+
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('fpEmail').value.trim();
+            const otp = verifiedOtp || getEnteredOtp();
+            const newPassword = document.getElementById('fpNewPassword').value;
+            const confirmPassword = document.getElementById('fpConfirmPassword').value;
+
+            if (!otp) {
+                showAlert('fpAlert3', 'error', '⚠️ OTP session expired. Please verify OTP again.');
+                return;
+            }
+
             if (newPassword.length < 8) {
-                showAlert('fpAlert2', 'error', '⚠️ New password must be at least 8 characters long.');
+                showAlert('fpAlert3', 'error', '⚠️ New password must be at least 8 characters long.');
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                showAlert('fpAlert2', 'error', '⚠️ Passwords do not match. Please re-enter.');
+                showAlert('fpAlert3', 'error', '⚠️ Passwords do not match. Please re-enter.');
                 return;
             }
 
-            hideAlert('fpAlert2');
+            hideAlert('fpAlert3');
             const btn = document.getElementById('fpResetSubmitBtn');
             const orig = btn.textContent;
             btn.disabled = true;
@@ -651,14 +728,13 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    document.getElementById('fpStep2').style.display = 'none';
-                    document.getElementById('fpStep3').style.display = 'block';
-                    if (resendTimerInterval) clearInterval(resendTimerInterval);
+                    document.getElementById('fpStep3').style.display = 'none';
+                    document.getElementById('fpStep4').style.display = 'block';
                 } else {
-                    showAlert('fpAlert2', 'error', '⚠️ ' + (data.message || 'Password reset failed.'));
+                    showAlert('fpAlert3', 'error', '⚠️ ' + (data.message || 'Password reset failed.'));
                 }
             } catch (err) {
-                showAlert('fpAlert2', 'error', '⚠️ Network error. Please try again.');
+                showAlert('fpAlert3', 'error', '⚠️ Network error. Please try again.');
             } finally {
                 btn.disabled = false;
                 btn.textContent = orig;
