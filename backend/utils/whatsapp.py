@@ -91,9 +91,26 @@ def send_whatsapp_admit_card_alert(
     academic_year = semester.academic_year if semester else "2025-2026"
     course_name = student.course_name if student else "Degree Course"
     
-    # Try finding phone number from user or student profile
-    raw_phone = getattr(user, "phone", None) or getattr(student, "guardian_phone", None) or "9876543210"
-    phone_e164 = format_phone_e164(raw_phone)
+    # Strictly resolve student's registered mobile number
+    raw_phone = None
+    if user and hasattr(user, "phone") and user.phone:
+        raw_phone = user.phone
+    elif student and hasattr(student, "user") and student.user and student.user.phone:
+        raw_phone = student.user.phone
+    elif student and hasattr(student, "guardian_phone") and student.guardian_phone:
+        raw_phone = student.guardian_phone
+    elif student and hasattr(student, "user_id") and student.user_id:
+        try:
+            from models.user import User as UserModel
+            u = UserModel.query.get(student.user_id)
+            if u and u.phone:
+                raw_phone = u.phone
+        except Exception:
+            pass
+
+    phone_e164 = format_phone_e164(raw_phone or "")
+    if not phone_e164:
+        phone_e164 = "+919876543210"  # fallback only if student profile has no phone number recorded
 
     university_name = "Rayat Bahra University"
     portal_url = "http://127.0.0.1:5000"
