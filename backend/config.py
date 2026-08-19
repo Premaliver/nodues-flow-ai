@@ -57,7 +57,7 @@ class BaseConfig:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <premkumar.officia0@gmail.com>"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <b60b32001@smtp-brevo.com>"
     )
 
     SESSION_COOKIE_SECURE = True
