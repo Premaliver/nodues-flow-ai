@@ -23,6 +23,7 @@ try:
     from models.notification import Notification
     from models.audit_log import AuditLog
     from models.admit_card import AdmitCard
+    from models.feedback import Feedback
     from utils.decorators import student_only
     from utils.helpers import (
         paginate_query, get_client_ip, get_user_agent,
@@ -40,6 +41,7 @@ except ImportError:
     from backend.models.notification import Notification
     from backend.models.audit_log import AuditLog
     from backend.models.admit_card import AdmitCard
+    from backend.models.feedback import Feedback
     from backend.utils.decorators import student_only
     from backend.utils.helpers import (
         paginate_query, get_client_ip, get_user_agent,
@@ -600,5 +602,111 @@ def download_admit_card_pdf(card_number):
         as_attachment=True,
         download_name=f"AdmitCard_{card.card_number}.pdf",
     )
+
+
+# ──────────────────────────────────────
+# API: Student Experience Feedback
+# ──────────────────────────────────────
+@student_bp.route("/api/feedback", methods=["POST"])
+@jwt_required(optional=True)
+def submit_feedback():
+    """Submit student experience feedback and ratings."""
+    user = None
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
+    if not user:
+        return jsonify({"success": False, "message": "Authentication required to submit feedback"}), 401
+
+    data = request.get_json(silent=True) or request.form
+
+    overall_rating = int(data.get("overall_rating", 5))
+    if overall_rating < 1 or overall_rating > 5:
+        overall_rating = 5
+
+    ease_of_use = data.get("ease_of_use", "easy")
+    ai_helpfulness = data.get("ai_helpfulness", "good")
+    upload_experience = data.get("upload_experience", "smooth")
+    nps_score = int(data.get("nps_score", 10))
+    comments = (data.get("comments") or "").strip()
+
+    # Determine automated sentiment
+    if overall_rating >= 4:
+        sentiment = "positive"
+    elif overall_rating == 3:
+        sentiment = "neutral"
+    else:
+        sentiment = "constructive"
+
+    student = getattr(user, "student_profile", None)
+    if not student and hasattr(user, "id"):
+        student = Student.query.filter_by(user_id=user.id).first()
+
+    # Find latest application if available
+    app_id = data.get("application_id")
+    if not app_id and student:
+        latest_app = NoDuesApplication.query.filter_by(student_id=student.id).order_by(NoDuesApplication.created_at.desc()).first()
+        if latest_app:
+            app_id = latest_app.id
+
+    feedback = Feedback(
+        user_id=user.id,
+        student_id=student.id if student else None,
+        application_id=app_id,
+        overall_rating=overall_rating,
+        ease_of_use=ease_of_use,
+        ai_helpfulness=ai_helpfulness,
+        upload_experience=upload_experience,
+        nps_score=nps_score,
+        comments=comments,
+        sentiment=sentiment,
+    )
+
+    db.session.add(feedback)
+
+    # Audit log
+    audit = AuditLog(
+        user_id=user.id,
+        action="create",
+        resource_type="feedback",
+        resource_id=feedback.id,
+        details={"rating": overall_rating, "sentiment": sentiment},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Thank you for your valuable feedback! Your response helps us continuously improve the NoDues platform.",
+        "data": feedback.to_dict()
+    }), 201
+
+
+@student_bp.route("/api/feedback/status", methods=["GET"])
+@jwt_required(optional=True)
+def get_feedback_status():
+    """Check if the current student has submitted feedback."""
+    user = None
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
+    if not user:
+        return jsonify({"success": False, "has_submitted": False}), 200
+
+    feedback = Feedback.query.filter_by(user_id=user.id).order_by(Feedback.created_at.desc()).first()
+    return jsonify({
+        "success": True,
+        "has_submitted": feedback is not None,
+        "last_feedback": feedback.to_dict() if feedback else None
+    })
+
 
 

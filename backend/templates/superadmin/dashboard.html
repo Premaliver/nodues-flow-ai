@@ -31,6 +31,7 @@
         <a class="super-sidebar-item" data-section="staff" onclick="switchSection('staff')"><span class="icon">👥</span> Staff Management</a>
         <a class="super-sidebar-item" data-section="students" onclick="switchSection('students')"><span class="icon">🎓</span> Students</a>
         <a class="super-sidebar-item" data-section="applications" onclick="switchSection('applications')"><span class="icon">📋</span> Applications</a>
+        <a class="super-sidebar-item" data-section="feedbacks" onclick="switchSection('feedbacks')"><span class="icon">💬</span> Student Feedbacks</a>
         <div class="super-sidebar-label" style="margin-top: 1rem;">System</div>
         <a class="super-sidebar-item" data-section="departments" onclick="switchSection('departments')"><span class="icon">🏢</span> Departments</a>
         <a class="super-sidebar-item" data-section="dbInspector" onclick="switchSection('dbInspector')"><span class="icon">🗄️</span> Database Inspector</a>
@@ -103,6 +104,90 @@
             <div class="filter-bar"><select class="form-select" id="appStatusFilter" onchange="loadApplications()"><option value="">All Status</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><input class="form-input" type="text" id="appSearch" placeholder="Search by student/roll..." oninput="debounce(loadApplications,300)()" style="min-width:200px;"></div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>App #</th><th>Student</th><th>Roll</th><th>Semester</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="appTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
             <div class="pagination" id="appPagination"></div>
+        </div>
+        <!-- FEEDBACKS -->
+        <div class="section" id="section-feedbacks">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">💬 Student Feedbacks & Experience Analytics</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;">Student satisfaction scores, Net Promoter Score (NPS), and portal improvement suggestions</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="loadFeedbacks(1)">🔄 Refresh Feed</button>
+            </div>
+
+            <!-- Summary KPI Grid -->
+            <div class="stat-grid" id="feedbackKpiGrid" style="margin-bottom: 1.5rem;">
+                <div class="super-stat">
+                    <div class="stat-top"><div class="stat-label">Average Rating</div><div class="stat-icon" style="background:var(--gradient-warning);color:white;">⭐</div></div>
+                    <div class="stat-value" id="fbStatAvgRating">5.0 / 5</div>
+                    <div class="stat-label" id="fbStatStarsCount">⭐⭐⭐⭐⭐ Overall student score</div>
+                    <div class="stat-accent" style="background:var(--gradient-warning);"></div>
+                </div>
+                <div class="super-stat">
+                    <div class="stat-top"><div class="stat-label">Total Feedbacks</div><div class="stat-icon" style="background:var(--gradient-primary);color:white;">💬</div></div>
+                    <div class="stat-value" id="fbStatTotal">0</div>
+                    <div class="stat-label">Verified student responses</div>
+                    <div class="stat-accent" style="background:var(--gradient-primary);"></div>
+                </div>
+                <div class="super-stat">
+                    <div class="stat-top"><div class="stat-label">Net Promoter Score</div><div class="stat-icon" style="background:var(--gradient-success);color:white;">🎯</div></div>
+                    <div class="stat-value" id="fbStatNps">+100</div>
+                    <div class="stat-label">Recommendation index</div>
+                    <div class="stat-accent" style="background:var(--gradient-success);"></div>
+                </div>
+                <div class="super-stat">
+                    <div class="stat-top"><div class="stat-label">Smooth Uploads</div><div class="stat-icon" style="background:var(--gradient-purple);color:white;">⚡</div></div>
+                    <div class="stat-value" id="fbStatSmooth">100%</div>
+                    <div class="stat-label">Fast document flow</div>
+                    <div class="stat-accent" style="background:var(--gradient-purple);"></div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <select class="form-select" id="fbRatingFilter" onchange="loadFeedbacks(1)">
+                    <option value="">All Star Ratings</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 Stars Only</option>
+                    <option value="4">⭐⭐⭐⭐ 4 Stars Only</option>
+                    <option value="3">⭐⭐⭐ 3 Stars Only</option>
+                    <option value="2">⭐⭐ 2 Stars Only</option>
+                    <option value="1">⭐ 1 Star Only</option>
+                </select>
+                <select class="form-select" id="fbSentimentFilter" onchange="loadFeedbacks(1)">
+                    <option value="">All Sentiments</option>
+                    <option value="positive">😊 Positive</option>
+                    <option value="neutral">😐 Neutral</option>
+                    <option value="constructive">💡 Constructive</option>
+                </select>
+                <input class="form-input" type="text" id="fbSearch" placeholder="Search by student/roll/comment..." oninput="debounce(function(){loadFeedbacks(1);},300)()" style="min-width:260px;">
+            </div>
+
+            <!-- Feedback Records Table -->
+            <div class="glass-panel">
+                <div class="glass-panel-header">
+                    <h3>📋 Student Experience Feed</h3>
+                    <span id="fbCountBadge" class="badge badge-info">0 records</span>
+                </div>
+                <div class="glass-panel-body" style="padding:0;overflow-x:auto;">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Roll / Course</th>
+                                <th>Rating & NPS</th>
+                                <th>Experience Breakdown</th>
+                                <th>Student Comments / Suggestions</th>
+                                <th>Submitted</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feedbackTableBody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading feedbacks...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination" id="feedbackPagination"></div>
         </div>
         <!-- DEPARTMENTS -->
         <div class="section" id="section-departments">
@@ -272,7 +357,7 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function confirmAction(title, msg, cb) { document.getElementById('confirmTitle').textContent = title; document.getElementById('confirmMessage').textContent = msg; confirmCallback = cb; openModal('confirmModal'); }
 function executeConfirm() { if (confirmCallback) confirmCallback(); confirmCallback = null; closeModal('confirmModal'); }
 function getToken() { return localStorage.getItem('access_token'); }
-const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
+const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', feedbacks:'💬 Student Feedbacks', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
 function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
@@ -280,7 +365,7 @@ function switchSection(name) {
     document.querySelector('.super-sidebar-item[data-section="' + name + '"]')?.classList.add('active');
     document.getElementById('pageTitle').textContent = sectionLabels[name] || name;
     toggleSuperSidebar(false);
-    const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, departments: loadDepartments, dbInspector: loadDatabaseInspector, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
+    const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, feedbacks: () => loadFeedbacks(1), departments: loadDepartments, dbInspector: loadDatabaseInspector, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
     if (loaders[name]) loaders[name]();
 }
 let chartDailyApps = null, chartRoleDist = null, chartStatusDist = null, chartMonthlyApps = null;
@@ -480,6 +565,111 @@ async function loadSettings() { try { const res = await fetch('/superadmin/api/s
 async function updateSetting(key, value) { try { const res = await fetch('/superadmin/api/settings/' + key, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({value}) }); const d = await res.json(); if (d.success) showToast('Setting "' + key + '" updated'); else showToast(d.message, 'error'); } catch(e) { showToast('Error', 'error'); } }
 async function initDefaultSettings() { try { const res = await fetch('/superadmin/api/settings/init', { method:'POST', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) { showToast(d.message); loadSettings(); } else { showToast(d.message, 'error'); } } catch(e) { showToast('Error', 'error'); } }
 async function loadProfile() { try { const res = await fetch('/auth/profile', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; document.getElementById('profileInfo').innerHTML = '<div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:400;margin:0 auto 1rem;font-family:\'DM Serif Display\',serif;">' + (d.first_name || 'A')[0] + '' + (d.last_name || 'D')[0] + '</div><h3 style="font-size:1.1rem;font-weight:400;font-family:\'DM Serif Display\',serif;">' + (d.full_name || d.first_name + ' ' + d.last_name) + '</h3><p style="color:var(--text-muted);">' + d.email + '</p><p><span class="badge badge-purple">' + d.role + '</span> <span class="badge badge-' + (d.status === 'active' ? 'success' : 'danger') + '">' + d.status + '</span></p><p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Member since ' + (d.created_at ? new Date(d.created_at).toLocaleDateString() : '') + '</p>'; } catch(e) { console.error(e); } }
+let fbPage = 1;
+async function loadFeedbacks(page) {
+    if (page) fbPage = page;
+    const rating = document.getElementById('fbRatingFilter').value;
+    const sentiment = document.getElementById('fbSentimentFilter').value;
+    const search = document.getElementById('fbSearch').value;
+
+    try {
+        const res = await fetch('/superadmin/api/feedbacks?page=' + fbPage + '&per_page=15&rating=' + rating + '&sentiment=' + sentiment + '&search=' + encodeURIComponent(search), {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const d = (await res.json()).data;
+        if (!d) return;
+
+        // Render KPI Stats
+        if (d.stats) {
+            document.getElementById('fbStatAvgRating').textContent = (d.stats.average_rating || 5.0) + ' / 5';
+            document.getElementById('fbStatTotal').textContent = d.stats.total_feedbacks || 0;
+            document.getElementById('fbStatNps').textContent = (d.stats.nps_score >= 0 ? '+' : '') + (d.stats.nps_score || 0);
+            if (d.stats.satisfaction_metrics) {
+                document.getElementById('fbStatSmooth').textContent = (d.stats.satisfaction_metrics.smooth_uploads_percent || 100) + '%';
+            }
+        }
+
+        const items = d.items || [];
+        document.getElementById('fbCountBadge').textContent = (d.pagination?.total || items.length) + ' records';
+        const tbody = document.getElementById('feedbackTableBody');
+
+        if (items.length) {
+            tbody.innerHTML = items.map(f => {
+                const stars = '⭐'.repeat(f.overall_rating) + '☆'.repeat(5 - f.overall_rating);
+                const sentimentBadge = f.sentiment === 'positive'
+                    ? '<span class="badge badge-success">😊 Positive</span>'
+                    : f.sentiment === 'neutral'
+                    ? '<span class="badge badge-info">😐 Neutral</span>'
+                    : '<span class="badge badge-warning">💡 Constructive</span>';
+
+                const easeText = f.ease_of_use === 'very_easy' ? '🚀 Super Smooth' : f.ease_of_use === 'easy' ? '👍 Easy' : f.ease_of_use === 'moderate' ? '😐 Moderate' : '😕 Difficult';
+                const aiText = f.ai_helpfulness === 'extremely_helpful' ? '🌟 AI Helpful' : f.ai_helpfulness === 'good' ? '👌 AI Good' : f.ai_helpfulness === 'not_used' ? '🤷 No AI' : '👎 AI Issue';
+                const uploadText = f.upload_experience === 'smooth' ? '⚡ Smooth Upload' : f.upload_experience === 'acceptable' ? '👌 OK Upload' : '⚠️ Upload Issue';
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${f.student_name}</strong><br>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">${f.student_email || ''}</span>
+                        </td>
+                        <td>
+                            <span style="font-weight:600; color:var(--accent);">${f.roll_number || 'N/A'}</span><br>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">${f.course_name || f.branch || '—'}</span>
+                        </td>
+                        <td>
+                            <div style="font-size:0.95rem; letter-spacing:1px;">${stars}</div>
+                            <span style="font-size:0.75rem; font-weight:700; color:var(--accent);">NPS: ${f.nps_score || 10}/10</span>
+                        </td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:3px;">
+                                <span style="font-size:0.72rem; padding:2px 6px; border-radius:6px; background:rgba(99,102,241,0.08); width:fit-content;">${easeText}</span>
+                                <span style="font-size:0.72rem; padding:2px 6px; border-radius:6px; background:rgba(16,185,129,0.08); width:fit-content;">${aiText}</span>
+                                <span style="font-size:0.72rem; padding:2px 6px; border-radius:6px; background:rgba(245,158,11,0.08); width:fit-content;">${uploadText}</span>
+                            </div>
+                        </td>
+                        <td style="max-width:240px;">
+                            ${sentimentBadge}
+                            <div style="font-size:0.82rem; margin-top:4px; font-style:italic; color:var(--text-primary);">"${f.comments || 'No written suggestion provided.'}"</div>
+                        </td>
+                        <td style="font-size:0.78rem; color:var(--text-muted); white-space:nowrap;">
+                            ${f.created_at ? new Date(f.created_at).toLocaleString() : '—'}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDeleteFeedback('${f.id}')" title="Delete Feedback">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No student feedbacks matching criteria.</td></tr>';
+        }
+
+        document.getElementById('feedbackPagination').innerHTML = paginateHtml(fbPage, d.pagination?.pages || 1, p => { fbPage = p; loadFeedbacks(); });
+    } catch(e) {
+        console.error('Feedbacks load error:', e);
+    }
+}
+
+function confirmDeleteFeedback(feedbackId) {
+    confirmAction('Delete Feedback', 'Are you sure you want to remove this student feedback record?', async () => {
+        try {
+            const res = await fetch('/superadmin/api/feedbacks/' + feedbackId, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + getToken() }
+            });
+            const d = await res.json();
+            if (d.success) {
+                showToast('Feedback deleted');
+                loadFeedbacks();
+            } else {
+                showToast(d.message, 'error');
+            }
+        } catch(e) {
+            showToast('Failed to delete feedback', 'error');
+        }
+    });
+}
+
 function paginateHtml(current, total, onClick) { if (total <= 1) return ''; let html = '<button class="page-btn" onclick="(' + onClick + ')(' + (current - 1) + ')" ' + (current <= 1 ? 'disabled' : '') + '>◀</button>'; const start = Math.max(1, current - 2); const end = Math.min(total, current + 2); for (let i = start; i <= end; i++) { html += '<button class="page-btn ' + (i === current ? 'active' : '') + '" onclick="(' + onClick + ')(' + i + ')">' + i + '</button>'; } html += '<button class="page-btn" onclick="(' + onClick + ')(' + (current + 1) + ')" ' + (current >= total ? 'disabled' : '') + '>▶</button><span class="page-info">Page ' + current + ' of ' + total + '</span>'; return html; }
 function updateClock() { document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString(); }
 document.addEventListener('DOMContentLoaded', () => { if (!getToken()) { window.location.href = '/auth/login'; return; } loadOverview(); updateClock(); });

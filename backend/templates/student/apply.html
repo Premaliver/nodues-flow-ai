@@ -38,6 +38,46 @@
         .step-line.active { background: var(--accent); }
         .step-line.completed { background: var(--emerald); }
         .req-tag { font-size: 0.72rem; color: var(--crimson); background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 12px; font-weight: 700; margin-left: 6px; }
+
+        /* Feedback Modal Styles */
+        .fb-modal-backdrop {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 10000; display: none; align-items: center; justify-content: center;
+            padding: 1rem; animation: fadeIn 0.3s ease;
+        }
+        .fb-modal-card {
+            background: var(--bg-card); width: 100%; max-width: 560px; max-height: 90vh;
+            overflow-y: auto; border-radius: var(--radius-xl); border: 1.5px solid var(--border-light);
+            box-shadow: 0 25px 60px -15px rgba(0,0,0,0.35); padding: 2rem; position: relative;
+            animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .star-rating-wrap { display: flex; gap: 8px; justify-content: center; margin: 0.75rem 0 1.25rem 0; }
+        .star-btn { font-size: 2.2rem; cursor: pointer; color: #94a3b8; transition: all 0.2s; background: none; border: none; padding: 0; outline: none; }
+        .star-btn.active, .star-btn.hover { color: #f59e0b; transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); }
+        .fb-pill-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.4rem; }
+        .fb-pill {
+            padding: 6px 13px; border-radius: 20px; border: 1.5px solid var(--border-light);
+            background: var(--bg-secondary); color: var(--text-primary); font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .fb-pill.active {
+            border-color: var(--accent); background: var(--accent); color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .nps-scale { display: flex; gap: 4px; justify-content: space-between; margin-top: 0.4rem; }
+        .nps-btn {
+            flex: 1; padding: 6px 0; text-align: center; border-radius: 8px; border: 1.5px solid var(--border-light);
+            background: var(--bg-secondary); color: var(--text-primary); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .nps-btn.active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+        .fb-suggestion-chip {
+            display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.72rem;
+            background: rgba(99, 102, 241, 0.1); color: var(--accent); cursor: pointer; margin: 3px 2px;
+            border: 1px solid rgba(99, 102, 241, 0.2); transition: all 0.2s;
+        }
+        .fb-suggestion-chip:hover { background: var(--accent); color: #ffffff; }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
     </style>
 </head>
 <body>
@@ -210,6 +250,109 @@
                     </form>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Post-Submission Interactive Feedback Modal -->
+    <div class="fb-modal-backdrop" id="feedbackModalBackdrop">
+        <div class="fb-modal-card">
+            <div id="fbFormView">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: var(--emerald); display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 0.75rem;">
+                        🎉
+                    </div>
+                    <h2 style="font-size: 1.35rem; font-weight: 700; margin: 0; color: var(--text-primary);">Application Submitted!</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">How was your experience with the Smart NoDues portal?</p>
+                </div>
+
+                <!-- Overall Star Rating -->
+                <div style="text-align: center;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Rate Overall Experience</label>
+                    <div class="star-rating-wrap" id="fbStarRating">
+                        <button type="button" class="star-btn active" data-val="1">★</button>
+                        <button type="button" class="star-btn active" data-val="2">★</button>
+                        <button type="button" class="star-btn active" data-val="3">★</button>
+                        <button type="button" class="star-btn active" data-val="4">★</button>
+                        <button type="button" class="star-btn active" data-val="5">★</button>
+                    </div>
+                </div>
+
+                <!-- Ease of Navigation -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">1. How easy was the clearance application process?</label>
+                    <div class="fb-pill-group" id="fbEaseGroup">
+                        <div class="fb-pill active" data-val="very_easy">🚀 Super Smooth</div>
+                        <div class="fb-pill" data-val="easy">👍 Easy</div>
+                        <div class="fb-pill" data-val="moderate">😐 Moderate</div>
+                        <div class="fb-pill" data-val="difficult">😕 Difficult</div>
+                    </div>
+                </div>
+
+                <!-- AI Chatbot Helpfulness -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">2. Did the AI Assistant & portal guidance help you?</label>
+                    <div class="fb-pill-group" id="fbAiGroup">
+                        <div class="fb-pill active" data-val="extremely_helpful">🌟 Extremely Helpful</div>
+                        <div class="fb-pill" data-val="good">👌 Good</div>
+                        <div class="fb-pill" data-val="not_used">🤷 Didn't Use</div>
+                        <div class="fb-pill" data-val="needs_improvement">👎 Needs Improvement</div>
+                    </div>
+                </div>
+
+                <!-- Document Upload Experience -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">3. Fee receipt & document upload experience?</label>
+                    <div class="fb-pill-group" id="fbUploadGroup">
+                        <div class="fb-pill active" data-val="smooth">⚡ Fast & Smooth</div>
+                        <div class="fb-pill" data-val="acceptable">👌 Acceptable</div>
+                        <div class="fb-pill" data-val="had_issues">⚠️ Had Issues</div>
+                    </div>
+                </div>
+
+                <!-- NPS Score -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+                        <span>4. Likelihood to recommend portal (1-10)</span>
+                        <span id="npsDisplayVal" style="color: var(--accent); font-weight: 700;">10 / 10</span>
+                    </div>
+                    <div class="nps-scale" id="fbNpsScale">
+                        <button type="button" class="nps-btn" data-val="1">1</button>
+                        <button type="button" class="nps-btn" data-val="2">2</button>
+                        <button type="button" class="nps-btn" data-val="3">3</button>
+                        <button type="button" class="nps-btn" data-val="4">4</button>
+                        <button type="button" class="nps-btn" data-val="5">5</button>
+                        <button type="button" class="nps-btn" data-val="6">6</button>
+                        <button type="button" class="nps-btn" data-val="7">7</button>
+                        <button type="button" class="nps-btn" data-val="8">8</button>
+                        <button type="button" class="nps-btn" data-val="9">9</button>
+                        <button type="button" class="nps-btn active" data-val="10">10</button>
+                    </div>
+                </div>
+
+                <!-- Comments & Suggestions -->
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">5. Suggestions or thoughts for Super Admin:</label>
+                    <div style="margin-bottom: 0.4rem;">
+                        <span class="fb-suggestion-chip" onclick="addSuggestionTag('Loved the fast clearance flow!')">✨ Loved the fast flow</span>
+                        <span class="fb-suggestion-chip" onclick="addSuggestionTag('Great UI and AI chatbot!')">🤖 Great UI & AI</span>
+                        <span class="fb-suggestion-chip" onclick="addSuggestionTag('Add WhatsApp/SMS status updates')">📱 Add WhatsApp alerts</span>
+                    </div>
+                    <textarea id="fbComments" class="form-input" rows="2" placeholder="Tell us what you loved or how we can improve..." style="resize: none; font-size: 0.85rem;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <button type="button" class="btn btn-ghost" onclick="skipFeedback()" style="flex: 1;">Skip for now</button>
+                    <button type="button" class="btn btn-primary" id="submitFeedbackBtn" onclick="submitStudentFeedback()" style="flex: 2;">🚀 Submit Feedback</button>
+                </div>
+            </div>
+
+            <!-- Gratitude View -->
+            <div id="fbThankYouView" style="display: none; text-align: center; padding: 2rem 1rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem; animation: onlineGlow 1.5s infinite alternate;">💖</div>
+                <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Thank You for Your Feedback!</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Your feedback has been sent directly to the Super Admin. It helps us build a world-class institutional experience for all students.</p>
+                <button type="button" class="btn btn-primary btn-lg" onclick="window.location.href='/student/dashboard'">Go to Dashboard →</button>
+            </div>
         </div>
     </div>
 
@@ -739,10 +882,14 @@
                 }
 
                 const suc = document.getElementById('successMsg');
-                suc.innerHTML = '🎉 Application submitted successfully! All clearance approvals initiated. Redirecting to your dashboard...';
+                suc.innerHTML = '🎉 Application submitted successfully! All clearance approvals initiated.';
                 suc.style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => window.location.href = '/student/dashboard', 2000);
+
+                // Open post-submission feedback modal after 600ms
+                setTimeout(() => {
+                    openFeedbackModal(appId);
+                }, 600);
 
             } catch(e) {
                 console.error('Submission error:', e);
@@ -761,6 +908,141 @@
         function hideError() {
             const err = document.getElementById('errorMsg');
             if (err) err.style.display = 'none';
+        }
+
+        // ───────────────────────────────
+        // POST-SUBMISSION FEEDBACK CONTROLLER
+        // ───────────────────────────────
+        let activeAppIdForFeedback = null;
+        let selectedStars = 5;
+        let selectedEase = 'very_easy';
+        let selectedAi = 'extremely_helpful';
+        let selectedUpload = 'smooth';
+        let selectedNps = 10;
+
+        function openFeedbackModal(appId) {
+            activeAppIdForFeedback = appId;
+            const modal = document.getElementById('feedbackModalBackdrop');
+            if (modal) modal.style.display = 'flex';
+            initFeedbackPills();
+        }
+
+        function initFeedbackPills() {
+            // Star rating interaction
+            const starBtns = document.querySelectorAll('#fbStarRating .star-btn');
+            starBtns.forEach(btn => {
+                btn.onclick = () => {
+                    selectedStars = parseInt(btn.dataset.val);
+                    updateStarUI(selectedStars);
+                };
+                btn.onmouseenter = () => updateStarUI(parseInt(btn.dataset.val));
+                btn.onmouseleave = () => updateStarUI(selectedStars);
+            });
+
+            // Ease pill selector
+            document.querySelectorAll('#fbEaseGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#fbEaseGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    selectedEase = pill.dataset.val;
+                };
+            });
+
+            // AI Helpfulness selector
+            document.querySelectorAll('#fbAiGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#fbAiGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    selectedAi = pill.dataset.val;
+                };
+            });
+
+            // Upload experience selector
+            document.querySelectorAll('#fbUploadGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#fbUploadGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    selectedUpload = pill.dataset.val;
+                };
+            });
+
+            // NPS Scale selector
+            document.querySelectorAll('#fbNpsScale .nps-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('#fbNpsScale .nps-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedNps = parseInt(btn.dataset.val);
+                    document.getElementById('npsDisplayVal').textContent = `${selectedNps} / 10`;
+                };
+            });
+        }
+
+        function updateStarUI(val) {
+            document.querySelectorAll('#fbStarRating .star-btn').forEach(btn => {
+                const bVal = parseInt(btn.dataset.val);
+                if (bVal <= val) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function addSuggestionTag(text) {
+            const commentInput = document.getElementById('fbComments');
+            if (commentInput) {
+                if (commentInput.value.trim().length > 0) {
+                    commentInput.value += ' ' + text;
+                } else {
+                    commentInput.value = text;
+                }
+                commentInput.focus();
+            }
+        }
+
+        async function submitStudentFeedback() {
+            const btn = document.getElementById('submitFeedbackBtn');
+            const comments = (document.getElementById('fbComments').value || '').trim();
+            const token = localStorage.getItem('access_token');
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const res = await fetch('/student/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        application_id: activeAppIdForFeedback,
+                        overall_rating: selectedStars,
+                        ease_of_use: selectedEase,
+                        ai_helpfulness: selectedAi,
+                        upload_experience: selectedUpload,
+                        nps_score: selectedNps,
+                        comments: comments
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('fbFormView').style.display = 'none';
+                    document.getElementById('fbThankYouView').style.display = 'block';
+                    setTimeout(() => window.location.href = '/student/dashboard', 2500);
+                } else {
+                    alert(data.message || 'Could not record feedback.');
+                    skipFeedback();
+                }
+            } catch (err) {
+                console.error(err);
+                skipFeedback();
+            }
+        }
+
+        function skipFeedback() {
+            window.location.href = '/student/dashboard';
         }
 
         // ───────────────────────────────

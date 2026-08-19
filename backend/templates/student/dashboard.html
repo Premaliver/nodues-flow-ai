@@ -71,6 +71,9 @@
                 <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)">
                     <span class="nav-icon">🔑</span> Security & Password
                 </a>
+                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); openStudentFeedbackModal(); return false;">
+                    <span class="nav-icon">⭐</span> Portal Feedback
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -854,9 +857,232 @@
             });
         }
 
+        // ───────────────────────────────
+        // STUDENT DASHBOARD FEEDBACK MODAL
+        // ───────────────────────────────
+        let dbSelectedStars = 5;
+        let dbSelectedEase = 'very_easy';
+        let dbSelectedAi = 'extremely_helpful';
+        let dbSelectedUpload = 'smooth';
+        let dbSelectedNps = 10;
+
+        function openStudentFeedbackModal() {
+            const modal = document.getElementById('dashFeedbackModal');
+            if (modal) modal.style.display = 'flex';
+            initDashFeedbackPills();
+        }
+
+        function closeStudentFeedbackModal() {
+            const modal = document.getElementById('dashFeedbackModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function initDashFeedbackPills() {
+            // Star rating
+            document.querySelectorAll('#dashFbStarRating .star-btn').forEach(btn => {
+                btn.onclick = () => {
+                    dbSelectedStars = parseInt(btn.dataset.val);
+                    updateDashStarUI(dbSelectedStars);
+                };
+                btn.onmouseenter = () => updateDashStarUI(parseInt(btn.dataset.val));
+                btn.onmouseleave = () => updateDashStarUI(dbSelectedStars);
+            });
+
+            // Ease
+            document.querySelectorAll('#dashFbEaseGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#dashFbEaseGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    dbSelectedEase = pill.dataset.val;
+                };
+            });
+
+            // AI
+            document.querySelectorAll('#dashFbAiGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#dashFbAiGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    dbSelectedAi = pill.dataset.val;
+                };
+            });
+
+            // Upload
+            document.querySelectorAll('#dashFbUploadGroup .fb-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#dashFbUploadGroup .fb-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    dbSelectedUpload = pill.dataset.val;
+                };
+            });
+
+            // NPS
+            document.querySelectorAll('#dashFbNpsScale .nps-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('#dashFbNpsScale .nps-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    dbSelectedNps = parseInt(btn.dataset.val);
+                    document.getElementById('dashNpsDisplayVal').textContent = `${dbSelectedNps} / 10`;
+                };
+            });
+        }
+
+        function updateDashStarUI(val) {
+            document.querySelectorAll('#dashFbStarRating .star-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.val) <= val);
+            });
+        }
+
+        function addDashSuggestionTag(text) {
+            const commentInput = document.getElementById('dashFbComments');
+            if (commentInput) {
+                commentInput.value = (commentInput.value.trim().length ? commentInput.value + ' ' : '') + text;
+                commentInput.focus();
+            }
+        }
+
+        async function submitDashboardFeedback() {
+            const btn = document.getElementById('submitDashFbBtn');
+            const comments = (document.getElementById('dashFbComments').value || '').trim();
+            const token = localStorage.getItem('access_token');
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const res = await fetch('/student/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        overall_rating: dbSelectedStars,
+                        ease_of_use: dbSelectedEase,
+                        ai_helpfulness: dbSelectedAi,
+                        upload_experience: dbSelectedUpload,
+                        nps_score: dbSelectedNps,
+                        comments: comments
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('dashFbFormView').style.display = 'none';
+                    document.getElementById('dashFbThankYouView').style.display = 'block';
+                    setTimeout(() => closeStudentFeedbackModal(), 2000);
+                } else {
+                    alert(data.message || 'Could not record feedback.');
+                    closeStudentFeedbackModal();
+                }
+            } catch(e) {
+                closeStudentFeedbackModal();
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Submit Feedback';
+            }
+        }
+
         // Initial Load
         loadDashboard();
     </script>
+
+    <!-- Student Dashboard Feedback Modal Overlay -->
+    <div class="fb-modal-backdrop" id="dashFeedbackModal">
+        <div class="fb-modal-card">
+            <div id="dashFbFormView">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="font-size:1.25rem; font-weight:700; margin:0;">⭐ Rate Portal Experience</h3>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="closeStudentFeedbackModal()">✕</button>
+                </div>
+
+                <!-- Stars -->
+                <div style="text-align:center;">
+                    <div class="star-rating-wrap" id="dashFbStarRating">
+                        <button type="button" class="star-btn active" data-val="1">★</button>
+                        <button type="button" class="star-btn active" data-val="2">★</button>
+                        <button type="button" class="star-btn active" data-val="3">★</button>
+                        <button type="button" class="star-btn active" data-val="4">★</button>
+                        <button type="button" class="star-btn active" data-val="5">★</button>
+                    </div>
+                </div>
+
+                <!-- Ease -->
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-size:0.8rem; font-weight:600;">1. Ease of Navigation & Clearance Flow</label>
+                    <div class="fb-pill-group" id="dashFbEaseGroup">
+                        <div class="fb-pill active" data-val="very_easy">🚀 Super Smooth</div>
+                        <div class="fb-pill" data-val="easy">👍 Easy</div>
+                        <div class="fb-pill" data-val="moderate">😐 Moderate</div>
+                        <div class="fb-pill" data-val="difficult">😕 Difficult</div>
+                    </div>
+                </div>
+
+                <!-- AI -->
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-size:0.8rem; font-weight:600;">2. AI Assistant Helpfulness</label>
+                    <div class="fb-pill-group" id="dashFbAiGroup">
+                        <div class="fb-pill active" data-val="extremely_helpful">🌟 Extremely Helpful</div>
+                        <div class="fb-pill" data-val="good">👌 Good</div>
+                        <div class="fb-pill" data-val="not_used">🤷 Didn't Use</div>
+                        <div class="fb-pill" data-val="needs_improvement">👎 Needs Work</div>
+                    </div>
+                </div>
+
+                <!-- Uploads -->
+                <div style="margin-bottom:0.85rem;">
+                    <label style="font-size:0.8rem; font-weight:600;">3. Fee Receipt & Upload Experience</label>
+                    <div class="fb-pill-group" id="dashFbUploadGroup">
+                        <div class="fb-pill active" data-val="smooth">⚡ Fast & Smooth</div>
+                        <div class="fb-pill" data-val="acceptable">👌 Acceptable</div>
+                        <div class="fb-pill" data-val="had_issues">⚠️ Had Issues</div>
+                    </div>
+                </div>
+
+                <!-- NPS -->
+                <div style="margin-bottom:0.85rem;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600;">
+                        <span>4. Recommendation Likelihood (1-10)</span>
+                        <span id="dashNpsDisplayVal" style="color:var(--accent); font-weight:700;">10 / 10</span>
+                    </div>
+                    <div class="nps-scale" id="dashFbNpsScale">
+                        <button type="button" class="nps-btn" data-val="1">1</button>
+                        <button type="button" class="nps-btn" data-val="2">2</button>
+                        <button type="button" class="nps-btn" data-val="3">3</button>
+                        <button type="button" class="nps-btn" data-val="4">4</button>
+                        <button type="button" class="nps-btn" data-val="5">5</button>
+                        <button type="button" class="nps-btn" data-val="6">6</button>
+                        <button type="button" class="nps-btn" data-val="7">7</button>
+                        <button type="button" class="nps-btn" data-val="8">8</button>
+                        <button type="button" class="nps-btn" data-val="9">9</button>
+                        <button type="button" class="nps-btn active" data-val="10">10</button>
+                    </div>
+                </div>
+
+                <!-- Suggestions -->
+                <div style="margin-bottom:1.25rem;">
+                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:0.35rem;">5. Suggestions / Comments:</label>
+                    <div style="margin-bottom:0.4rem;">
+                        <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Loved the fast clearance flow!')">✨ Loved the flow</span>
+                        <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Great UI design!')">🎨 Great UI</span>
+                        <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Add WhatsApp notifications')">📱 Add WhatsApp alerts</span>
+                    </div>
+                    <textarea id="dashFbComments" class="form-input" rows="2" placeholder="Tell us what you loved or how we can improve..." style="resize:none; font-size:0.85rem;"></textarea>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeStudentFeedbackModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitDashFbBtn" onclick="submitDashboardFeedback()">🚀 Submit Feedback</button>
+                </div>
+            </div>
+
+            <div id="dashFbThankYouView" style="display:none; text-align:center; padding:2rem 1rem;">
+                <div style="font-size:3rem; margin-bottom:0.5rem;">💖</div>
+                <h3 style="font-size:1.35rem; font-weight:700; margin-bottom:0.5rem;">Thank You!</h3>
+                <p style="color:var(--text-muted); font-size:0.875rem;">Your feedback has been saved and shared with the Super Admin.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Smart NoDues AI Assistant Chatbot -->
     <script src="/static/js/chatbot.js" defer></script>
 </body>

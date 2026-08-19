@@ -22,6 +22,7 @@ from models.notification import Notification
 from models.audit_log import AuditLog
 from models.admit_card import AdmitCard
 from models.system_setting import SystemSetting
+from models.feedback import Feedback
 from utils.decorators import admin_only, validate_json
 from utils.helpers import paginate_query, get_client_ip, get_user_agent
 from app import bcrypt
@@ -934,3 +935,146 @@ def get_analytics():
             "department_performance": dept_perf,
         },
     })
+
+
+# ──────────────────────────────────────
+# API: Student Feedbacks & NPS Analytics
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/feedbacks")
+@jwt_required(optional=True)
+def get_feedbacks():
+    """Get all student feedbacks with aggregated statistics, ratings distribution, and NPS score."""
+    user = None
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
+    if not user or user.role != "super_admin":
+        return jsonify({"success": False, "message": "Super Admin access required"}), 403
+
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 15))
+    rating_filter = request.args.get("rating")
+    sentiment_filter = request.args.get("sentiment")
+    search = (request.args.get("search") or "").strip().lower()
+
+    # Query for statistics across all feedbacks
+    all_feedbacks = Feedback.query.order_by(Feedback.created_at.desc()).all()
+    total_feedbacks = len(all_feedbacks)
+
+    if total_feedbacks > 0:
+        avg_rating = round(sum(f.overall_rating for f in all_feedbacks) / total_feedbacks, 2)
+        
+        # NPS Calculation: Promoters (9-10), Passives (7-8), Detractors (1-6)
+        promoters = sum(1 for f in all_feedbacks if (f.nps_score or 10) >= 9)
+        detractors = sum(1 for f in all_feedbacks if (f.nps_score or 10) <= 6)
+        nps_score = round(((promoters - detractors) / total_feedbacks) * 100, 1)
+
+        # Star breakdown
+        rating_dist = {
+            "5_star": sum(1 for f in all_feedbacks if f.overall_rating == 5),
+            "4_star": sum(1 for f in all_feedbacks if f.overall_rating == 4),
+            "3_star": sum(1 for f in all_feedbacks if f.overall_rating == 3),
+            "2_star": sum(1 for f in all_feedbacks if f.overall_rating == 2),
+            "1_star": sum(1 for f in all_feedbacks if f.overall_rating == 1),
+        }
+
+        # Sentiment breakdown
+        sentiment_dist = {
+            "positive": sum(1 for f in all_feedbacks if f.sentiment == "positive"),
+            "neutral": sum(1 for f in all_feedbacks if f.sentiment == "neutral"),
+            "constructive": sum(1 for f in all_feedbacks if f.sentiment == "constructive"),
+        }
+
+        # Feature satisfactions
+        smooth_uploads = round((sum(1 for f in all_feedbacks if f.upload_experience == "smooth") / total_feedbacks) * 100, 1)
+        helpful_ai = round((sum(1 for f in all_feedbacks if f.ai_helpfulness in ["extremely_helpful", "good"]) / total_feedbacks) * 100, 1)
+        easy_navigation = round((sum(1 for f in all_feedbacks if f.ease_of_use in ["very_easy", "easy"]) / total_feedbacks) * 100, 1)
+    else:
+        avg_rating = 5.0
+        nps_score = 100.0
+        rating_dist = {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+        sentiment_dist = {"positive": 0, "neutral": 0, "constructive": 0}
+        smooth_uploads = 100.0
+        helpful_ai = 100.0
+        easy_navigation = 100.0
+
+    # Filtered Query for table/feed list
+    query = Feedback.query
+
+    if rating_filter and rating_filter.isdigit():
+        query = query.filter(Feedback.overall_rating == int(rating_filter))
+
+    if sentiment_filter:
+        query = query.filter(Feedback.sentiment == sentiment_filter)
+
+    if search:
+        # Join with user and student for name/email/roll search
+        query = query.join(User, Feedback.user_id == User.id, isouter=True)\
+                     .join(Student, Feedback.student_id == Student.id, isouter=True)\
+                     .filter(
+                         db.or_(
+                             User.first_name.ilike(f"%{search}%"),
+                             User.last_name.ilike(f"%{search}%"),
+                             User.email.ilike(f"%{search}%"),
+                             Student.roll_number.ilike(f"%{search}%"),
+                             Feedback.comments.ilike(f"%{search}%")
+                         )
+                     )
+
+    query = query.order_by(Feedback.created_at.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "stats": {
+                "total_feedbacks": total_feedbacks,
+                "average_rating": avg_rating,
+                "nps_score": nps_score,
+                "rating_distribution": rating_dist,
+                "sentiment_distribution": sentiment_dist,
+                "satisfaction_metrics": {
+                    "smooth_uploads_percent": smooth_uploads,
+                    "helpful_ai_percent": helpful_ai,
+                    "easy_navigation_percent": easy_navigation,
+                }
+            },
+            "items": [f.to_dict() for f in pagination.items],
+            "pagination": {
+                "page": pagination.page,
+                "per_page": pagination.per_page,
+                "total": pagination.total,
+                "pages": pagination.pages,
+                "has_prev": pagination.has_prev,
+                "has_next": pagination.has_next,
+            }
+        }
+    })
+
+
+@superadmin_bp.route("/api/feedbacks/<feedback_id>", methods=["DELETE"])
+@jwt_required(optional=True)
+def delete_feedback(feedback_id):
+    """Delete a student feedback record (Super Admin moderation)."""
+    user = None
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
+    if not user or user.role != "super_admin":
+        return jsonify({"success": False, "message": "Super Admin access required"}), 403
+
+    feedback = Feedback.query.get(feedback_id)
+    if not feedback:
+        return jsonify({"success": False, "message": "Feedback record not found"}), 404
+
+    db.session.delete(feedback)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Feedback deleted successfully"})
+
