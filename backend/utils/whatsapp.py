@@ -132,9 +132,15 @@ def send_whatsapp_admit_card_alert(
         portal_url=portal_url,
     )
 
-    # 1-Click WhatsApp Direct Web/App Link
+    # 1-Click WhatsApp Direct Web/App Link (Supports WhatsApp Web and Mobile)
     encoded_text = urllib.parse.quote(message_text)
-    wa_direct_link = f"https://wa.me/{phone_e164.lstrip('+')}?text={encoded_text}"
+    clean_digits = phone_e164.lstrip("+")
+    wa_direct_link = f"https://web.whatsapp.com/send?phone={clean_digits}&text={encoded_text}"
+    wa_mobile_link = f"https://wa.me/{clean_digits}?text={encoded_text}"
+
+    # Check for UltraMsg API credentials (Easiest instant QR scan gateway)
+    ultramsg_instance = os.environ.get("ULTRAMSG_INSTANCE_ID") or os.environ.get("ULTRAMSG_INSTANCE")
+    ultramsg_token = os.environ.get("ULTRAMSG_TOKEN")
 
     # Check for Meta WhatsApp Cloud API credentials
     meta_token = os.environ.get("WHATSAPP_API_TOKEN")
@@ -149,8 +155,27 @@ def send_whatsapp_admit_card_alert(
     api_provider = None
     error_msg = None
 
-    # Meta Cloud API dispatch
-    if meta_token and meta_phone_id:
+    # 1. Try UltraMsg Gateway (Instant delivery via connected WhatsApp instance)
+    if ultramsg_instance and ultramsg_token:
+        try:
+            url = f"https://api.ultramsg.com/{ultramsg_instance}/messages/chat"
+            payload = {
+                "token": ultramsg_token,
+                "to": clean_digits,
+                "body": message_text
+            }
+            resp = requests.post(url, data=payload, timeout=10)
+            res_json = resp.json() if resp.status_code == 200 else {}
+            if resp.status_code == 200 and (res_json.get("sent") == "true" or res_json.get("id")):
+                api_sent = True
+                api_provider = "ultramsg"
+            else:
+                error_msg = f"UltraMsg API error: {resp.text}"
+        except Exception as e:
+            error_msg = f"UltraMsg exception: {str(e)}"
+
+    # 2. Try Meta WhatsApp Cloud API dispatch
+    elif meta_token and meta_phone_id:
         try:
             url = f"https://graph.facebook.com/v18.0/{meta_phone_id}/messages"
             headers = {
@@ -159,7 +184,7 @@ def send_whatsapp_admit_card_alert(
             }
             payload = {
                 "messaging_product": "whatsapp",
-                "to": phone_e164.lstrip("+"),
+                "to": clean_digits,
                 "type": "text",
                 "text": { "body": message_text }
             }
@@ -172,7 +197,7 @@ def send_whatsapp_admit_card_alert(
         except Exception as e:
             error_msg = f"Meta API exception: {str(e)}"
 
-    # Twilio API dispatch
+    # 3. Try Twilio API dispatch
     elif twilio_sid and twilio_token:
         try:
             url = f"https://api.twilio.com/2010-04-01/Accounts/{twilio_sid}/Messages.json"
@@ -198,10 +223,10 @@ def send_whatsapp_admit_card_alert(
         print("=" * 70)
         print(f"Recipient: {student_name} ({phone_e164})")
         print(f"Admit Card Number: {card_number}")
-        print(f"Delivery Mode: {'LIVE API (' + str(api_provider) + ')' if api_sent else '1-CLICK WHATSAPP DIRECT / CONSOLE'}")
+        print(f"Delivery Status: {'DELIVERED VIA API (' + str(api_provider) + ')' if api_sent else 'FALLBACK (No Gateway API keys in .env)'}")
         if error_msg:
-            print(f"Notice: {error_msg}")
-        print(f"Direct WhatsApp Link: {wa_direct_link[:80]}...")
+            print(f"Gateway Notice: {error_msg}")
+        print(f"Direct WhatsApp Web Link: {wa_direct_link[:80]}...")
         print("=" * 70 + "\n")
     except Exception:
         pass
@@ -209,8 +234,10 @@ def send_whatsapp_admit_card_alert(
     return {
         "success": True,
         "api_sent": api_sent,
-        "provider": api_provider or "whatsapp_direct_and_console",
+        "provider": api_provider or "whatsapp_direct_launcher",
         "phone": phone_e164,
         "wa_link": wa_direct_link,
-        "message": message_text
+        "wa_mobile_link": wa_mobile_link,
+        "message": message_text,
+        "error_notice": error_msg
     }

@@ -279,7 +279,18 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    alert(`✅ Success!\n\n${data.message || 'WhatsApp alert sent successfully to student registered phone number.'}`);
+                    const isApiSent = data.data && data.data.api_sent;
+                    const phone = data.data?.phone || 'student registered number';
+
+                    if (isApiSent) {
+                        alert(`✅ WhatsApp Delivered!\n\nOfficial clearance alert delivered directly to student's mobile (${phone}) via WhatsApp Gateway (${data.data.provider}).`);
+                    } else {
+                        alert(`✅ WhatsApp Alert Triggered for ${phone}!\n\nOpening WhatsApp Web to deliver the clearance notification directly to the student.`);
+                        if (data.data && (data.data.wa_link || data.data.wa_mobile_link)) {
+                            window.open(data.data.wa_link || data.data.wa_mobile_link, '_blank');
+                        }
+                    }
+
                     if (btn) {
                         btn.style.background = '#16a34a';
                         btn.innerHTML = '✓ Sent';

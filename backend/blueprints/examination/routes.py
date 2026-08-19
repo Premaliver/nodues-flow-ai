@@ -756,11 +756,14 @@ def trigger_whatsapp_notification(card_number):
 
         return jsonify({
             "success": True,
-            "message": f"WhatsApp alert sent to student's registered number ({phone})!",
+            "message": f"WhatsApp alert dispatched for student's registered number ({phone})!",
             "data": {
                 "phone": phone,
                 "api_sent": whatsapp_res.get("api_sent", False),
-                "provider": whatsapp_res.get("provider")
+                "provider": whatsapp_res.get("provider"),
+                "wa_link": whatsapp_res.get("wa_link"),
+                "wa_mobile_link": whatsapp_res.get("wa_mobile_link"),
+                "error_notice": whatsapp_res.get("error_notice")
             }
         })
     except Exception as e:
