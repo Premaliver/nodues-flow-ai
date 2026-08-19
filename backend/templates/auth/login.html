@@ -219,7 +219,7 @@
                         <label class="form-label" for="fpEmail">Registered Email Address</label>
                         <div class="form-input-icon">
                             <span class="icon">✉️</span>
-                            <input type="email" id="fpEmail" class="form-input" placeholder="student@rayatbahra.edu" required autocomplete="email">
+                            <input type="email" id="fpEmail" name="fpEmail" class="form-input" placeholder="student@rayatbahra.edu" required autocomplete="email">
                         </div>
                     </div>
 
@@ -257,14 +257,14 @@
                         </div>
                     </div>
 
-                    <label class="form-label" style="text-align: center; display: block; margin-bottom: 0.25rem;">6-Digit OTP Code</label>
-                    <div class="otp-inputs-wrap" id="otpContainer">
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="0" autofocus>
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="1">
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="2">
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="3">
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="4">
-                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="5">
+                    <label class="form-label" id="otpMainLabel" for="otp_digit_0" style="text-align: center; display: block; margin-bottom: 0.25rem;">6-Digit OTP Code</label>
+                    <div class="otp-inputs-wrap" id="otpContainer" role="group" aria-labelledby="otpMainLabel">
+                        <input type="text" id="otp_digit_0" name="otp_digit_0" aria-label="OTP Digit 1" maxlength="1" inputmode="numeric" class="otp-digit" data-index="0" autocomplete="off" autofocus>
+                        <input type="text" id="otp_digit_1" name="otp_digit_1" aria-label="OTP Digit 2" maxlength="1" inputmode="numeric" class="otp-digit" data-index="1" autocomplete="off">
+                        <input type="text" id="otp_digit_2" name="otp_digit_2" aria-label="OTP Digit 3" maxlength="1" inputmode="numeric" class="otp-digit" data-index="2" autocomplete="off">
+                        <input type="text" id="otp_digit_3" name="otp_digit_3" aria-label="OTP Digit 4" maxlength="1" inputmode="numeric" class="otp-digit" data-index="3" autocomplete="off">
+                        <input type="text" id="otp_digit_4" name="otp_digit_4" aria-label="OTP Digit 5" maxlength="1" inputmode="numeric" class="otp-digit" data-index="4" autocomplete="off">
+                        <input type="text" id="otp_digit_5" name="otp_digit_5" aria-label="OTP Digit 6" maxlength="1" inputmode="numeric" class="otp-digit" data-index="5" autocomplete="off">
                     </div>
 
                     <div style="text-align: center; margin-bottom: 1.25rem;">
@@ -280,8 +280,8 @@
                         <label class="form-label" for="fpNewPassword">New Password</label>
                         <div class="form-input-icon" style="position: relative;">
                             <span class="icon">🔒</span>
-                            <input type="password" id="fpNewPassword" class="form-input" placeholder="At least 8 characters" minlength="8" required style="padding-right: 3rem !important;">
-                            <button type="button" onclick="togglePasswordView('fpNewPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
+                            <input type="password" id="fpNewPassword" name="fpNewPassword" class="form-input" placeholder="At least 8 characters" minlength="8" required autocomplete="new-password" style="padding-right: 3rem !important;">
+                            <button type="button" aria-label="Toggle new password visibility" onclick="togglePasswordView('fpNewPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
                                 👁️
                             </button>
                         </div>
@@ -291,8 +291,8 @@
                         <label class="form-label" for="fpConfirmPassword">Confirm New Password</label>
                         <div class="form-input-icon" style="position: relative;">
                             <span class="icon">🔒</span>
-                            <input type="password" id="fpConfirmPassword" class="form-input" placeholder="Re-enter new password" minlength="8" required style="padding-right: 3rem !important;">
-                            <button type="button" onclick="togglePasswordView('fpConfirmPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
+                            <input type="password" id="fpConfirmPassword" name="fpConfirmPassword" class="form-input" placeholder="Re-enter new password" minlength="8" required autocomplete="new-password" style="padding-right: 3rem !important;">
+                            <button type="button" aria-label="Toggle confirm password visibility" onclick="togglePasswordView('fpConfirmPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
                                 👁️
                             </button>
                         </div>
