@@ -30,7 +30,7 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
     try:
         app_name = current_app.config.get("APP_NAME", "Smart NoDues AI")
         university_name = current_app.config.get("UNIVERSITY_NAME", "Rayat Bahra University")
-        sender = current_app.config.get("MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>")
+        sender = current_app.config.get("MAIL_DEFAULT_SENDER", "Smart NoDues AI <premkumar.officia0@gmail.com>")
 
         rendered_html = render_template_string(
             OTP_EMAIL_TEMPLATE,

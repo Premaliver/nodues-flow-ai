@@ -58,6 +58,8 @@ with app.app_context():
         ("hod.cse@rayatbahra.edu", "hod", "Dr. Arvind", "Gupta", "+91-9876543216"),
         ("examination@rayatbahra.edu", "examination", "Neha", "Mehta", "+91-9876543217"),
         ("student@rayatbahra.edu", "student", "Aditi", "Sharma", "+91-9876543218"),
+        ("premkumar.officia0@gmail.com", "student", "Prem", "Kumar", "+91-9876543210"),
+        ("premkumar78142@gmail.com", "student", "Prem", "Kumar", "+91-9876543210"),
     ]
     created_users = []
     for email, role, fname, lname, phone in users_data:
