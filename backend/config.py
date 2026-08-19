@@ -54,10 +54,10 @@ class BaseConfig:
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "b60b32001@smtp-brevo.com")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <b60b32001@smtp-brevo.com>"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>"
     )
 
     SESSION_COOKIE_SECURE = True

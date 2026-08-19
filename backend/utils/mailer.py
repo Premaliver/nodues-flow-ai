@@ -149,7 +149,7 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
         mail_use_tls = current_app.config.get("MAIL_USE_TLS", True)
         mail_user = current_app.config.get("MAIL_USERNAME", "b60b32001@smtp-brevo.com")
         mail_pass = current_app.config.get("MAIL_PASSWORD", "")
-        sender_email = mail_user or "b60b32001@smtp-brevo.com"
+        sender_email = "noreply@smartnodue.in"
         sender_name = "Smart NoDues AI"
         subject = f"[{app_name}] Password Reset OTP: {otp}"
 
