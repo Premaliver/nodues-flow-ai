@@ -174,4 +174,154 @@ def get_openapi_spec():
     })
 
 
+@api_bp.route("/chatbot", methods=["POST"])
+@api_bp.route("/chat", methods=["POST"])
+def ai_chatbot():
+    """
+    Intelligent AI Chatbot Assistant for Smart NoDues AI.
+    Handles inquiries in English and Hinglish regarding applications, clearance workflows,
+    compulsory documents, admit cards, fees, and password resets.
+    """
+    from flask import request
+    data = request.get_json(silent=True) or request.form
+    user_msg = (data.get("message") or "").strip().lower()
+
+    if not user_msg:
+        return jsonify({
+            "success": True,
+            "reply": "👋 Hello! I am your **Smart NoDues AI Assistant**. How can I help you today with your institutional clearance, application status, or fee receipts?",
+            "suggestions": [
+                "How to apply for No-Dues?",
+                "What documents are compulsory?",
+                "How to download Admit Card?",
+                "How to reset password?"
+            ]
+        })
+
+    # Response knowledge mapping
+    # 1. How to apply / application process
+    if any(k in user_msg for k in ["how to apply", "apply kaise", "apply karna", "application process", "new application", "form kaise", "submit application"]):
+        reply = (
+            "📋 **How to Apply for No-Dues Clearance:**\n\n"
+            "1. **Login** to your student account with your roll number/email.\n"
+            "2. Navigate to **[📝 New Application](/student/apply)**.\n"
+            "3. **Step 1 (Personal Info):** Confirm your academic & category details.\n"
+            "4. **Step 2 (Facilities):** Select facilities you availed (*Hostel / Mess* for Hostellers, *Transport / Scholarship* for Day Scholars).\n"
+            "5. **Step 3 (Compulsory Receipts):** Upload **Examination Fee Receipt** and **Next Semester Fee Receipt**.\n"
+            "6. **Step 4 (Review & Submit):** Verify details and click **Submit Application**.\n\n"
+            "⚡ Once submitted, your clearance requests will be routed to all concerned departments in parallel!"
+        )
+        suggestions = ["What documents are compulsory?", "Clearance departments?", "How to track status?"]
+
+    # 2. Documents / Receipts / Compulsory
+    elif any(k in user_msg for k in ["document", "receipt", "fee", "compulsory", "kya upload", "upload kya", "fees", "fees slip", "exam fee"]):
+        reply = (
+            "📎 **Required & Compulsory Documents:**\n\n"
+            "To get institutional clearance, every student **MUST** upload:\n\n"
+            "1. **📄 Examination Fee Receipt (*Compulsory*):** Proof of payment for current semester examination fees.\n"
+            "2. **📄 Next Semester Registration Fee Receipt (*Compulsory*):** Proof of advance payment for the upcoming semester.\n\n"
+            "⚠️ *Both documents must be clear PDFs or JPG/PNG images under 16MB.* Applications without both receipts cannot be submitted."
+        )
+        suggestions = ["How to apply for No-Dues?", "Where to upload receipts?", "Clearance departments?"]
+
+    # 3. Admit Card / Digital Pass
+    elif any(k in user_msg for k in ["admit card", "hall ticket", "download admit", "roll no slip", "exam pass", "qr code", "verify"]):
+        reply = (
+            "🎓 **Admit Card & Digital Examination Pass:**\n\n"
+            "• **Eligibility:** Once **ALL** your clearance departments (HOD, Accounts, Examination, Hostel/Mess/Transport) approve with **100% No-Dues**, your Admit Card is generated automatically!\n"
+            "• **Download:** Go to your **[📊 Student Dashboard](/student/dashboard)** under **Admit Cards & Digital Pass** section to download the HMAC-signed PDF.\n"
+            "• **Security:** Each admit card features a **Cryptographic Scannable QR Code** for on-spot verification by exam superintendents."
+        )
+        suggestions = ["How to check clearance status?", "How long does clearance take?", "What if a department rejects?"]
+
+    # 4. Password Reset / Forgot Password / OTP
+    elif any(k in user_msg for k in ["password", "forgot", "bhul gaya", "reset", "otp", "change password", "login issue", "password kaise"]):
+        reply = (
+            "🔑 **How to Reset Your Password:**\n\n"
+            "1. Visit the **[🔐 Sign In Page](/auth/login)**.\n"
+            "2. Click on **'Forgot Password?'** below the password box.\n"
+            "3. Enter your registered **Email Address** and click **Send Verification Code**.\n"
+            "4. Enter the **6-digit OTP** sent to your email inbox.\n"
+            "5. Type your new password and click **Reset Password**!\n\n"
+            "💡 *Tip:* OTP is valid for **10 minutes**. You can also request a resend after 60 seconds."
+        )
+        suggestions = ["How to login?", "How to register?", "Contact support"]
+
+    # 5. Hosteller vs Day Scholar
+    elif any(k in user_msg for k in ["hosteller", "day scholar", "category", "hostel", "mess", "transport", "bus"]):
+        reply = (
+            "🏠 **Student Clearance Categories:**\n\n"
+            "• **🚶 Day Scholar:** Routes through Academic HOD, Accounts, and Examination. You can optionally select Transport or Scholarship clearance if availed.\n"
+            "• **🏠 Hosteller:** Routes through Academic HOD, Accounts, Examination, **Hostel Department** (room inventory), and **Mess Department** (cafeteria dues).\n\n"
+            "📍 Your category is automatically detected from your admission registration."
+        )
+        suggestions = ["How to apply for No-Dues?", "What documents are compulsory?", "How to track status?"]
+
+    # 6. Clearance Departments & Status
+    elif any(k in user_msg for k in ["department", "status", "hod", "accounts", "examination", "scholarship", "kitna time", "pending", "approval"]):
+        reply = (
+            "🏛️ **Clearance Departments & Workflow:**\n\n"
+            "• **🎯 Academic HOD:** Verifies lab dues, library books, and department attendance.\n"
+            "• **💰 Accounts Department:** Verifies tuition fees and university financial dues.\n"
+            "• **📝 Examination Department:** Verifies exam enrollment and fee clearance.\n"
+            "• **🏠 Hostel & Mess:** Verifies room clearance and catering dues (for hostellers).\n"
+            "• **🚌 Transport:** Verifies bus pass & route fees (if availed).\n\n"
+            "📊 Track real-time progress on your **[📊 Dashboard](/student/dashboard)** with the Live Circular Gauge!"
+        )
+        suggestions = ["How to download Admit Card?", "What documents are compulsory?", "How to apply for No-Dues?"]
+
+    # 7. Contact / Help / Support / University
+    elif any(k in user_msg for k in ["contact", "support", "help", "email", "phone", "admin", "university", "rayat bahra", "where"]):
+        university = current_app.config.get("UNIVERSITY_NAME", "Rayat Bahra University")
+        support_email = current_app.config.get("SUPPORT_EMAIL", "support@rayatbahra.edu")
+        reply = (
+            f"📞 **{university} Support & Helpdesk:**\n\n"
+            f"• **System:** Smart NoDues AI Portal\n"
+            f"• **Support Email:** `{support_email}`\n"
+            f"• **Office Hours:** Monday to Friday (9:00 AM - 5:00 PM)\n"
+            f"• **Admin Office:** Academic Examination & Student Affairs Block\n\n"
+            "Feel free to ask me any specific question about your clearance or application!"
+        )
+        suggestions = ["How to apply for No-Dues?", "How to reset password?", "What documents are compulsory?"]
+
+    # 8. Greetings / Casual
+    elif any(k in user_msg for k in ["hi", "hello", "hey", "namaste", "salam", "kya haal", "good morning", "good evening", "kaise ho", "who are you", "what is this"]):
+        reply = (
+            "👋 **Hello! I am Arya — your Smart NoDues AI Assistant.**\n\n"
+            "I'm here 24/7 to help you navigate the institutional no-dues clearance portal, submit applications, upload receipts, and get your digital admit cards instantly.\n\n"
+            "What would you like to do today?"
+        )
+        suggestions = [
+            "How to apply for No-Dues?",
+            "What documents are compulsory?",
+            "How to download Admit Card?",
+            "How to reset password?"
+        ]
+
+    # 9. Default Fallback with intelligent guidance
+    else:
+        reply = (
+            f"🤖 I understand you're asking about **'{user_msg}'**.\n\n"
+            "Here is how I can best guide you:\n"
+            "• **To apply for No-Dues:** Go to **[📝 New Application](/student/apply)**.\n"
+            "• **To view clearance progress:** Check **[📊 Dashboard](/student/dashboard)**.\n"
+            "• **To reset password:** Use **[🔑 Forgot Password](/auth/login)**.\n"
+            "• **Required documents:** Examination fee receipt + Next semester registration fee receipt.\n\n"
+            "If you need further help, pick one of the quick suggestions below or rephrase your question!"
+        )
+        suggestions = [
+            "How to apply for No-Dues?",
+            "What documents are compulsory?",
+            "How to download Admit Card?",
+            "Clearance departments?"
+        ]
+
+    return jsonify({
+        "success": True,
+        "reply": reply,
+        "suggestions": suggestions
+    })
+
+
+
 
