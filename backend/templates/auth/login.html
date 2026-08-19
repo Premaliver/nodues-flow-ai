@@ -246,6 +246,17 @@
 
                 <form id="fpResetForm" onsubmit="handleResetPassword(event)">
                     <!-- 6 Digit OTP Inputs -->
+                    <div id="fpDevOtpNotice" style="display: none; margin: 0 0 1rem 0; background: rgba(99, 102, 241, 0.12); border: 1px dashed var(--accent); border-radius: 10px; padding: 0.65rem 0.85rem; text-align: center;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                            🧪 <strong>Dev Mode (SMTP not configured):</strong> OTP generated for demo
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <span style="font-size: 0.82rem; font-weight: 600;">Code:</span>
+                            <strong id="fpDevOtpCode" style="font-family: monospace; font-size: 1.15rem; color: var(--accent); letter-spacing: 2px;">123456</strong>
+                            <button type="button" onclick="autoFillDevOtp()" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: 6px; cursor: pointer;">⚡ Auto Fill</button>
+                        </div>
+                    </div>
+
                     <label class="form-label" style="text-align: center; display: block; margin-bottom: 0.25rem;">6-Digit OTP Code</label>
                     <div class="otp-inputs-wrap" id="otpContainer">
                         <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="0" autofocus>
@@ -529,6 +540,17 @@
                     document.getElementById('fpSentEmailDisplay').textContent = email;
                     document.getElementById('fpStep1').style.display = 'none';
                     document.getElementById('fpStep2').style.display = 'block';
+
+                    const devNotice = document.getElementById('fpDevOtpNotice');
+                    if (data.data && data.data.dev_otp) {
+                        currentDevOtp = String(data.data.dev_otp);
+                        document.getElementById('fpDevOtpCode').textContent = currentDevOtp;
+                        if (devNotice) devNotice.style.display = 'block';
+                    } else {
+                        currentDevOtp = '';
+                        if (devNotice) devNotice.style.display = 'none';
+                    }
+
                     showAlert('fpAlert2', 'success', '✓ ' + (data.message || 'OTP code sent! Please check your inbox.'));
                     startResendCountdown(60);
                     setupOtpInputs();
@@ -541,6 +563,17 @@
                 btn.disabled = false;
                 btn.textContent = orig;
             }
+        }
+
+        let currentDevOtp = '';
+
+        function autoFillDevOtp() {
+            if (!currentDevOtp) return;
+            const inputs = document.querySelectorAll('#otpContainer .otp-digit');
+            inputs.forEach((inp, i) => {
+                inp.value = currentDevOtp[i] || '';
+            });
+            if (inputs[inputs.length - 1]) inputs[inputs.length - 1].focus();
         }
 
         function resendOtp() {

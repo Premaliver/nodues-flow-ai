@@ -5,6 +5,18 @@ All environment-specific settings for the Flask application.
 
 import os
 from datetime import timedelta
+try:
+    from dotenv import load_dotenv
+    # Load .env from backend directory or project root
+    for env_path in [
+        os.path.join(os.path.dirname(__file__), ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    ]:
+        if os.path.exists(env_path):
+            load_dotenv(env_path, override=True)
+            break
+except ImportError:
+    pass
 
 
 def _get_db_uri(default_uri: str) -> str:
@@ -38,13 +50,14 @@ class BaseConfig:
     )
     ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp"}
 
-    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp-relay.brevo.com")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
-    MAIL_USE_TLS = True
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "noreply@rayatbahra.edu"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>"
     )
 
     SESSION_COOKIE_SECURE = True

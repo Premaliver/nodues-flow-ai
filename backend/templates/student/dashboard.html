@@ -623,9 +623,6 @@
                                     <p style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.25rem;">
                                         Your No-Dues clearance is 100% complete across all departments. Official Admit Card has been generated!
                                     </p>
-                                    <div style="margin-top: 0.4rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; background: rgba(37, 211, 102, 0.15); color: #166534; padding: 3px 10px; border-radius: 12px; font-weight: 600; border: 1px solid rgba(37, 211, 102, 0.3);">
-                                        📱 WhatsApp Alert Dispatched to your Registered Number
-                                    </div>
                                 </div>
                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
@@ -658,9 +655,6 @@
                     const admitBody = document.getElementById('admitCardsBody');
                     if (d.admit_cards && d.admit_cards.length > 0) {
                         admitBody.innerHTML = d.admit_cards.map(ac => {
-                            const waText = encodeURIComponent(`🎓 *Rayat Bahra University — No-Dues Clearance Completed!* \n\nMy Admit Card #${ac.card_number} has been officially approved and generated with 100% clearance from all departments.`);
-                            const waUrl = `https://wa.me/?text=${waText}`;
-
                             return `
                                 <div class="admit-card-pass" style="margin-bottom: 1rem;">
                                     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; position: relative; z-index: 2;">
@@ -672,14 +666,10 @@
                                             <div style="font-size: 0.85rem; color: #cbd5e1; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
                                                 <span>📅 Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
                                                 <span>📥 Downloads: ${ac.download_count || 0} times</span>
-                                                <span style="color: #4ade80;">📱 WhatsApp Alert Sent</span>
                                             </div>
                                         </div>
                                         
                                         <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                                            <a href="${waUrl}" target="_blank" rel="noopener" class="btn btn-secondary" style="background: #25D366; color: white; border-color: #22c55e;" title="Share / View on WhatsApp">
-                                                💬 WhatsApp
-                                            </a>
                                             <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);">
                                                 📥 Download Official PDF
                                             </a>
@@ -791,11 +781,8 @@
                             <div style="font-weight: 700; font-size: 0.95rem; font-family: monospace; color: var(--accent);">${s.roll_number || '—'}</div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" style="font-size: 0.78rem;">📱 Registered Phone (WhatsApp)</label>
-                            <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.95rem; color: #16a34a;">
-                                <span>${phoneNum || 'Not registered'}</span>
-                                <span style="font-size: 0.65rem; background: rgba(37, 211, 102, 0.15); color: #166534; padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(37, 211, 102, 0.3);">✓ WhatsApp Alert</span>
-                            </div>
+                            <label class="form-label" style="font-size: 0.78rem;">Phone / Mobile</label>
+                            <div style="font-weight: 700; font-size: 0.95rem;">${phoneNum || '—'}</div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="font-size: 0.78rem;">Enrollment Number</label>
@@ -850,7 +837,7 @@
                                 <input type="text" class="form-input" id="editFullName" value="${s.student_name || s.full_name || ''}" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" style="font-size: 0.78rem;">📱 Registered Mobile (WhatsApp Alerts) *</label>
+                                <label class="form-label" style="font-size: 0.78rem;">Mobile / Phone Number *</label>
                                 <input type="tel" class="form-input" id="editPhone" value="${phoneNum}" placeholder="+91..." required>
                             </div>
                             <div class="form-group">
@@ -1288,7 +1275,7 @@
                     <div style="margin-bottom:0.4rem;">
                         <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Loved the fast clearance flow!')">✨ Loved the flow</span>
                         <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Great UI design!')">🎨 Great UI</span>
-                        <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Add WhatsApp notifications')">📱 Add WhatsApp alerts</span>
+                        <span class="fb-suggestion-chip" onclick="addDashSuggestionTag('Add SMS status alerts')">📱 Add SMS alerts</span>
                     </div>
                     <textarea id="dashFbComments" class="form-input" rows="2" placeholder="Tell us what you loved or how we can improve..." style="resize:none; font-size:0.85rem;"></textarea>
                 </div>

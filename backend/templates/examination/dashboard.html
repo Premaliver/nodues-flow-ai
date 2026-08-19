@@ -253,68 +253,10 @@
                             <td>${card.course_name||'N/A'}</td>
                             <td>Sem ${card.semester||'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${card.created_at ? new Date(card.created_at).toLocaleDateString() : 'N/A'}</td>
-                            <td>
-                                <div style="display:flex;gap:0.4rem;align-items:center;">
-                                    <button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button>
-                                    <button type="button" class="btn btn-sm" style="background:#25D366;color:white;border:none;padding:0.35rem 0.65rem;border-radius:var(--radius-md);font-size:0.78rem;font-weight:600;cursor:pointer;" onclick="sendWhatsAppToStudent('${card.card_number}', this)" title="Send WhatsApp Alert directly to Student's Registered Number">📱 Send WhatsApp</button>
-                                </div>
-                            </td>
+                            <td><button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button></td>
                         </tr>`).join('') + `</tbody></table>`;
                 } else { tbody.innerHTML = '<table><thead><tr><th>Card #</th><th>Student</th><th>Action</th></tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No admit cards issued yet</td></tr></tbody></table>'; }
             } catch (e) { console.error(e); }
-        }
-
-        async function sendWhatsAppToStudent(cardNumber, btn) {
-            if (!confirm(`Are you sure you want to send the official WhatsApp clearance notification to this student's registered mobile number?`)) return;
-            const originalText = btn ? btn.innerHTML : '📱 Send WhatsApp';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '⏳ Sending...';
-            }
-            try {
-                const token = localStorage.getItem('access_token');
-                const res = await fetch(`/examination/api/send-whatsapp-alert/${cardNumber}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    const isApiSent = data.data && data.data.api_sent;
-                    const phone = data.data?.phone || 'student registered number';
-
-                    if (isApiSent) {
-                        alert(`✅ WhatsApp Delivered!\n\nOfficial clearance alert delivered directly to student's mobile (${phone}) via WhatsApp Gateway (${data.data.provider}).`);
-                    } else {
-                        alert(`✅ WhatsApp Alert Triggered for ${phone}!\n\nOpening WhatsApp Web to deliver the clearance notification directly to the student.`);
-                        if (data.data && (data.data.wa_link || data.data.wa_mobile_link)) {
-                            window.open(data.data.wa_link || data.data.wa_mobile_link, '_blank');
-                        }
-                    }
-
-                    if (btn) {
-                        btn.style.background = '#16a34a';
-                        btn.innerHTML = '✓ Sent';
-                        setTimeout(() => {
-                            btn.disabled = false;
-                            btn.style.background = '#25D366';
-                            btn.innerHTML = originalText;
-                        }, 3000);
-                    }
-                } else {
-                    alert(`⚠️ ${data.message || 'Could not send WhatsApp alert'}`);
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = originalText;
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Error sending WhatsApp notification');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                }
-            }
         }
 
         async function generateAdmitCard(applicationId) {
@@ -326,8 +268,7 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    const waStatus = data.data?.whatsapp?.phone ? `\n📱 WhatsApp Alert sent to ${data.data.whatsapp.phone}!` : '';
-                    alert((data.message || 'Admit card generated!') + waStatus);
+                    alert(data.message || 'Admit card generated!');
                     if (data.data && data.data.download_url) {
                         viewAdmitCard(data.data.download_url);
                     }

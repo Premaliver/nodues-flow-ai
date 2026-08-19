@@ -430,20 +430,36 @@ def forgot_password_request():
     db.session.commit()
 
     # Send OTP Email
-    send_otp_email(
+    mail_result = send_otp_email(
         recipient_email=user.email,
         recipient_name=user.full_name or "Student",
         otp=otp,
         expires_in_minutes=10
     )
 
+    is_simulated = mail_result.get("simulated", False)
+    is_sent = mail_result.get("sent", False)
+
+    response_data = {
+        "email": email,
+        "expires_in_minutes": 10,
+        "mail_sent": is_sent,
+        "simulated": is_simulated,
+    }
+
+    if is_simulated or current_app.config.get("FLASK_ENV") == "development":
+        response_data["dev_otp"] = otp
+        if is_simulated:
+            msg_text = f"OTP code generated! (Dev Mode: {otp})"
+        else:
+            msg_text = f"A 6-digit OTP has been sent to {email}. Please check your inbox."
+    else:
+        msg_text = f"A 6-digit OTP has been sent to {email}. Please check your inbox."
+
     return jsonify({
         "success": True,
-        "message": f"A 6-digit OTP has been sent to {email}. Please check your inbox.",
-        "data": {
-            "email": email,
-            "expires_in_minutes": 10
-        }
+        "message": msg_text,
+        "data": response_data
     }), 200
 
 

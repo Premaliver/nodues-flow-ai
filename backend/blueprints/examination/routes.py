@@ -27,10 +27,7 @@ from models.audit_log import AuditLog
 from models.admit_card import AdmitCard
 from utils.decorators import department_access, validate_json
 from utils.helpers import paginate_query, get_client_ip, get_user_agent, generate_hmac_signature
-try:
-    from utils.whatsapp import send_whatsapp_admit_card_alert
-except ImportError:
-    from backend.utils.whatsapp import send_whatsapp_admit_card_alert
+
 
 
 def _get_exam_dept():
@@ -572,34 +569,14 @@ def generate_admit_card(application_id):
     application.completed_at = datetime.now(timezone.utc)
     application.current_step = application.total_steps
 
-    # ──────────────────────────────────────
-    # Dispatch Official WhatsApp Alert
-    # ──────────────────────────────────────
-    whatsapp_res = None
-    try:
-        whatsapp_res = send_whatsapp_admit_card_alert(
-            user=student_user or getattr(student, "user", None),
-            student=student,
-            application=application,
-            admit_card=admit_card,
-            semester=semester,
-        )
-    except Exception as e:
-        current_app.logger.error("WhatsApp alert dispatch failed: %s", str(e))
-
-    # Notify student in-app with WhatsApp metadata
+    # Notify student
     notification = Notification(
         user_id=student.user_id,
         type="admit_card_generated",
-        title="🎉 No-Dues Cleared & Admit Card Ready!",
-        message=f"All departments have approved your clearance. Your Admit Card ({card_number}) is ready for download.",
+        title="Your admit card is ready!",
+        message=f"Your admit card ({card_number}) has been generated.",
         application_id=application.id,
-        data={
-            "card_number": card_number,
-            "whatsapp_sent": whatsapp_res.get("api_sent", False) if whatsapp_res else False,
-            "whatsapp_link": whatsapp_res.get("wa_link") if whatsapp_res else None,
-            "phone": whatsapp_res.get("phone") if whatsapp_res else None,
-        },
+        data={"card_number": card_number},
     )
     db.session.add(notification)
 
@@ -608,11 +585,7 @@ def generate_admit_card(application_id):
         action="generate",
         resource_type="admit_card",
         resource_id=admit_card.id,
-        details={
-            "application_id": str(application.id),
-            "card_number": card_number,
-            "whatsapp_status": whatsapp_res.get("provider") if whatsapp_res else "skipped"
-        },
+        details={"application_id": str(application.id), "card_number": card_number},
         ip_address=get_client_ip(),
         user_agent=get_user_agent(),
     )
@@ -621,13 +594,12 @@ def generate_admit_card(application_id):
 
     return jsonify({
         "success": True,
-        "message": "Admit card generated successfully and WhatsApp alert dispatched!",
+        "message": "Admit card generated successfully",
         "data": {
             **admit_card.to_dict(),
             "student_name": student_user.full_name if student_user else student.student_name,
             "roll_number": student.roll_number,
             "download_url": f"/examination/api/admit-card/{card_number}/pdf",
-            "whatsapp": whatsapp_res,
         },
     }), 201
 
@@ -709,64 +681,5 @@ def public_verify_clearance(card_number):
     )
 
 
-@exam_bp.route("/api/send-whatsapp-alert/<card_number>", methods=["POST"])
-@jwt_required()
-def trigger_whatsapp_notification(card_number):
-    """Trigger WhatsApp alert to student's registered mobile number from examination dashboard."""
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user or user.role not in ["examination", "super_admin", "admin"]:
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
 
-    card = AdmitCard.query.filter_by(card_number=card_number).first()
-    if not card:
-        return jsonify({"success": False, "message": "Admit card record not found"}), 404
-
-    student = Student.query.get(card.student_id)
-    semester = Semester.query.get(card.semester_id)
-    application = NoDuesApplication.query.get(card.application_id)
-    student_user = User.query.get(student.user_id) if student and student.user_id else None
-
-    if not student:
-        return jsonify({"success": False, "message": "Student profile not found"}), 404
-
-    try:
-        whatsapp_res = send_whatsapp_admit_card_alert(
-            user=student_user or getattr(student, "user", None),
-            student=student,
-            application=application,
-            admit_card=card,
-            semester=semester,
-        )
-
-        phone = whatsapp_res.get("phone", "registered number")
-        
-        # Add Audit Log
-        audit = AuditLog(
-            user_id=user_id,
-            action="update",
-            resource_type="admit_card",
-            resource_id=card.id,
-            details={"action": "resend_whatsapp_alert", "card_number": card_number, "phone": phone},
-            ip_address=get_client_ip(),
-            user_agent=get_user_agent(),
-        )
-        db.session.add(audit)
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": f"WhatsApp alert dispatched for student's registered number ({phone})!",
-            "data": {
-                "phone": phone,
-                "api_sent": whatsapp_res.get("api_sent", False),
-                "provider": whatsapp_res.get("provider"),
-                "wa_link": whatsapp_res.get("wa_link"),
-                "wa_mobile_link": whatsapp_res.get("wa_mobile_link"),
-                "error_notice": whatsapp_res.get("error_notice")
-            }
-        })
-    except Exception as e:
-        current_app.logger.error("Failed to send WhatsApp alert: %s", str(e))
-        return jsonify({"success": False, "message": f"Failed to send alert: {str(e)}"}), 500
 
