@@ -54,7 +54,7 @@
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary); color: white;">🎫</div><div class="stat-value" id="admitCardsCount">0</div><div class="stat-label">Admit Cards Issued</div></div>
                 </div>
-<div class="card section-content" id="section-dashboard">
+                <div class="card section-content" id="section-dashboard">
                     <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Applications Ready for Admit Card</h3></div>
                     <div class="card-body">
                         <div class="table-container">
@@ -67,7 +67,7 @@
                     <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Approved Applications</h3></div>
                     <div class="card-body">
                         <div class="table-container">
-<table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th></tr></thead>
+                            <table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th></tr></thead>
                             <tbody id="approvedAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Click to load...</td></tr></tbody></table>
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                     <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Admit Cards Issued</h3></div>
                     <div class="card-body"><p id="issuedCardsBody" style="color:var(--text-muted);">Loading...</p></div>
                 </div>
-</main>
+            </main>
         </div>
     </div>
 
@@ -118,7 +118,7 @@
         </div>
     </div>
 
-<script>
+    <script>
         function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
         
         async function openExamDocsModal(appId, name, rollNo, course, sem) {
@@ -153,6 +153,7 @@
                 } else { container.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }
             } catch(e) { container.innerHTML = '<span style="font-size:0.85rem;color:var(--crimson);">Error loading docs</span>'; }
         }
+
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
             const bd = document.getElementById('sidebarBackdrop');
@@ -166,16 +167,18 @@
                 bd.classList.remove('active');
             }
         }
-        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+
         function viewAdmitCard(url) {
             document.getElementById('admitCardFrame').src = url;
             document.getElementById('admitCardDownloadBtn').href = url;
             document.getElementById('admitCardModal').style.display = 'flex';
         }
+
         function closeAdmitCardModal() {
             document.getElementById('admitCardModal').style.display = 'none';
             document.getElementById('admitCardFrame').src = '';
         }
+
         function switchSection(name) {
             document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
             document.querySelector('.sidebar-nav-item[data-section="'+name+'"]')?.classList.add('active');
@@ -186,6 +189,7 @@
             else if (name === 'approved') loadApprovedApps();
             else if (name === 'issued') loadIssuedCards();
         }
+
         async function loadDashboard() {
             try {
                 const token = localStorage.getItem('access_token');
@@ -212,7 +216,8 @@
                 }
             } catch (e) { console.error(e); }
         }
-async function loadApprovedApps() {
+
+        async function loadApprovedApps() {
             try {
                 const token = localStorage.getItem('access_token');
                 if (!token) { window.location.href = '/auth/login'; return; }
@@ -231,6 +236,7 @@ async function loadApprovedApps() {
                 } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No approved apps</td></tr>'; }
             } catch (e) { console.error(e); }
         }
+
         async function loadIssuedCards() {
             try {
                 const token = localStorage.getItem('access_token');
@@ -250,13 +256,56 @@ async function loadApprovedApps() {
                             <td>
                                 <div style="display:flex;gap:0.4rem;align-items:center;">
                                     <button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button>
-                                    <a href="https://wa.me/?text=${encodeURIComponent('🎓 Rayat Bahra University — No-Dues Clearance Completed! Your Admit Card #' + card.card_number + ' has been approved. Check portal: http://127.0.0.1:5000/student/dashboard')}" target="_blank" rel="noopener" class="btn btn-sm" style="background:#25D366;color:white;text-decoration:none;padding:0.35rem 0.65rem;border-radius:var(--radius-md);font-size:0.78rem;font-weight:600;" title="Share / Resend WhatsApp Alert">📱 WhatsApp</a>
+                                    <button type="button" class="btn btn-sm" style="background:#25D366;color:white;border:none;padding:0.35rem 0.65rem;border-radius:var(--radius-md);font-size:0.78rem;font-weight:600;cursor:pointer;" onclick="sendWhatsAppToStudent('${card.card_number}', this)" title="Send WhatsApp Alert directly to Student's Registered Number">📱 Send WhatsApp</button>
                                 </div>
                             </td>
                         </tr>`).join('') + `</tbody></table>`;
                 } else { tbody.innerHTML = '<table><thead><tr><th>Card #</th><th>Student</th><th>Action</th></tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No admit cards issued yet</td></tr></tbody></table>'; }
             } catch (e) { console.error(e); }
         }
+
+        async function sendWhatsAppToStudent(cardNumber, btn) {
+            if (!confirm(`Are you sure you want to send the official WhatsApp clearance notification to this student's registered mobile number?`)) return;
+            const originalText = btn ? btn.innerHTML : '📱 Send WhatsApp';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Sending...';
+            }
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/examination/api/send-whatsapp-alert/${cardNumber}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert(`✅ Success!\n\n${data.message || 'WhatsApp alert sent successfully to student registered phone number.'}`);
+                    if (btn) {
+                        btn.style.background = '#16a34a';
+                        btn.innerHTML = '✓ Sent';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.style.background = '#25D366';
+                            btn.innerHTML = originalText;
+                        }, 3000);
+                    }
+                } else {
+                    alert(`⚠️ ${data.message || 'Could not send WhatsApp alert'}`);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error sending WhatsApp notification');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+        }
+
         async function generateAdmitCard(applicationId) {
             try {
                 const token = localStorage.getItem('access_token');

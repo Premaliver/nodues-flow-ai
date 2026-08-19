@@ -707,3 +707,63 @@ def public_verify_clearance(card_number):
         application=application,
         department_approvals=department_approvals,
     )
+
+
+@exam_bp.route("/api/send-whatsapp-alert/<card_number>", methods=["POST"])
+@jwt_required()
+def trigger_whatsapp_notification(card_number):
+    """Trigger WhatsApp alert to student's registered mobile number from examination dashboard."""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user or user.role not in ["examination", "super_admin", "admin"]:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    card = AdmitCard.query.filter_by(card_number=card_number).first()
+    if not card:
+        return jsonify({"success": False, "message": "Admit card record not found"}), 404
+
+    student = Student.query.get(card.student_id)
+    semester = Semester.query.get(card.semester_id)
+    application = NoDuesApplication.query.get(card.application_id)
+    student_user = User.query.get(student.user_id) if student and student.user_id else None
+
+    if not student:
+        return jsonify({"success": False, "message": "Student profile not found"}), 404
+
+    try:
+        whatsapp_res = send_whatsapp_admit_card_alert(
+            user=student_user or getattr(student, "user", None),
+            student=student,
+            application=application,
+            admit_card=card,
+            semester=semester,
+        )
+
+        phone = whatsapp_res.get("phone", "registered number")
+        
+        # Add Audit Log
+        audit = AuditLog(
+            user_id=user_id,
+            action="update",
+            resource_type="admit_card",
+            resource_id=card.id,
+            details={"action": "resend_whatsapp_alert", "card_number": card_number, "phone": phone},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"WhatsApp alert sent to student's registered number ({phone})!",
+            "data": {
+                "phone": phone,
+                "api_sent": whatsapp_res.get("api_sent", False),
+                "provider": whatsapp_res.get("provider")
+            }
+        })
+    except Exception as e:
+        current_app.logger.error("Failed to send WhatsApp alert: %s", str(e))
+        return jsonify({"success": False, "message": f"Failed to send alert: {str(e)}"}), 500
+
