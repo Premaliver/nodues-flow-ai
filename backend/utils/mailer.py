@@ -4,10 +4,105 @@ Handles sending transactional emails like OTP verification, notifications, and a
 """
 
 import logging
+import threading
 from flask import current_app, render_template_string
 from flask_mail import Message
 
 logger = logging.getLogger(__name__)
+
+
+def _send_async_mail(app, msg, recipient_email):
+    """Background worker to dispatch SMTP email without delaying the user's HTTP response."""
+    with app.app_context():
+        try:
+            from app import mail
+            mail.send(msg)
+            logger.info(f"✓ [ASYNC SMTP] Password reset OTP email successfully sent to {recipient_email}")
+        except Exception as e:
+            logger.error(f"❌ [ASYNC SMTP] Failed to send email to {recipient_email}: {e}")
+
+
+def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_in_minutes: int = 10, async_send: bool = True) -> dict:
+    """
+    Send OTP email to user for password reset.
+    Dispatches in a background thread for instant (< 100ms) UI response.
+    """
+    try:
+        app_name = current_app.config.get("APP_NAME", "Smart NoDues AI")
+        university_name = current_app.config.get("UNIVERSITY_NAME", "Rayat Bahra University")
+        sender = current_app.config.get("MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>")
+
+        rendered_html = render_template_string(
+            OTP_EMAIL_TEMPLATE,
+            recipient_name=recipient_name,
+            otp=otp,
+            expires_in_minutes=expires_in_minutes,
+            app_name=app_name,
+            university_name=university_name,
+        )
+
+        mail_user = current_app.config.get("MAIL_USERNAME")
+        mail_pass = current_app.config.get("MAIL_PASSWORD")
+
+        # Check if real SMTP credentials are provided in .env
+        if not mail_user or not mail_pass:
+            logger.info("=" * 60)
+            logger.info(f"📧 [DEV EMAIL SIMULATION] To: {recipient_email}")
+            logger.info(f"🔑 RESET OTP CODE: >>> {otp} <<< (Valid for {expires_in_minutes} mins)")
+            logger.info("=" * 60)
+            print(f"\n[DEV MAIL SIMULATION] OTP for {recipient_email} is: >>> {otp} <<<\n")
+            return {
+                "success": True,
+                "sent": False,
+                "simulated": True,
+                "otp": otp,
+                "message": "SMTP not configured in .env. OTP printed to terminal."
+            }
+
+        msg = Message(
+            subject=f"[{app_name}] Password Reset OTP: {otp}",
+            sender=sender or mail_user,
+            recipients=[recipient_email],
+            html=rendered_html,
+        )
+
+        if async_send:
+            # Spawn background daemon thread for ultra-fast instant response
+            app_obj = current_app._get_current_object()
+            thr = threading.Thread(
+                target=_send_async_mail,
+                args=(app_obj, msg, recipient_email),
+                daemon=True
+            )
+            thr.start()
+            logger.info(f"⚡ [INSTANT DISPATCH] OTP email queued in background for {recipient_email}")
+        else:
+            from app import mail
+            mail.send(msg)
+            logger.info(f"✓ Password reset OTP email successfully sent to {recipient_email}")
+
+        return {
+            "success": True,
+            "sent": True,
+            "simulated": False,
+            "message": f"Password reset email sent to {recipient_email}"
+        }
+
+    except Exception as e:
+        logger.warning(f"SMTP send notice/failed: {e}")
+        logger.info("=" * 60)
+        logger.info(f"📧 [CONSOLE OTP FALLBACK] To: {recipient_email}")
+        logger.info(f"🔑 RESET OTP CODE: >>> {otp} <<< (Valid for {expires_in_minutes} mins)")
+        logger.info("=" * 60)
+        print(f"\n[CONSOLE OTP FALLBACK] OTP for {recipient_email} is: >>> {otp} <<<\n")
+        return {
+            "success": True,
+            "sent": False,
+            "simulated": True,
+            "otp": otp,
+            "error": str(e),
+            "message": f"SMTP delivery notice: {str(e)}"
+        }
 
 
 OTP_EMAIL_TEMPLATE = """
