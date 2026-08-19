@@ -3,6 +3,7 @@
 """Authentication routes — login, register, logout, password reset."""
 
 import uuid
+import time
 from datetime import datetime, timezone
 
 from flask import request, jsonify, render_template, current_app, redirect
@@ -383,6 +384,11 @@ def hidden_admin_access():
     return redirect("/auth/login?admin=secret")
 
 
+# In-memory OTP cooldown tracker to prevent rapid duplicate OTP generation
+_otp_cache = {}
+_OTP_COOLDOWN_SECONDS = 45
+
+
 @auth_bp.route("/forgot-password/request", methods=["POST"])
 @auth_bp.route("/forgot-password/send-otp", methods=["POST"])
 def forgot_password_request():
@@ -399,7 +405,7 @@ def forgot_password_request():
 
     user = User.query.filter_by(email=email).first()
 
-    # If user doesn't exist, return generic friendly message to prevent email enumeration or return error
+    # If user doesn't exist, return generic friendly message
     if not user:
         return jsonify({
             "success": False,
@@ -412,38 +418,44 @@ def forgot_password_request():
             "message": "This account is inactive or suspended. Please contact administrator."
         }), 403
 
-    # Generate 6-digit OTP
-    otp = f"{secrets.randbelow(900000) + 100000:06d}"
-    user.set_reset_otp(otp, expires_in_minutes=10)
+    now_ts = time.time()
+    last_record = _otp_cache.get(email)
+    # Check if an OTP was sent within the last 45 seconds
+    if last_record and (now_ts - last_record.get("timestamp", 0)) < _OTP_COOLDOWN_SECONDS:
+        remaining = int(_OTP_COOLDOWN_SECONDS - (now_ts - last_record["timestamp"]))
+        return jsonify({
+            "success": True,
+            "message": f"OTP code is already active! Please check your email or wait {remaining}s to resend.",
+            "data": {
+                "email": email,
+                "expires_in_minutes": 15,
+                "cooldown_remaining": remaining
+            }
+        }), 200
 
-    # Audit log
-    audit = AuditLog(
-        user_id=user.id,
-        action="generate",
-        resource_type="auth",
-        resource_id=user.id,
-        details={"email": email, "event": "forgot_password_otp_request"},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    # Generate ONE clean 6-digit OTP
+    otp = f"{secrets.randbelow(900000) + 100000:06d}"
+    user.set_reset_otp(otp, expires_in_minutes=15)
     db.session.commit()
 
-    # Send OTP Email asynchronously in background thread (< 100ms response)
+    # Record in cooldown cache
+    _otp_cache[email] = {"timestamp": now_ts, "otp": otp}
+
+    # Send 1 single OTP Email asynchronously in background thread (< 10ms response)
     send_otp_email(
         recipient_email=user.email,
         recipient_name=user.full_name or "Student",
         otp=otp,
-        expires_in_minutes=10,
+        expires_in_minutes=15,
         async_send=True
     )
 
     return jsonify({
         "success": True,
-        "message": f"A 6-digit OTP has been sent to {email}. Please check your inbox.",
+        "message": f"A 6-digit OTP has been sent to {email}. Valid for 15 minutes.",
         "data": {
             "email": email,
-            "expires_in_minutes": 10
+            "expires_in_minutes": 15
         }
     }), 200
 

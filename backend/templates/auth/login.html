@@ -535,11 +535,16 @@
                 return;
             }
 
+            const isAlreadyOnStep2 = document.getElementById('fpStep2').style.display === 'block';
+            const alertTarget = isAlreadyOnStep2 ? 'fpAlert2' : 'fpAlert1';
             hideAlert('fpAlert1');
+            hideAlert('fpAlert2');
+
             const btn = document.getElementById('fpSendOtpBtn');
-            const orig = btn.textContent;
+            const resendBtn = document.getElementById('fpResendBtn');
             btn.disabled = true;
             btn.textContent = 'Sending OTP...';
+            if (resendBtn) resendBtn.textContent = 'Sending...';
 
             try {
                 const res = await fetch('/auth/forgot-password/send-otp', {
@@ -556,16 +561,18 @@
                     document.getElementById('fpStep3').style.display = 'none';
                     document.getElementById('fpStep4').style.display = 'none';
                     showAlert('fpAlert2', 'success', '✓ ' + (data.message || 'OTP code sent! Please check your inbox.'));
-                    startResendCountdown(60);
+                    const cooldown = (data.data && data.data.cooldown_remaining) ? data.data.cooldown_remaining : 45;
+                    startResendCountdown(cooldown);
                     setupOtpInputs();
                 } else {
-                    showAlert('fpAlert1', 'error', '⚠️ ' + (data.message || 'Failed to send OTP.'));
+                    showAlert(alertTarget, 'error', '⚠️ ' + (data.message || 'Failed to send OTP.'));
                 }
             } catch (err) {
-                showAlert('fpAlert1', 'error', '⚠️ Network error. Please try again.');
+                showAlert(alertTarget, 'error', '⚠️ Network error. Please try again.');
             } finally {
                 btn.disabled = false;
-                btn.textContent = orig;
+                btn.textContent = 'Send Verification Code';
+                if (resendBtn) resendBtn.textContent = 'Resend OTP';
             }
         }
 
