@@ -326,32 +326,72 @@
         }
 
         // ───────────────────────────────
-        // INIT: Instant Profile Render + API Fallback
+        // INIT: Instant Profile Render + Robust Fallbacks
         // ───────────────────────────────
         async function init() {
-            // If preloaded student data is present, render immediately with 0ms delay
-            if (studentData && studentData.roll_number) {
+            // Check if preloaded student data is present
+            if (studentData && (studentData.roll_number || studentData.email || studentData.student_name)) {
                 renderPersonalInfo();
                 renderFacilityOptions();
                 autoDetectHOD();
-            } else {
-                // Asynchronous fetch fallback
-                const token = localStorage.getItem('access_token');
-                if (token) {
-                    try {
-                        const profileRes = await fetch('/student/api/profile', {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const profileData = await profileRes.json();
-                        if (profileData.success && profileData.data) {
-                            studentData = profileData.data;
+                return;
+            }
+
+            // Fallback 1: Try from localStorage 'user'
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    const parsed = JSON.parse(storedUser);
+                    if (parsed) {
+                        studentData = parsed.student ? { ...parsed, ...parsed.student } : parsed;
+                        if (studentData.roll_number || studentData.email) {
                             renderPersonalInfo();
                             renderFacilityOptions();
                             autoDetectHOD();
                         }
-                    } catch(e) {
-                        console.error('Init error:', e);
                     }
+                } catch(e) {
+                    console.warn('LocalStorage user parse error:', e);
+                }
+            }
+
+            // Fallback 2: Asynchronous fetch from /student/api/profile
+            const token = localStorage.getItem('access_token');
+            try {
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const profileRes = await fetch('/student/api/profile', { headers: headers });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    if (profileData.success && profileData.data) {
+                        studentData = profileData.data;
+                        renderPersonalInfo();
+                        renderFacilityOptions();
+                        autoDetectHOD();
+                        return;
+                    }
+                }
+            } catch(e) {
+                console.error('Init profile fetch error:', e);
+            }
+
+            // Fallback 3: Try /auth/profile if needed
+            if (token) {
+                try {
+                    const authRes = await fetch('/auth/profile', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (authRes.ok) {
+                        const authData = await authRes.json();
+                        if (authData.success && authData.data) {
+                            const u = authData.data;
+                            studentData = u.student ? { ...u, ...u.student } : u;
+                            renderPersonalInfo();
+                            renderFacilityOptions();
+                            autoDetectHOD();
+                        }
+                    }
+                } catch(e) {
+                    console.error('Auth profile fetch error:', e);
                 }
             }
         }
@@ -364,40 +404,49 @@
         }
 
         function renderPersonalInfo() {
-            const s = studentData;
+            const s = studentData || {};
+            const fullName = s.full_name || (s.first_name ? (s.first_name + ' ' + (s.last_name || '')).trim() : (s.student_name || 'Student'));
+            const rollNo = s.roll_number || '—';
+            const enrollNo = s.enrollment_number || '—';
+            const courseName = s.course_name || '—';
+            const branchName = s.branch || '—';
+            const sem = s.current_semester ? `Semester ${s.current_semester}` : 'Semester 1';
+            const cat = (s.category || 'day_scholar').replace(/_/g, ' ').toUpperCase();
+            const phone = s.guardian_phone || s.phone || '—';
+
             document.getElementById('personalInfo').innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">FULL NAME</label>
-                        <input class="form-input" value="${s.first_name ? (s.first_name + ' ' + (s.last_name || '')) : (s.student_name || '')}" readonly style="background:var(--bg-secondary); font-weight: 600;">
+                        <input class="form-input" value="${fullName}" readonly style="background:var(--bg-secondary); font-weight: 600;">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ROLL NUMBER</label>
-                        <input class="form-input" value="${s.roll_number || ''}" readonly style="background:var(--bg-secondary); font-weight: 600; font-family: monospace;">
+                        <input class="form-input" value="${rollNo}" readonly style="background:var(--bg-secondary); font-weight: 600; font-family: monospace;">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ENROLLMENT NUMBER</label>
-                        <input class="form-input" value="${s.enrollment_number || '—'}" readonly style="background:var(--bg-secondary);">
+                        <input class="form-input" value="${enrollNo}" readonly style="background:var(--bg-secondary);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">COURSE</label>
-                        <input class="form-input" value="${s.course_name || ''}" readonly style="background:var(--bg-secondary);">
+                        <input class="form-input" value="${courseName}" readonly style="background:var(--bg-secondary);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">BRANCH</label>
-                        <input class="form-input" value="${s.branch || ''}" readonly style="background:var(--bg-secondary);">
+                        <input class="form-input" value="${branchName}" readonly style="background:var(--bg-secondary);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">CURRENT SEMESTER</label>
-                        <input class="form-input" value="Semester ${s.current_semester || '6'}" readonly style="background:var(--bg-secondary);">
+                        <input class="form-input" value="${sem}" readonly style="background:var(--bg-secondary);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">REGISTERED CATEGORY</label>
-                        <input class="form-input" value="${(s.category || 'day_scholar').replace(/_/g, ' ').toUpperCase()}" readonly style="background:var(--bg-secondary); font-weight: 700; color: var(--accent);">
+                        <input class="form-input" value="${cat}" readonly style="background:var(--bg-secondary); font-weight: 700; color: var(--accent);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">GUARDIAN PHONE</label>
-                        <input class="form-input" value="${s.guardian_phone || s.phone || '—'}" readonly style="background:var(--bg-secondary);">
+                        <input class="form-input" value="${phone}" readonly style="background:var(--bg-secondary);">
                     </div>
                 </div>
             `;
@@ -673,6 +722,7 @@
                         btn.disabled = false;
                         btn.innerHTML = '🚀 Submit Application For Clearance';
                         return;
+                    }
                 }
 
                 // 3. Final Submit application

@@ -61,24 +61,36 @@ def dashboard():
 def apply_page():
     """Render student application form page with pre-fetched student data for instant loading."""
     student_data = {}
-    if current_user and current_user.student_profile:
+    if current_user:
         student_data = current_user.to_dict()
-        student_data.update(current_user.student_profile.to_dict())
+        student_prof = getattr(current_user, "student_profile", None)
+        if not student_prof and hasattr(current_user, "id"):
+            student_prof = Student.query.filter_by(user_id=current_user.id).first()
+        if student_prof:
+            student_data.update(student_prof.to_dict())
     return render_template("student/apply.html", student_data=student_data)
 
 
 @student_bp.route("/api/profile")
-@jwt_required()
+@jwt_required(optional=True)
 def get_profile():
     """Get student profile with full details."""
+    user = None
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
     data = user.to_dict()
-    if user.role == "student" and user.student_profile:
-        data.update(user.student_profile.to_dict())
+    student_prof = getattr(user, "student_profile", None)
+    if not student_prof and hasattr(user, "id"):
+        student_prof = Student.query.filter_by(user_id=user.id).first()
+    if student_prof:
+        data.update(student_prof.to_dict())
 
     return jsonify({"success": True, "data": data})
 

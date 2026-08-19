@@ -17,9 +17,11 @@ from models import db
 from models.user import User
 from models.student import Student
 from models.audit_log import AuditLog
+import secrets
 from utils.validators import validate_email, validate_password, validate_name
 from utils.decorators import validate_json
 from utils.helpers import get_client_ip, get_user_agent
+from utils.mailer import send_otp_email
 from app import bcrypt
 
 
@@ -379,4 +381,128 @@ def profile():
 def hidden_admin_access():
     """Hidden secret login route for Super Admin access."""
     return redirect("/auth/login?admin=secret")
+
+
+@auth_bp.route("/forgot-password/request", methods=["POST"])
+@auth_bp.route("/forgot-password/send-otp", methods=["POST"])
+def forgot_password_request():
+    """Request a 6-digit OTP sent to the user's registered email."""
+    data = request.get_json(silent=True) or request.form
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"success": False, "message": "Email address is required"}), 400
+
+    is_valid, error = validate_email(email)
+    if not is_valid:
+        return jsonify({"success": False, "message": error}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    # If user doesn't exist, return generic friendly message to prevent email enumeration or return error
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "No registered account found with this email address."
+        }), 404
+
+    if not user.is_active_user:
+        return jsonify({
+            "success": False,
+            "message": "This account is inactive or suspended. Please contact administrator."
+        }), 403
+
+    # Generate 6-digit OTP
+    otp = f"{secrets.randbelow(900000) + 100000:06d}"
+    user.set_reset_otp(otp, expires_in_minutes=10)
+
+    # Audit log
+    audit = AuditLog(
+        user_id=user.id,
+        action="generate",
+        resource_type="auth",
+        resource_id=user.id,
+        details={"email": email, "event": "forgot_password_otp_request"},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    # Send OTP Email
+    send_otp_email(
+        recipient_email=user.email,
+        recipient_name=user.full_name or "Student",
+        otp=otp,
+        expires_in_minutes=10
+    )
+
+    return jsonify({
+        "success": True,
+        "message": f"A 6-digit OTP has been sent to {email}. Please check your inbox.",
+        "data": {
+            "email": email,
+            "expires_in_minutes": 10
+        }
+    }), 200
+
+
+@auth_bp.route("/forgot-password/reset", methods=["POST"])
+@auth_bp.route("/forgot-password/verify-reset", methods=["POST"])
+def forgot_password_reset():
+    """Verify OTP and update user's password."""
+    data = request.get_json(silent=True) or request.form
+    email = data.get("email", "").strip().lower()
+    otp = data.get("otp", "").strip()
+    new_password = data.get("new_password", "")
+    confirm_password = data.get("confirm_password", "")
+
+    if not email or not otp or not new_password:
+        return jsonify({
+            "success": False,
+            "message": "Email, OTP, and new password are required."
+        }), 400
+
+    if confirm_password and new_password != confirm_password:
+        return jsonify({
+            "success": False,
+            "message": "New passwords do not match."
+        }), 400
+
+    is_valid, error = validate_password(new_password)
+    if not is_valid:
+        return jsonify({"success": False, "message": error}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"success": False, "message": "User not found."}), 404
+
+    if not user.verify_reset_otp(otp):
+        return jsonify({
+            "success": False,
+            "message": "Invalid or expired OTP. Please request a new one."
+        }), 400
+
+    # Set new password and clear OTP
+    user.set_password(new_password)
+    user.clear_reset_otp()
+
+    # Create audit log
+    audit = AuditLog(
+        user_id=user.id,
+        action="update",
+        resource_type="auth",
+        resource_id=user.id,
+        details={"email": email, "action": "otp_reset_success"},
+        ip_address=get_client_ip(),
+        user_agent=get_user_agent(),
+    )
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Password reset successfully! You can now log in with your new password."
+    }), 200
+
 

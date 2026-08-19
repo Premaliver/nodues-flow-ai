@@ -39,11 +39,59 @@
         .del-3 { animation-delay: 0.3s; }
         .del-4 { animation-delay: 0.4s; }
         .del-5 { animation-delay: 0.5s; }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 1000; display: none; align-items: center; justify-content: center;
+            padding: 1rem; opacity: 0; transition: opacity 0.25s ease;
+        }
+        .modal-backdrop.active { display: flex; opacity: 1; }
+        .modal-dialog {
+            width: 100%; max-width: 440px; background: var(--bg-card);
+            border-radius: var(--radius-xl); box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgba(0,0,0,0.25));
+            border: 1.5px solid var(--border-light); padding: 2rem; position: relative;
+            transform: scale(0.95) translateY(10px); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-backdrop.active .modal-dialog { transform: scale(1) translateY(0); }
+        .modal-close-btn {
+            position: absolute; right: 1.25rem; top: 1.25rem; background: var(--bg-hover, #f1f5f9);
+            border: none; border-radius: 50%; width: 32px; height: 32px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted);
+            transition: all var(--transition-fast);
+        }
+        .modal-close-btn:hover { background: var(--border-light); color: var(--text-primary); }
+        
+        /* OTP Input Boxes */
+        .otp-inputs-wrap {
+            display: flex; gap: 0.5rem; justify-content: center; margin: 1.25rem 0;
+        }
+        .otp-digit {
+            width: 46px; height: 52px; text-align: center; font-size: 1.4rem; font-weight: 700;
+            border: 2px solid var(--border-light); border-radius: var(--radius-md);
+            background: var(--bg-card); color: var(--accent); font-family: monospace;
+            outline: none; transition: all var(--transition-fast);
+        }
+        .otp-digit:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .modal-alert {
+            padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem;
+            margin-bottom: 1.25rem; display: none; line-height: 1.4;
+        }
+        .modal-alert.error { background: var(--crimson-soft, #fee2e2); color: var(--crimson, #dc2626); border-left: 4px solid var(--crimson, #dc2626); }
+        .modal-alert.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
+
         @media (max-width: 480px) {
             .login-container { padding: 0.75rem; }
             .login-card .card { padding: 1.25rem !important; border-radius: var(--radius-xl) !important; }
             .form-input-icon .form-input { font-size: 0.9rem !important; padding-left: 2.5rem !important; height: 44px !important; }
             .form-input-icon .icon { left: 0.75rem; font-size: 1rem; }
+            .otp-digit { width: 38px; height: 46px; font-size: 1.2rem; }
+            .modal-dialog { padding: 1.5rem; }
         }
     </style>
 </head>
@@ -124,9 +172,14 @@
                         </div>
                     </div>
 
-                    <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem;">
-                        <input type="checkbox" id="remember" name="remember" style="width: 16px; height: 16px; accent-color: var(--accent); border-radius: 4px;">
-                        <label for="remember" style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">Remember me</label>
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="remember" name="remember" style="width: 16px; height: 16px; accent-color: var(--accent); border-radius: 4px; cursor: pointer;">
+                            <label for="remember" style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; user-select: none;">Remember me</label>
+                        </div>
+                        <a href="javascript:void(0)" onclick="openForgotModal()" style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-decoration: none; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                            Forgot Password?
+                        </a>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
@@ -140,6 +193,116 @@
                         <a href="{{ url_for('auth.register') }}" style="font-weight: 600; color: var(--accent);">Create one</a>
                     </p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModalBackdrop" class="modal-backdrop" onclick="handleBackdropClick(event)">
+        <div class="modal-dialog">
+            <button type="button" class="modal-close-btn" onclick="closeForgotModal()" title="Close">&times;</button>
+            
+            <!-- STEP 1: Enter Email & Request OTP -->
+            <div id="fpStep1">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
+                        🔑
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">Reset Password</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Enter your registered email address and we'll send a 6-digit verification OTP code.</p>
+                </div>
+
+                <div id="fpAlert1" class="modal-alert"></div>
+
+                <form id="fpRequestForm" onsubmit="handleRequestOtp(event)">
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label class="form-label" for="fpEmail">Registered Email Address</label>
+                        <div class="form-input-icon">
+                            <span class="icon">✉️</span>
+                            <input type="email" id="fpEmail" class="form-input" placeholder="student@rayatbahra.edu" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="fpSendOtpBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
+                        Send Verification Code
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 2: Enter OTP & New Password -->
+            <div id="fpStep2" style="display: none;">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
+                        📩
+                    </div>
+                    <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-primary);">Enter 6-Digit OTP</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">
+                        Sent to <strong id="fpSentEmailDisplay" style="color: var(--text-primary);"></strong>
+                        <a href="javascript:void(0)" onclick="goToFpStep1()" style="color: var(--accent); margin-left: 4px; font-size: 0.8rem;">(Change)</a>
+                    </p>
+                </div>
+
+                <div id="fpAlert2" class="modal-alert"></div>
+
+                <form id="fpResetForm" onsubmit="handleResetPassword(event)">
+                    <!-- 6 Digit OTP Inputs -->
+                    <label class="form-label" style="text-align: center; display: block; margin-bottom: 0.25rem;">6-Digit OTP Code</label>
+                    <div class="otp-inputs-wrap" id="otpContainer">
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="0" autofocus>
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="1">
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="2">
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="3">
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="4">
+                        <input type="text" maxlength="1" inputmode="numeric" class="otp-digit" data-index="5">
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 1.25rem;">
+                        <span id="fpTimerWrap" style="font-size: 0.825rem; color: var(--text-muted);">
+                            Resend code in <strong id="fpCountdown" style="color: var(--accent);">60</strong>s
+                        </span>
+                        <a href="javascript:void(0)" id="fpResendBtn" onclick="resendOtp()" style="display: none; font-size: 0.85rem; font-weight: 600; color: var(--accent);">
+                            Resend OTP
+                        </a>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label" for="fpNewPassword">New Password</label>
+                        <div class="form-input-icon" style="position: relative;">
+                            <span class="icon">🔒</span>
+                            <input type="password" id="fpNewPassword" class="form-input" placeholder="At least 8 characters" minlength="8" required style="padding-right: 3rem !important;">
+                            <button type="button" onclick="togglePasswordView('fpNewPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label class="form-label" for="fpConfirmPassword">Confirm New Password</label>
+                        <div class="form-input-icon" style="position: relative;">
+                            <span class="icon">🔒</span>
+                            <input type="password" id="fpConfirmPassword" class="form-input" placeholder="Re-enter new password" minlength="8" required style="padding-right: 3rem !important;">
+                            <button type="button" onclick="togglePasswordView('fpConfirmPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 5;">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="fpResetSubmitBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
+                        Reset Password
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 3: Success Screen -->
+            <div id="fpStep3" style="display: none; text-align: center; padding: 1rem 0;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 1rem;">
+                    ✓
+                </div>
+                <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Password Changed!</h3>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">Your password has been successfully updated. You can now sign in with your new credentials.</p>
+                <button type="button" onclick="finishAndSignIn()" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem;">
+                    Sign In Now
+                </button>
             </div>
         </div>
     </div>
@@ -258,6 +421,7 @@
                 btn.textContent = originalText;
             }
         });
+
         function toggleLoginPassword() {
             const input = document.getElementById('password');
             const btn = document.getElementById('toggleLoginPasswordBtn');
@@ -281,6 +445,234 @@
                     </svg>
                 `;
             }
+        }
+
+        // ================= FORGOT PASSWORD MODAL LOGIC =================
+        let resendTimerInterval = null;
+
+        function openForgotModal() {
+            const backdrop = document.getElementById('forgotModalBackdrop');
+            backdrop.classList.add('active');
+            
+            // Auto fill email from login input if present
+            const currentEmail = document.getElementById('email').value;
+            if (currentEmail) {
+                document.getElementById('fpEmail').value = currentEmail;
+            }
+            goToFpStep1();
+        }
+
+        function closeForgotModal() {
+            const backdrop = document.getElementById('forgotModalBackdrop');
+            backdrop.classList.remove('active');
+            if (resendTimerInterval) clearInterval(resendTimerInterval);
+        }
+
+        function handleBackdropClick(e) {
+            if (e.target === document.getElementById('forgotModalBackdrop')) {
+                closeForgotModal();
+            }
+        }
+
+        function goToFpStep1() {
+            document.getElementById('fpStep1').style.display = 'block';
+            document.getElementById('fpStep2').style.display = 'none';
+            document.getElementById('fpStep3').style.display = 'none';
+            hideAlert('fpAlert1');
+            hideAlert('fpAlert2');
+        }
+
+        function showAlert(elemId, type, message) {
+            const el = document.getElementById(elemId);
+            if (!el) return;
+            el.className = 'modal-alert ' + type;
+            el.innerHTML = message;
+            el.style.display = 'block';
+        }
+
+        function hideAlert(elemId) {
+            const el = document.getElementById(elemId);
+            if (el) el.style.display = 'none';
+        }
+
+        function togglePasswordView(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            btn.textContent = isPassword ? '🙈' : '👁️';
+        }
+
+        async function handleRequestOtp(e) {
+            if (e) e.preventDefault();
+            const email = document.getElementById('fpEmail').value.trim();
+            if (!email) {
+                showAlert('fpAlert1', 'error', '⚠️ Please enter your registered email address.');
+                return;
+            }
+
+            hideAlert('fpAlert1');
+            const btn = document.getElementById('fpSendOtpBtn');
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Sending OTP...';
+
+            try {
+                const res = await fetch('/auth/forgot-password/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('fpSentEmailDisplay').textContent = email;
+                    document.getElementById('fpStep1').style.display = 'none';
+                    document.getElementById('fpStep2').style.display = 'block';
+                    showAlert('fpAlert2', 'success', '✓ ' + (data.message || 'OTP code sent! Please check your inbox.'));
+                    startResendCountdown(60);
+                    setupOtpInputs();
+                } else {
+                    showAlert('fpAlert1', 'error', '⚠️ ' + (data.message || 'Failed to send OTP.'));
+                }
+            } catch (err) {
+                showAlert('fpAlert1', 'error', '⚠️ Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = orig;
+            }
+        }
+
+        function resendOtp() {
+            handleRequestOtp(null);
+        }
+
+        function startResendCountdown(seconds) {
+            if (resendTimerInterval) clearInterval(resendTimerInterval);
+            const timerWrap = document.getElementById('fpTimerWrap');
+            const resendBtn = document.getElementById('fpResendBtn');
+            const countdownEl = document.getElementById('fpCountdown');
+
+            timerWrap.style.display = 'inline';
+            resendBtn.style.display = 'none';
+
+            let remaining = seconds;
+            countdownEl.textContent = remaining;
+
+            resendTimerInterval = setInterval(() => {
+                remaining--;
+                countdownEl.textContent = remaining;
+                if (remaining <= 0) {
+                    clearInterval(resendTimerInterval);
+                    timerWrap.style.display = 'none';
+                    resendBtn.style.display = 'inline-block';
+                }
+            }, 1000);
+        }
+
+        function setupOtpInputs() {
+            const inputs = document.querySelectorAll('#otpContainer .otp-digit');
+            inputs.forEach(inp => inp.value = '');
+            if (inputs[0]) inputs[0].focus();
+
+            inputs.forEach((input, index) => {
+                input.oninput = function(e) {
+                    const val = this.value.replace(/[^0-9]/g, '');
+                    this.value = val ? val[val.length - 1] : '';
+                    if (this.value && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                };
+
+                input.onkeydown = function(e) {
+                    if (e.key === 'Backspace' && !this.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                };
+
+                input.onpaste = function(e) {
+                    e.preventDefault();
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+                    if (/^\d{6}$/.test(pasteData)) {
+                        inputs.forEach((inp, i) => { inp.value = pasteData[i] || ''; });
+                        inputs[inputs.length - 1].focus();
+                    }
+                };
+            });
+        }
+
+        function getEnteredOtp() {
+            let otp = '';
+            document.querySelectorAll('#otpContainer .otp-digit').forEach(input => {
+                otp += input.value.trim();
+            });
+            return otp;
+        }
+
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('fpEmail').value.trim();
+            const otp = getEnteredOtp();
+            const newPassword = document.getElementById('fpNewPassword').value;
+            const confirmPassword = document.getElementById('fpConfirmPassword').value;
+
+            if (otp.length !== 6) {
+                showAlert('fpAlert2', 'error', '⚠️ Please enter the complete 6-digit OTP code.');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showAlert('fpAlert2', 'error', '⚠️ New password must be at least 8 characters long.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('fpAlert2', 'error', '⚠️ Passwords do not match. Please re-enter.');
+                return;
+            }
+
+            hideAlert('fpAlert2');
+            const btn = document.getElementById('fpResetSubmitBtn');
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Updating Password...';
+
+            try {
+                const res = await fetch('/auth/forgot-password/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        otp: otp,
+                        new_password: newPassword,
+                        confirm_password: confirmPassword
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('fpStep2').style.display = 'none';
+                    document.getElementById('fpStep3').style.display = 'block';
+                    if (resendTimerInterval) clearInterval(resendTimerInterval);
+                } else {
+                    showAlert('fpAlert2', 'error', '⚠️ ' + (data.message || 'Password reset failed.'));
+                }
+            } catch (err) {
+                showAlert('fpAlert2', 'error', '⚠️ Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = orig;
+            }
+        }
+
+        function finishAndSignIn() {
+            const email = document.getElementById('fpEmail').value.trim();
+            closeForgotModal();
+            if (email) {
+                document.getElementById('email').value = email;
+            }
+            document.getElementById('password').value = '';
+            document.getElementById('password').focus();
         }
     </script>
 </body>

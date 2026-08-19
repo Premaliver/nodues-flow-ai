@@ -40,6 +40,8 @@ class User(UserMixin, db.Model):
     is_email_verified = db.Column(db.Boolean, default=False)
     is_mfa_enabled = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
+    reset_otp_hash = db.Column(db.String(255), nullable=True)
+    reset_otp_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     deleted_at = db.Column(db.DateTime(timezone=True))
@@ -56,6 +58,36 @@ class User(UserMixin, db.Model):
     def check_password(self, password: str) -> bool:
         """Verify password against hash."""
         return check_password_hash(self.password_hash, password)
+
+    def set_reset_otp(self, otp: str, expires_in_minutes: int = 10) -> None:
+        """Set hashed reset OTP with expiration."""
+        import hashlib
+        from datetime import timedelta
+        self.reset_otp_hash = hashlib.sha256(otp.strip().encode("utf-8")).hexdigest()
+        self.reset_otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=expires_in_minutes)
+
+    def verify_reset_otp(self, otp: str) -> bool:
+        """Verify OTP matches and is not expired."""
+        import hashlib
+        if not self.reset_otp_hash or not self.reset_otp_expires_at:
+            return False
+        
+        now = datetime.now(timezone.utc)
+        # Ensure reset_otp_expires_at is timezone-aware
+        expires_at = self.reset_otp_expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if now > expires_at:
+            return False
+        
+        candidate_hash = hashlib.sha256(otp.strip().encode("utf-8")).hexdigest()
+        return candidate_hash == self.reset_otp_hash
+
+    def clear_reset_otp(self) -> None:
+        """Clear reset OTP data after successful reset."""
+        self.reset_otp_hash = None
+        self.reset_otp_expires_at = None
 
     @property
     def full_name(self) -> str:
