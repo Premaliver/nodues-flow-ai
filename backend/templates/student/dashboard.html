@@ -618,15 +618,20 @@
                             <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1)); border: 1.5px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: var(--shadow-md);">
                                 <div>
                                     <div style="font-weight: 800; font-size: 1.05rem; color: var(--emerald); display: flex; align-items: center; gap: 0.5rem;">
-                                        🎉 All Departments Cleared!
+                                        🎉 All Departments Cleared & Approved!
                                     </div>
                                     <p style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.25rem;">
-                                        Your application is approved from every department! Please download your admit card.
+                                        Your No-Dues clearance is 100% complete across all departments. Official Admit Card has been generated!
                                     </p>
+                                    <div style="margin-top: 0.4rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; background: rgba(37, 211, 102, 0.15); color: #166534; padding: 3px 10px; border-radius: 12px; font-weight: 600; border: 1px solid rgba(37, 211, 102, 0.3);">
+                                        📱 WhatsApp Alert Dispatched to your Registered Number
+                                    </div>
                                 </div>
-                                <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
-                                    🎓 Download Admit Card
-                                </button>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                                        🎓 Download Admit Card
+                                    </button>
+                                </div>
                             </div>
                         ` : '';
 
@@ -652,28 +657,37 @@
                     // Render Issued Admit Cards Showcase
                     const admitBody = document.getElementById('admitCardsBody');
                     if (d.admit_cards && d.admit_cards.length > 0) {
-                        admitBody.innerHTML = d.admit_cards.map(ac => `
-                            <div class="admit-card-pass" style="margin-bottom: 1rem;">
-                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; position: relative; z-index: 2;">
-                                    <div>
-                                        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Official Hall Ticket / Exam Admit Card</div>
-                                        <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin: 0.2rem 0; color: #ffffff;">
-                                            Admit Card #${ac.card_number}
-                                        </h4>
-                                        <div style="font-size: 0.85rem; color: #cbd5e1; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                                            <span>📅 Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
-                                            <span>📥 Downloads: ${ac.download_count || 0} times</span>
+                        admitBody.innerHTML = d.admit_cards.map(ac => {
+                            const waText = encodeURIComponent(`🎓 *Rayat Bahra University — No-Dues Clearance Completed!* \n\nMy Admit Card #${ac.card_number} has been officially approved and generated with 100% clearance from all departments.`);
+                            const waUrl = `https://wa.me/?text=${waText}`;
+
+                            return `
+                                <div class="admit-card-pass" style="margin-bottom: 1rem;">
+                                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; position: relative; z-index: 2;">
+                                        <div>
+                                            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Official Hall Ticket / Exam Admit Card</div>
+                                            <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin: 0.2rem 0; color: #ffffff;">
+                                                Admit Card #${ac.card_number}
+                                            </h4>
+                                            <div style="font-size: 0.85rem; color: #cbd5e1; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                                                <span>📅 Issued: ${ac.created_at ? new Date(ac.created_at).toLocaleDateString() : 'N/A'}</span>
+                                                <span>📥 Downloads: ${ac.download_count || 0} times</span>
+                                                <span style="color: #4ade80;">📱 WhatsApp Alert Sent</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                            <a href="${waUrl}" target="_blank" rel="noopener" class="btn btn-secondary" style="background: #25D366; color: white; border-color: #22c55e;" title="Share / View on WhatsApp">
+                                                💬 WhatsApp
+                                            </a>
+                                            <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);">
+                                                📥 Download Official PDF
+                                            </a>
                                         </div>
                                     </div>
-                                    
-                                    <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <a href="/student/api/admit-card/${ac.card_number}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);">
-                                            📥 Download Official PDF
-                                        </a>
-                                    </div>
                                 </div>
-                            </div>
-                        `).join('');
+                            `;
+                        }).join('');
                     } else {
                         admitBody.innerHTML = `
                             <div style="text-align: center; padding: 2rem; color: var(--text-muted); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px dashed var(--border-medium);">

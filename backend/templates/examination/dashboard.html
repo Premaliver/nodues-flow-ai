@@ -247,7 +247,12 @@ async function loadApprovedApps() {
                             <td>${card.course_name||'N/A'}</td>
                             <td>Sem ${card.semester||'N/A'}</td>
                             <td style="font-size:0.8rem;color:var(--text-muted);">${card.created_at ? new Date(card.created_at).toLocaleDateString() : 'N/A'}</td>
-<td><button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button></td>
+                            <td>
+                                <div style="display:flex;gap:0.4rem;align-items:center;">
+                                    <button class="btn btn-primary btn-sm" onclick="viewAdmitCard('${card.download_url||'#'}')">📥 View PDF</button>
+                                    <a href="https://wa.me/?text=${encodeURIComponent('🎓 Rayat Bahra University — No-Dues Clearance Completed! Your Admit Card #' + card.card_number + ' has been approved. Check portal: http://127.0.0.1:5000/student/dashboard')}" target="_blank" rel="noopener" class="btn btn-sm" style="background:#25D366;color:white;text-decoration:none;padding:0.35rem 0.65rem;border-radius:var(--radius-md);font-size:0.78rem;font-weight:600;" title="Share / Resend WhatsApp Alert">📱 WhatsApp</a>
+                                </div>
+                            </td>
                         </tr>`).join('') + `</tbody></table>`;
                 } else { tbody.innerHTML = '<table><thead><tr><th>Card #</th><th>Student</th><th>Action</th></tr></thead><tbody><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No admit cards issued yet</td></tr></tbody></table>'; }
             } catch (e) { console.error(e); }
@@ -260,8 +265,9 @@ async function loadApprovedApps() {
                     method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-if (res.ok) {
-                    alert(data.message || 'Admit card generated!');
+                if (res.ok) {
+                    const waStatus = data.data?.whatsapp?.phone ? `\n📱 WhatsApp Alert sent to ${data.data.whatsapp.phone}!` : '';
+                    alert((data.message || 'Admit card generated!') + waStatus);
                     if (data.data && data.data.download_url) {
                         viewAdmitCard(data.data.download_url);
                     }

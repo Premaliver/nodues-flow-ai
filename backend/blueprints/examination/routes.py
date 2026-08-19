@@ -27,6 +27,10 @@ from models.audit_log import AuditLog
 from models.admit_card import AdmitCard
 from utils.decorators import department_access, validate_json
 from utils.helpers import paginate_query, get_client_ip, get_user_agent, generate_hmac_signature
+try:
+    from utils.whatsapp import send_whatsapp_admit_card_alert
+except ImportError:
+    from backend.utils.whatsapp import send_whatsapp_admit_card_alert
 
 
 def _get_exam_dept():
@@ -568,14 +572,34 @@ def generate_admit_card(application_id):
     application.completed_at = datetime.now(timezone.utc)
     application.current_step = application.total_steps
 
-    # Notify student
+    # ──────────────────────────────────────
+    # Dispatch Official WhatsApp Alert
+    # ──────────────────────────────────────
+    whatsapp_res = None
+    try:
+        whatsapp_res = send_whatsapp_admit_card_alert(
+            user=student_user or getattr(student, "user", None),
+            student=student,
+            application=application,
+            admit_card=admit_card,
+            semester=semester,
+        )
+    except Exception as e:
+        current_app.logger.error("WhatsApp alert dispatch failed: %s", str(e))
+
+    # Notify student in-app with WhatsApp metadata
     notification = Notification(
         user_id=student.user_id,
         type="admit_card_generated",
-        title="Your admit card is ready!",
-        message=f"Your admit card ({card_number}) has been generated.",
+        title="🎉 No-Dues Cleared & Admit Card Ready!",
+        message=f"All departments have approved your clearance. Your Admit Card ({card_number}) is ready for download.",
         application_id=application.id,
-        data={"card_number": card_number},
+        data={
+            "card_number": card_number,
+            "whatsapp_sent": whatsapp_res.get("api_sent", False) if whatsapp_res else False,
+            "whatsapp_link": whatsapp_res.get("wa_link") if whatsapp_res else None,
+            "phone": whatsapp_res.get("phone") if whatsapp_res else None,
+        },
     )
     db.session.add(notification)
 
@@ -584,7 +608,11 @@ def generate_admit_card(application_id):
         action="generate",
         resource_type="admit_card",
         resource_id=admit_card.id,
-        details={"application_id": str(application.id), "card_number": card_number},
+        details={
+            "application_id": str(application.id),
+            "card_number": card_number,
+            "whatsapp_status": whatsapp_res.get("provider") if whatsapp_res else "skipped"
+        },
         ip_address=get_client_ip(),
         user_agent=get_user_agent(),
     )
@@ -593,12 +621,13 @@ def generate_admit_card(application_id):
 
     return jsonify({
         "success": True,
-        "message": "Admit card generated successfully",
+        "message": "Admit card generated successfully and WhatsApp alert dispatched!",
         "data": {
             **admit_card.to_dict(),
             "student_name": student_user.full_name if student_user else student.student_name,
             "roll_number": student.roll_number,
             "download_url": f"/examination/api/admit-card/{card_number}/pdf",
+            "whatsapp": whatsapp_res,
         },
     }), 201
 
