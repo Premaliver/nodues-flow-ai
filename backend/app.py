@@ -8,6 +8,18 @@ import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
+try:
+    from dotenv import load_dotenv
+    for env_file in [
+        os.path.join(os.path.dirname(__file__), ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    ]:
+        if os.path.exists(env_file):
+            load_dotenv(env_file, override=True)
+            break
+except ImportError:
+    pass
+
 # Ensure backend directory is present in sys.path for cloud WSGI servers (Render/Gunicorn)
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
@@ -69,6 +81,16 @@ def create_app(config_name: str = "default") -> Flask:
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+
+    # Populate Mail configuration from environment
+    for mail_key in ["MAIL_SERVER", "MAIL_PORT", "MAIL_USE_TLS", "MAIL_USE_SSL", "MAIL_USERNAME", "MAIL_PASSWORD", "MAIL_DEFAULT_SENDER"]:
+        if os.environ.get(mail_key):
+            val = os.environ.get(mail_key)
+            if mail_key == "MAIL_PORT":
+                val = int(val)
+            elif mail_key in ("MAIL_USE_TLS", "MAIL_USE_SSL"):
+                val = str(val).lower() == "true"
+            app.config[mail_key] = val
 
 
     # Initialize extensions
