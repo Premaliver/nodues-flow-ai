@@ -732,11 +732,14 @@
             }
         }
 
-        // Profile Modal Handler
-        async function showStudentProfileModal() {
+        // Global student profile cache
+        let cachedStudentProfile = null;
+
+        // Profile Modal Handler (View / Edit Mode)
+        async function showStudentProfileModal(editMode = false) {
             const modal = document.getElementById('profileModal');
+            if (modal) modal.style.display = 'flex';
             const body = document.getElementById('profileModalBody');
-            modal.classList.add('open');
             body.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
 
             try {
@@ -747,70 +750,215 @@
                 const d = await res.json();
 
                 if (d.success && d.data) {
-                    const s = d.data;
-                    const phoneNum = s.phone || s.guardian_phone || 'Not registered';
-                    body.innerHTML = `
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Full Name</label>
-                                <div style="font-weight: 700; font-size: 0.95rem;">${s.student_name || s.full_name || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Roll Number</label>
-                                <div style="font-weight: 700; font-size: 0.95rem; font-family: monospace; color: var(--accent);">${s.roll_number || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">📱 Registered Phone (WhatsApp)</label>
-                                <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.95rem; color: #16a34a;">
-                                    <span>${phoneNum}</span>
-                                    <span style="font-size: 0.68rem; background: rgba(37, 211, 102, 0.15); color: #166534; padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(37, 211, 102, 0.3);">✓ WhatsApp Alert</span>
-                                </div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">📧 Email Address</label>
-                                <div style="font-weight: 600; font-size: 0.88rem;">${s.email || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Enrollment Number</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${s.enrollment_number || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Course / Degree</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${s.course_name || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Branch / Department</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${s.branch || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Current Semester</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">Semester ${s.current_semester || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Clearance Category</label>
-                                <div style="font-weight: 600; font-size: 0.9rem; text-transform: capitalize;">${(s.category || 'Standard').replace(/_/g, ' ')}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Father's Name</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${s.father_name || 'N/A'}</div>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Father's Phone / Guardian</label>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${s.guardian_phone || s.father_phone || 'N/A'}</div>
-                            </div>
-                        </div>
-                    `;
+                    cachedStudentProfile = d.data;
+                    renderProfileContent(editMode);
                 }
             } catch (e) {
                 body.innerHTML = '<p style="color: var(--crimson);">Failed to load profile details.</p>';
             }
         }
 
-        function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
+        function renderProfileContent(isEdit = false) {
+            const s = cachedStudentProfile || {};
+            const body = document.getElementById('profileModalBody');
+            const phoneNum = s.phone || s.guardian_phone || '';
+
+            if (!isEdit) {
+                // View Mode
+                body.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; font-weight: 700;">
+                                ${(s.student_name || s.full_name || 'S')[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">${s.student_name || s.full_name || 'Student'}</h3>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${s.email || ''}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="renderProfileContent(true)">
+                            ✏️ Edit Profile
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Full Name</label>
+                            <div style="font-weight: 700; font-size: 0.95rem;">${s.student_name || s.full_name || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Roll Number</label>
+                            <div style="font-weight: 700; font-size: 0.95rem; font-family: monospace; color: var(--accent);">${s.roll_number || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">📱 Registered Phone (WhatsApp)</label>
+                            <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.95rem; color: #16a34a;">
+                                <span>${phoneNum || 'Not registered'}</span>
+                                <span style="font-size: 0.65rem; background: rgba(37, 211, 102, 0.15); color: #166534; padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(37, 211, 102, 0.3);">✓ WhatsApp Alert</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Enrollment Number</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.enrollment_number || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Course / Degree</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.course_name || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Branch / Department</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.branch || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Current Semester</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">Semester ${s.current_semester || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Clearance Category</label>
+                            <div style="font-weight: 600; font-size: 0.9rem; text-transform: capitalize;">${(s.category || 'Standard').replace(/_/g, ' ')}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Father's Name</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.father_name || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Father's Phone / Guardian</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.guardian_phone || s.father_phone || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">Mother's Name</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.mother_name || '—'}</div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 0.78rem;">City & State</label>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${s.city || ''}${s.city && s.state ? ', ' : ''}${s.state || '—'}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Interactive Edit Mode Form
+                body.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">✏️ Edit Profile Details</h3>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="renderProfileContent(false)">Cancel Edit</button>
+                    </div>
+
+                    <form id="editProfileForm" onsubmit="saveStudentProfileChanges(event)">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Full Name *</label>
+                                <input type="text" class="form-input" id="editFullName" value="${s.student_name || s.full_name || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">📱 Registered Mobile (WhatsApp Alerts) *</label>
+                                <input type="tel" class="form-input" id="editPhone" value="${phoneNum}" placeholder="+91..." required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Father's Name</label>
+                                <input type="text" class="form-input" id="editFatherName" value="${s.father_name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Father's Phone / Guardian</label>
+                                <input type="tel" class="form-input" id="editGuardianPhone" value="${s.guardian_phone || s.father_phone || ''}" placeholder="+91...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Mother's Name</label>
+                                <input type="text" class="form-input" id="editMotherName" value="${s.mother_name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Clearance Category</label>
+                                <select class="form-input" id="editCategory">
+                                    <option value="day_scholar" ${s.category === 'day_scholar' ? 'selected' : ''}>Day Scholar</option>
+                                    <option value="hosteller" ${s.category === 'hosteller' ? 'selected' : ''}>Hosteller</option>
+                                    <option value="transport_user" ${s.category === 'transport_user' ? 'selected' : ''}>Transport User</option>
+                                    <option value="scholarship_holder" ${s.category === 'scholarship_holder' ? 'selected' : ''}>Scholarship Holder</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">Current Semester</label>
+                                <input type="number" min="1" max="10" class="form-input" id="editSemester" value="${s.current_semester || 1}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">City</label>
+                                <input type="text" class="form-input" id="editCity" value="${s.city || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.78rem;">State</label>
+                                <input type="text" class="form-input" id="editState" value="${s.state || ''}">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                            <button type="button" class="btn btn-secondary" onclick="renderProfileContent(false)">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="saveProfileBtn">💾 Save Profile Changes</button>
+                        </div>
+                    </form>
+                `;
+            }
+        }
+
+        async function saveStudentProfileChanges(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveProfileBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            const payload = {
+                full_name: document.getElementById('editFullName').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                father_name: document.getElementById('editFatherName').value.trim(),
+                guardian_phone: document.getElementById('editGuardianPhone').value.trim(),
+                mother_name: document.getElementById('editMotherName').value.trim(),
+                category: document.getElementById('editCategory').value,
+                current_semester: document.getElementById('editSemester').value,
+                city: document.getElementById('editCity').value.trim(),
+                state: document.getElementById('editState').value.trim(),
+            };
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch('/student/api/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    cachedStudentProfile = data.data;
+                    alert('✅ Profile updated successfully!');
+                    renderProfileContent(false);
+                    loadDashboard(); // Refresh student dashboard details
+                } else {
+                    alert(`⚠️ ${data.message || 'Could not update profile'}`);
+                    btn.disabled = false;
+                    btn.textContent = '💾 Save Profile Changes';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error saving profile changes');
+                btn.disabled = false;
+                btn.textContent = '💾 Save Profile Changes';
+            }
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) modal.style.display = 'none';
+        }
 
         // Upload Modal Handler
-        function showUploadModal() { document.getElementById('uploadModal').classList.add('open'); }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.remove('open'); }
+        function showUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            if (modal) modal.style.display = 'flex';
+        }
+        function closeUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            if (modal) modal.style.display = 'none';
+        }
 
         async function handleReceiptUpload(e) {
             e.preventDefault();
@@ -1015,6 +1163,52 @@
         // Initial Load
         loadDashboard();
     </script>
+
+    <!-- Student Profile Modal Overlay (View / Edit) -->
+    <div class="fb-modal-backdrop" id="profileModal" style="display:none;">
+        <div class="fb-modal-card" style="max-width: 680px; width: 95%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; display:flex; align-items:center; gap: 0.5rem;">
+                    👤 Student Profile
+                </h3>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeProfileModal()">✕</button>
+            </div>
+            <div id="profileModalBody" style="margin-top: 0.5rem;">
+                <!-- Dynamically populated by JS (View/Edit modes) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Upload Receipts Modal Overlay -->
+    <div class="fb-modal-backdrop" id="uploadModal" style="display:none;">
+        <div class="fb-modal-card" style="max-width: 520px; width: 95%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0;">📤 Upload Clearance Receipts</h3>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUploadModal()">✕</button>
+            </div>
+            <form onsubmit="handleReceiptUpload(event)">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Receipt / Document Type</label>
+                    <select class="form-input" id="uploadDocType" required>
+                        <option value="fee_receipt">Academic / Tuition Fee Receipt</option>
+                        <option value="hostel_receipt">Hostel / Rent Clearance Receipt</option>
+                        <option value="mess_receipt">Mess Dues Receipt</option>
+                        <option value="transport_receipt">Bus / Transport Receipt</option>
+                        <option value="library_receipt">Library Clearance Receipt</option>
+                        <option value="other_document">Other Supporting Document</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Select Document File (PDF / PNG / JPG)</label>
+                    <input type="file" class="form-input" id="uploadFileInput" accept=".pdf,.png,.jpg,.jpeg" required style="padding: 0.5rem;">
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">📤 Upload File</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Student Dashboard Feedback Modal Overlay -->
     <div class="fb-modal-backdrop" id="dashFeedbackModal">

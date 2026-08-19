@@ -73,10 +73,10 @@ def apply_page():
     return render_template("student/apply.html", student_data=student_data)
 
 
-@student_bp.route("/api/profile")
+@student_bp.route("/api/profile", methods=["GET", "PUT"])
 @jwt_required(optional=True)
 def get_profile():
-    """Get student profile with full details."""
+    """Get or update student profile with full details."""
     user = None
     user_id = get_jwt_identity()
     if user_id:
@@ -87,10 +87,72 @@ def get_profile():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
-    data = user.to_dict()
     student_prof = getattr(user, "student_profile", None)
     if not student_prof and hasattr(user, "id"):
         student_prof = Student.query.filter_by(user_id=user.id).first()
+
+    # Handle Profile Update
+    if request.method == "PUT":
+        req_data = request.get_json() or {}
+        
+        # 1. Update User basic info
+        full_name = (req_data.get("full_name") or req_data.get("student_name") or "").strip()
+        if full_name:
+            parts = full_name.split(" ", 1)
+            user.first_name = parts[0]
+            user.last_name = parts[1] if len(parts) > 1 else ""
+
+        if "phone" in req_data:
+            user.phone = req_data.get("phone", "").strip() or None
+
+        # 2. Update Student Profile info
+        if student_prof:
+            if full_name:
+                student_prof.student_name = full_name
+            if "father_name" in req_data:
+                student_prof.father_name = req_data.get("father_name", "").strip() or None
+            if "mother_name" in req_data:
+                student_prof.mother_name = req_data.get("mother_name", "").strip() or None
+            if "guardian_phone" in req_data:
+                student_prof.guardian_phone = req_data.get("guardian_phone", "").strip() or None
+            elif "father_phone" in req_data:
+                student_prof.guardian_phone = req_data.get("father_phone", "").strip() or None
+            if "category" in req_data and req_data.get("category"):
+                student_prof.category = req_data.get("category")
+            if "city" in req_data:
+                student_prof.city = req_data.get("city", "").strip() or None
+            if "state" in req_data:
+                student_prof.state = req_data.get("state", "").strip() or None
+            if "current_semester" in req_data and req_data.get("current_semester"):
+                try:
+                    student_prof.current_semester = int(req_data.get("current_semester"))
+                except (ValueError, TypeError):
+                    pass
+
+        # 3. Create Audit Log
+        audit = AuditLog(
+            user_id=user.id,
+            action="update",
+            resource_type="student_profile",
+            resource_id=student_prof.id if student_prof else user.id,
+            details={"updated_fields": list(req_data.keys())},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
+        db.session.commit()
+
+        data = user.to_dict()
+        if student_prof:
+            data.update(student_prof.to_dict())
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully!",
+            "data": data
+        })
+
+    # GET Profile
+    data = user.to_dict()
     if student_prof:
         data.update(student_prof.to_dict())
 

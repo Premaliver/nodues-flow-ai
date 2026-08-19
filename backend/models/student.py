@@ -56,6 +56,14 @@ class Student(db.Model):
         """Get student's full name from user."""
         return self.user.full_name if self.user else ""
 
+    @student_name.setter
+    def student_name(self, value: str):
+        """Set student's name by updating the underlying user."""
+        if self.user and value:
+            parts = value.strip().split(" ", 1)
+            self.user.first_name = parts[0]
+            self.user.last_name = parts[1] if len(parts) > 1 else ""
+
     def to_dict(self) -> dict:
         return {
             "id": str(self.id),
