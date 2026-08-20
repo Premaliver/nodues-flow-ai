@@ -149,9 +149,21 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
         mail_use_tls = current_app.config.get("MAIL_USE_TLS", True)
         mail_user = current_app.config.get("MAIL_USERNAME", "b60b32001@smtp-brevo.com")
         mail_pass = current_app.config.get("MAIL_PASSWORD", "")
-        sender_email = "noreply@smartnodue.in"
-        sender_name = "Smart NoDues AI"
+        
+        # Determine sender email from config or default
+        raw_sender = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_SENDER_EMAIL") or "noreply@smartnodue.in"
+        if "<" in raw_sender and ">" in raw_sender:
+            sender_email = raw_sender.split("<")[1].split(">")[0].strip()
+            sender_name = raw_sender.split("<")[0].strip() or "Smart NoDues AI"
+        else:
+            sender_email = raw_sender.strip()
+            sender_name = "Smart NoDues AI"
+            
         subject = f"[{app_name}] Password Reset OTP: {otp}"
+
+        # Always log OTP in terminal for instant dev/admin access
+        logger.info(f"🔑 [PASSWORD RESET OTP] Destination: {recipient_email} | OTP: >>> {otp} <<< (Valid: {expires_in_minutes}m)")
+        print(f"\n======================================================\n🔑 [OTP DISPATCH] Recipient: {recipient_email}\n🔑 [OTP CODE]     >>> {otp} <<<\n======================================================\n", flush=True)
 
         # If SMTP password not available, log simulation
         if not mail_pass:

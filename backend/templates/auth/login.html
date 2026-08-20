@@ -177,9 +177,14 @@
                             <input type="checkbox" id="remember" name="remember" style="width: 16px; height: 16px; accent-color: var(--accent); border-radius: 4px; cursor: pointer;">
                             <label for="remember" style="font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; user-select: none;">Remember me</label>
                         </div>
-                        <a href="javascript:void(0)" onclick="openForgotModal()" style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-decoration: none; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                            Forgot Password?
-                        </a>
+                        <div style="text-align: right; line-height: 1.2;">
+                            <a href="javascript:void(0)" onclick="openForgotModal()" style="font-size: 0.85rem; font-weight: 600; color: var(--accent); text-decoration: none; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                                Forgot Password?
+                            </a>
+                            <span style="display: block; font-size: 0.72rem; color: var(--text-muted); opacity: 0.7; margin-top: 2px; font-weight: 400;">
+                                currently not available
+                            </span>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
@@ -213,6 +218,11 @@
                 </div>
 
                 <div id="fpAlert1" class="modal-alert"></div>
+
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.45rem; font-size: 0.78rem; color: #b45309; line-height: 1.4;">
+                    <span style="font-size: 0.9rem;">⚠️</span>
+                    <span><strong>Notice:</strong> Email OTP delivery may be currently unavailable or delayed. Please contact college support if needed.</span>
+                </div>
 
                 <form id="fpRequestForm" onsubmit="handleRequestOtp(event)">
                     <div class="form-group" style="margin-bottom: 1.25rem;">
