@@ -883,10 +883,15 @@ tr:hover td {
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border-right: 1px solid var(--border-light);
-    z-index: 100;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
-    transition: transform var(--transition-base), background var(--transition-base);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1), background var(--transition-base);
+    will-change: transform;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-100%) !important;
 }
 
 .sidebar-header {
@@ -909,23 +914,29 @@ tr:hover td {
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
-    transition: all var(--transition-fast);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
     text-decoration: none;
     margin-bottom: 2px;
     position: relative;
+    will-change: transform, opacity;
 }
 
 .sidebar-nav-item:hover {
     background: var(--bg-secondary);
     color: var(--text-primary);
-    transform: translateX(4px);
+    transform: translateX(6px);
+}
+
+.sidebar-nav-item:active {
+    transform: translateX(3px) scale(0.98);
 }
 
 .sidebar-nav-item.active {
     background: var(--gradient-card);
     color: var(--accent);
     font-weight: 600;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
 }
 
 .sidebar-nav-item.active::before {
@@ -938,15 +949,33 @@ tr:hover td {
     height: 20px;
     background: var(--gradient-primary);
     border-radius: var(--radius-full);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
 }
 
-.sidebar-nav-item .nav-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
+/* Staggered Cascade Entrance Animation when Sidebar Opens */
+.sidebar.open .sidebar-nav-item,
+.sidebar:not(.collapsed) .sidebar-nav-item {
+    animation: sidebarItemCascade 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sidebar.open .sidebar-nav-item:nth-child(1), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(1) { animation-delay: 0.03s; }
+.sidebar.open .sidebar-nav-item:nth-child(2), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(2) { animation-delay: 0.06s; }
+.sidebar.open .sidebar-nav-item:nth-child(3), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(3) { animation-delay: 0.09s; }
+.sidebar.open .sidebar-nav-item:nth-child(4), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(4) { animation-delay: 0.12s; }
+.sidebar.open .sidebar-nav-item:nth-child(5), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(5) { animation-delay: 0.15s; }
+.sidebar.open .sidebar-nav-item:nth-child(6), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(6) { animation-delay: 0.18s; }
+.sidebar.open .sidebar-nav-item:nth-child(7), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(7) { animation-delay: 0.21s; }
+.sidebar.open .sidebar-nav-item:nth-child(8), .sidebar:not(.collapsed) .sidebar-nav-item:nth-child(8) { animation-delay: 0.24s; }
+
+@keyframes sidebarItemCascade {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .sidebar-footer {
@@ -961,7 +990,20 @@ tr:hover td {
     flex: 1;
     margin-left: 280px;
     min-width: 0;
-    transition: margin-left var(--transition-base);
+    transition: margin-left 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-toggle-btn {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--bg-secondary) !important;
+    transform: scale(1.08);
+}
+
+.sidebar-toggle-btn:active {
+    transform: scale(0.88) rotate(-90deg) !important;
 }
 
 .sidebar-overlay {
@@ -1083,13 +1125,13 @@ tr:hover td {
 .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 999;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-backdrop.active {
@@ -1125,8 +1167,8 @@ tr:hover td {
         max-width: 85vw !important;
         z-index: 1000 !important;
         transform: translateX(-100%) !important;
-        transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
         background: var(--bg-card) !important;
     }
 

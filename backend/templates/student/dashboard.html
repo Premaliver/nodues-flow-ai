@@ -88,7 +88,7 @@
             <!-- Top Navbar -->
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
+                    <button class="btn btn-ghost btn-icon sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Sidebar Navigation" title="Toggle Sidebar">☰</button>
                     <div class="top-nav-search">
                         <span style="color: var(--text-muted); font-size: 0.9rem;">🔍</span>
                         <input type="text" id="globalSearchInput" placeholder="Search applications, departments..." onkeyup="filterApplicationsTable()">
@@ -412,14 +412,33 @@
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
             const bd = document.getElementById('sidebarBackdrop');
+            const appMain = document.querySelector('.app-main-wrapper');
             if (!sb || !bd) return;
-            const isOpen = show !== undefined ? show : !sb.classList.contains('open');
-            if (isOpen) {
-                sb.classList.add('open');
-                bd.classList.add('active');
+
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                const isOpen = show !== undefined ? show : !sb.classList.contains('open');
+                if (isOpen) {
+                    sb.classList.add('open');
+                    bd.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    sb.classList.remove('open');
+                    bd.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
             } else {
-                sb.classList.remove('open');
-                bd.classList.remove('active');
+                // Desktop toggle mode: collapse / expand sidebar smoothly
+                const isCollapsed = sb.classList.contains('collapsed');
+                const shouldCollapse = show !== undefined ? !show : !isCollapsed;
+                if (shouldCollapse) {
+                    sb.classList.add('collapsed');
+                    if (appMain) appMain.style.marginLeft = '0px';
+                } else {
+                    sb.classList.remove('collapsed');
+                    if (appMain) appMain.style.marginLeft = '280px';
+                }
             }
         }
 
