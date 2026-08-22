@@ -2090,25 +2090,29 @@ tr:hover td {
 }
 
 /* ============================================================
-   MODAL OVERLAY
+   MODAL OVERLAYS & BACKDROPS
    ============================================================ */
-.modal-overlay {
+.modal-overlay,
+.fb-modal-backdrop {
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
     align-items: center;
     justify-content: center;
     padding: var(--space-xl);
+    animation: modalBackdropFadeIn 0.25s ease-out;
 }
 
 .modal-overlay.open {
     display: flex;
 }
 
-.modal-box {
+.modal-box,
+.fb-modal-card {
     background: var(--bg-card);
     border-radius: var(--radius-2xl);
     width: 100%;
@@ -2116,9 +2120,10 @@ tr:hover td {
     max-height: 85vh;
     overflow-y: auto;
     padding: var(--space-2xl);
-    box-shadow: var(--shadow-xl);
-    animation: scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(99, 102, 241, 0.15);
+    animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: 1px solid var(--border-light);
+    position: relative;
 }
 
 /* ============================================================
