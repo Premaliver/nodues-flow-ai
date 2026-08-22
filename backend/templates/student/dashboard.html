@@ -71,8 +71,8 @@
                 <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)">
                     <span class="nav-icon">🔑</span> Security & Password
                 </a>
-                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); openStudentFeedbackModal(); return false;">
-                    <span class="nav-icon">⭐</span> Portal Feedback
+                <a href="#" class="sidebar-nav-item" data-panel="feedback" onclick="switchToPanel('panelFeedback'); toggleSidebar(false); return false;">
+                    <span class="nav-icon">⭐</span> Portal Experience
                 </a>
             </nav>
 
@@ -288,6 +288,191 @@
                     </div>
                 </div>
 
+                <!-- PANEL 4: PORTAL EXPERIENCE & TELEMETRY MATRIX (LEGEND CODER PROGRAM STYLE) -->
+                <div id="panelFeedback" class="dashboard-panel" style="display: none;">
+                    <div class="cyber-card-matrix reveal">
+                        <!-- Cyber Header Badge Bar -->
+                        <div class="cyber-header-bar">
+                            <div class="cyber-status-group">
+                                <span class="cyber-status-dot"></span>
+                                <span class="cyber-matrix-tag">SYS_TELEMETRY_ENGINE_v2.4</span>
+                                <span class="cyber-divider">//</span>
+                                <span class="cyber-node-tag">NODE_ID: RBU_CLEARANCE_SYSTEM</span>
+                            </div>
+                            <div class="cyber-security-badge">
+                                🔒 ENCRYPTED FEEDBACK LOGS
+                            </div>
+                        </div>
+
+                        <!-- Cyber Title & Subtitle -->
+                        <div class="cyber-hero-title-wrap">
+                            <h2 class="cyber-main-title">
+                                <span class="cyber-icon-glow">⭐</span> Rate Portal Experience & System Performance
+                            </h2>
+                            <p class="cyber-sub-text">
+                                Your direct telemetry feedback helps our AI engine and university administration continuously optimize clearance latency, user experience, and automated workflows.
+                            </p>
+                        </div>
+
+                        <div id="panelFbFormView">
+                            <div class="cyber-grid-layout">
+                                
+                                <!-- QUESTION 1: OVERALL STAR RATING -->
+                                <div class="cyber-input-panel">
+                                    <div class="cyber-panel-label">
+                                        <span class="cyber-num">01</span>
+                                        <span>OVERALL PORTAL SATISFACTION RATING</span>
+                                    </div>
+                                    <div class="cyber-star-matrix" id="panelFbStarRating">
+                                        <button type="button" class="cyber-star-btn active" data-val="1" title="1 Star">★</button>
+                                        <button type="button" class="cyber-star-btn active" data-val="2" title="2 Stars">★</button>
+                                        <button type="button" class="cyber-star-btn active" data-val="3" title="3 Stars">★</button>
+                                        <button type="button" class="cyber-star-btn active" data-val="4" title="4 Stars">★</button>
+                                        <button type="button" class="cyber-star-btn active" data-val="5" title="5 Stars">★</button>
+                                    </div>
+                                    <div class="cyber-star-caption" id="panelStarCaption">Excellent System Performance (5/5 Stars)</div>
+                                </div>
+
+                                <!-- QUESTION 2: EASE OF NAVIGATION & CLEARANCE FLOW -->
+                                <div class="cyber-input-panel">
+                                    <div class="cyber-panel-label">
+                                        <span class="cyber-num">02</span>
+                                        <span>CLEARANCE FLOW & NAVIGATION SPEED</span>
+                                    </div>
+                                    <div class="cyber-pill-matrix" id="panelFbEaseGroup">
+                                        <div class="cyber-pill active" data-val="very_easy">
+                                            <span class="cyber-pill-icon">🚀</span>
+                                            <span>Super Smooth</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="easy">
+                                            <span class="cyber-pill-icon">👍</span>
+                                            <span>Easy & Fast</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="moderate">
+                                            <span class="cyber-pill-icon">😐</span>
+                                            <span>Moderate</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="difficult">
+                                            <span class="cyber-pill-icon">😕</span>
+                                            <span>Needs Improvement</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- QUESTION 3: AI ASSISTANT HELPFULNESS -->
+                                <div class="cyber-input-panel">
+                                    <div class="cyber-panel-label">
+                                        <span class="cyber-num">03</span>
+                                        <span>AI ASSISTANT (SMART NODUES INTELLIGENCE)</span>
+                                    </div>
+                                    <div class="cyber-pill-matrix" id="panelFbAiGroup">
+                                        <div class="cyber-pill active" data-val="extremely_helpful">
+                                            <span class="cyber-pill-icon">🌟</span>
+                                            <span>Extremely Helpful</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="good">
+                                            <span class="cyber-pill-icon">👌</span>
+                                            <span>Good & Accurate</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="not_used">
+                                            <span class="cyber-pill-icon">🤷</span>
+                                            <span>Didn't Use</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="needs_improvement">
+                                            <span class="cyber-pill-icon">👎</span>
+                                            <span>Needs Upgrade</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- QUESTION 4: FEE RECEIPT & UPLOAD EXPERIENCE -->
+                                <div class="cyber-input-panel">
+                                    <div class="cyber-panel-label">
+                                        <span class="cyber-num">04</span>
+                                        <span>FEE RECEIPT UPLOAD & DOCUMENT PROCESSOR</span>
+                                    </div>
+                                    <div class="cyber-pill-matrix" id="panelFbUploadGroup">
+                                        <div class="cyber-pill active" data-val="smooth">
+                                            <span class="cyber-pill-icon">⚡</span>
+                                            <span>Instant Upload</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="acceptable">
+                                            <span class="cyber-pill-icon">👌</span>
+                                            <span>Acceptable</span>
+                                        </div>
+                                        <div class="cyber-pill" data-val="had_issues">
+                                            <span class="cyber-pill-icon">⚠️</span>
+                                            <span>Encountered Latency</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- QUESTION 5: RECOMMENDATION LIKELIHOOD (NPS MATRIX 1-10) -->
+                                <div class="cyber-input-panel cyber-full-width">
+                                    <div class="cyber-panel-header-flex">
+                                        <div class="cyber-panel-label">
+                                            <span class="cyber-num">05</span>
+                                            <span>RECOMMENDATION LIKELIHOOD (NET PROMOTER SCORE)</span>
+                                        </div>
+                                        <div class="cyber-nps-display-val" id="panelNpsDisplayVal">10 / 10</div>
+                                    </div>
+                                    <div class="cyber-nps-grid" id="panelFbNpsScale">
+                                        <button type="button" class="cyber-nps-btn" data-val="1">1</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="2">2</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="3">3</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="4">4</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="5">5</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="6">6</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="7">7</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="8">8</button>
+                                        <button type="button" class="cyber-nps-btn" data-val="9">9</button>
+                                        <button type="button" class="cyber-nps-btn active" data-val="10">10</button>
+                                    </div>
+                                </div>
+
+                                <!-- QUESTION 6: SUGGESTIONS & TERMINAL LOG ENTRY -->
+                                <div class="cyber-input-panel cyber-full-width">
+                                    <div class="cyber-panel-label">
+                                        <span class="cyber-num">06</span>
+                                        <span>SUGGESTIONS & CUSTOM COMMENTS // TERMINAL ENTRY</span>
+                                    </div>
+                                    <div class="cyber-chip-bar">
+                                        <span class="cyber-tag-chip" onclick="addPanelSuggestionTag('Loved the fast clearance flow!')">✨ Loved the flow</span>
+                                        <span class="cyber-tag-chip" onclick="addPanelSuggestionTag('10/10 Modern UI design!')">🎨 Great UI</span>
+                                        <span class="cyber-tag-chip" onclick="addPanelSuggestionTag('Add instant SMS status alerts')">📱 Add SMS alerts</span>
+                                        <span class="cyber-tag-chip" onclick="addPanelSuggestionTag('Super fast document verification!')">⚡ Fast Verification</span>
+                                    </div>
+                                    <div class="cyber-textarea-wrap">
+                                        <div class="cyber-terminal-prompt">// COMMENTS_ENTRY:</div>
+                                        <textarea id="panelFbComments" class="cyber-textarea" rows="3" placeholder="Describe your experience or suggest optimizations for the portal..."></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- TRANSMIT BUTTON -->
+                            <div class="cyber-action-bar">
+                                <button type="button" class="cyber-submit-btn" id="submitPanelFbBtn" onclick="submitPanelFeedback()">
+                                    <span class="cyber-btn-text">⚡ TRANSMIT FEEDBACK LOGS</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- THANK YOU VIEW -->
+                        <div id="panelFbThankYouView" style="display: none;" class="cyber-thankyou-card">
+                            <div class="cyber-success-icon-wrap">
+                                <span class="cyber-success-icon">✨</span>
+                            </div>
+                            <h3 class="cyber-success-title">Feedback Transmitted & Encrypted!</h3>
+                            <p class="cyber-success-desc">Thank you for sharing your experience. Your feedback logs have been securely recorded into the administration metrics table.</p>
+                            <button type="button" class="btn btn-primary" onclick="switchToPanel('panelOverview')" style="margin-top: 1rem;">
+                                ➔ Return to Dashboard Overview
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
@@ -406,6 +591,10 @@
             } else if (panelId === 'panelAdmitCards') {
                 const navItem = document.querySelector('.sidebar-nav-item[data-panel="admitCards"]');
                 if (navItem) navItem.classList.add('active');
+            } else if (panelId === 'panelFeedback') {
+                const navItem = document.querySelector('.sidebar-nav-item[data-panel="feedback"]');
+                if (navItem) navItem.classList.add('active');
+                initCyberPanelFeedbackControls();
             }
         }
 
@@ -1163,6 +1352,130 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🚀 Submit Feedback';
+            }
+        }
+
+        // ============================================================
+        // LEGEND CODER PROGRAM STYLE - CYBERPUNK PORTAL FEEDBACK JS
+        // ============================================================
+        let panelSelectedStars = 5;
+        let panelSelectedEase = 'very_easy';
+        let panelSelectedAi = 'extremely_helpful';
+        let panelSelectedUpload = 'smooth';
+        let panelSelectedNps = 10;
+
+        function initCyberPanelFeedbackControls() {
+            // Stars
+            document.querySelectorAll('#panelFbStarRating .cyber-star-btn').forEach(btn => {
+                btn.onclick = () => {
+                    panelSelectedStars = parseInt(btn.dataset.val);
+                    updatePanelStarUI(panelSelectedStars);
+                };
+            });
+
+            // Ease Pills
+            document.querySelectorAll('#panelFbEaseGroup .cyber-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#panelFbEaseGroup .cyber-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    panelSelectedEase = pill.dataset.val;
+                };
+            });
+
+            // AI Pills
+            document.querySelectorAll('#panelFbAiGroup .cyber-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#panelFbAiGroup .cyber-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    panelSelectedAi = pill.dataset.val;
+                };
+            });
+
+            // Upload Pills
+            document.querySelectorAll('#panelFbUploadGroup .cyber-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('#panelFbUploadGroup .cyber-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    panelSelectedUpload = pill.dataset.val;
+                };
+            });
+
+            // NPS Scale
+            document.querySelectorAll('#panelFbNpsScale .cyber-nps-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('#panelFbNpsScale .cyber-nps-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    panelSelectedNps = parseInt(btn.dataset.val);
+                    const disp = document.getElementById('panelNpsDisplayVal');
+                    if (disp) disp.textContent = `${panelSelectedNps} / 10`;
+                };
+            });
+        }
+
+        function updatePanelStarUI(val) {
+            const captions = {
+                1: '1/5 Stars — Needs Urgent Optimization',
+                2: '2/5 Stars — Below Expectations',
+                3: '3/5 Stars — Average Performance',
+                4: '4/5 Stars — Very Good Experience',
+                5: '5/5 Stars — Outstanding System Performance'
+            };
+            document.querySelectorAll('#panelFbStarRating .cyber-star-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.val) <= val);
+            });
+            const cap = document.getElementById('panelStarCaption');
+            if (cap) cap.textContent = captions[val] || `${val}/5 Stars`;
+        }
+
+        function addPanelSuggestionTag(text) {
+            const commentInput = document.getElementById('panelFbComments');
+            if (commentInput) {
+                commentInput.value = (commentInput.value.trim().length ? commentInput.value + ' ' : '') + text;
+                commentInput.focus();
+            }
+        }
+
+        async function submitPanelFeedback() {
+            const btn = document.getElementById('submitPanelFbBtn');
+            const comments = (document.getElementById('panelFbComments').value || '').trim();
+            const token = localStorage.getItem('access_token');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="cyber-btn-text">⏳ TRANSMITTING TELEMETRY LOGS...</span>';
+            }
+
+            try {
+                const res = await fetch('/student/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        overall_rating: panelSelectedStars,
+                        ease_of_use: panelSelectedEase,
+                        ai_helpfulness: panelSelectedAi,
+                        upload_experience: panelSelectedUpload,
+                        nps_score: panelSelectedNps,
+                        comments: comments
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('panelFbFormView').style.display = 'none';
+                    document.getElementById('panelFbThankYouView').style.display = 'block';
+                } else {
+                    alert(data.message || 'Could not record feedback logs.');
+                }
+            } catch(e) {
+                alert('Network error submitting feedback. Please check connection.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="cyber-btn-text">⚡ TRANSMIT FEEDBACK LOGS</span>';
+                }
             }
         }
 
