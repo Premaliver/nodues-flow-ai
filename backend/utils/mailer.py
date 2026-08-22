@@ -155,18 +155,41 @@ def _send_direct_smtp(server, port, use_tls, username, password, sender_name, se
 
 
 def _send_http_api(sender_name, sender_email, recipient_email, recipient_name, subject, html_content, otp):
-    """Dispatch email via modern cloud HTTPS REST APIs (Brevo / Resend) to bypass cloud SMTP port blocks."""
+    """Dispatch email via modern cloud HTTPS REST APIs (Google Apps Script Webhook / Resend / Brevo) to bypass cloud SMTP port blocks."""
     import urllib.request
     import json
     import os
 
+    webhook_url = os.environ.get("MAIL_WEBHOOK_URL")
     resend_key = os.environ.get("RESEND_API_KEY")
     brevo_key = os.environ.get("BREVO_API_KEY")
 
+    # Priority 1: Google Apps Script Webhook Relay (Zero API key needed, uses Gmail over HTTPS 443)
+    if webhook_url:
+        try:
+            payload = {
+                "to": recipient_email,
+                "name": recipient_name,
+                "subject": subject,
+                "html": html_content,
+                "otp": otp
+            }
+            req = urllib.request.Request(
+                webhook_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "SmartNoDues/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                if resp.status in (200, 201, 302):
+                    logger.info(f"✓ [GMAIL WEBHOOK RELAY 443] OTP delivered to {recipient_email}")
+                    return True
+        except Exception as e:
+            logger.warning(f"Gmail Webhook Relay notice: {e}")
+
+    # Priority 2: Resend HTTPS API
     if resend_key:
         try:
             url = "https://api.resend.com/emails"
-            # If custom verified domain provided, use it, else onboarding@resend.dev
             from_addr = os.environ.get("RESEND_FROM") or f"{sender_name} <onboarding@resend.dev>"
             payload = {
                 "from": from_addr,
@@ -186,6 +209,7 @@ def _send_http_api(sender_name, sender_email, recipient_email, recipient_name, s
         except Exception as e:
             logger.warning(f"Resend HTTPS API notice: {e}")
 
+    # Priority 3: Brevo HTTPS API
     if brevo_key:
         try:
             url = "https://api.brevo.com/v3/smtp/email"

@@ -441,21 +441,14 @@ def forgot_password_request():
     # Record in cooldown cache
     _otp_cache[email] = {"timestamp": now_ts, "otp": otp}
 
-    # Send 1 single OTP Email synchronously so Gunicorn worker thread doesn't terminate background worker
-    mail_res = send_otp_email(
+    # Send 1 single OTP Email in background (< 50ms instant response)
+    send_otp_email(
         recipient_email=user.email,
         recipient_name=user.full_name or "Student",
         otp=otp,
         expires_in_minutes=15,
-        async_send=False
+        async_send=True
     )
-
-    if not mail_res.get("sent", False) and not mail_res.get("success", False):
-        err_msg = mail_res.get("error") or mail_res.get("message") or "Email delivery failed"
-        return jsonify({
-            "success": False,
-            "message": f"Could not send OTP email: {err_msg}"
-        }), 500
 
     return jsonify({
         "success": True,
