@@ -91,7 +91,7 @@ OTP_EMAIL_TEMPLATE = """
 
 
 def _send_direct_smtp(server, port, use_tls, username, password, sender_name, sender_email, recipient_email, recipient_name, subject, html_content, otp):
-    """Direct, high-performance native SMTP delivery worker with full MIME standards."""
+    """Direct, high-performance native SMTP delivery worker with automatic SSL/TLS fallbacks for cloud hosting."""
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -105,23 +105,62 @@ def _send_direct_smtp(server, port, use_tls, username, password, sender_name, se
         msg["Reply-To"] = sender_email
         msg["Message-ID"] = make_msgid(domain="smartnodue.in")
 
-        text_fallback = f"Smart NoDues AI: Your 6-digit password reset OTP is {otp}. Valid for 10 minutes."
+        text_fallback = f"Smart NoDues AI: Your 6-digit password reset OTP is {otp}. Valid for 15 minutes."
         part_text = MIMEText(text_fallback, "plain", "utf-8")
         part_html = MIMEText(html_content, "html", "utf-8")
         msg.attach(part_text)
         msg.attach(part_html)
 
-        server_host = server or "smtp-relay.brevo.com"
+        server_host = server or "smtp.gmail.com"
         server_port = int(port or 587)
 
-        s = smtplib.SMTP(server_host, server_port, timeout=12)
-        if use_tls:
-            s.starttls()
-        if username and password:
-            s.login(username, password)
-        s.send_message(msg)
-        s.quit()
-        logger.info(f"✓ [DIRECT SMTP] Password reset OTP delivered to {recipient_email}")
+        sent = False
+        last_err = None
+
+        # Attempt 1: If port 465, try SSL
+        if server_port == 465:
+            try:
+                with smtplib.SMTP_SSL(server_host, 465, timeout=12) as s:
+                    if username and password:
+                        s.login(username, password)
+                    s.send_message(msg)
+                sent = True
+                logger.info(f"✓ [DIRECT SMTP SSL 465] OTP delivered to {recipient_email}")
+            except Exception as e:
+                last_err = e
+                logger.warning(f"SMTP SSL 465 notice on {server_host}: {e}")
+
+        # Attempt 2: Try TLS 587
+        if not sent:
+            try:
+                with smtplib.SMTP(server_host, 587, timeout=12) as s:
+                    if use_tls:
+                        s.starttls()
+                    if username and password:
+                        s.login(username, password)
+                    s.send_message(msg)
+                sent = True
+                logger.info(f"✓ [DIRECT SMTP TLS 587] OTP delivered to {recipient_email}")
+            except Exception as e:
+                last_err = e
+                logger.warning(f"SMTP TLS 587 notice on {server_host}: {e}")
+
+        # Attempt 3: Fallback to SSL 465 if 587 failed
+        if not sent and server_port != 465:
+            try:
+                with smtplib.SMTP_SSL(server_host, 465, timeout=12) as s:
+                    if username and password:
+                        s.login(username, password)
+                    s.send_message(msg)
+                sent = True
+                logger.info(f"✓ [DIRECT SMTP SSL 465 FALLBACK] OTP delivered to {recipient_email}")
+            except Exception as e:
+                last_err = e
+                logger.error(f"❌ [DIRECT SMTP SSL 465 FALLBACK ERROR] Failed: {e}")
+
+        if not sent and last_err:
+            raise last_err
+
     except Exception as e:
         logger.error(f"❌ [DIRECT SMTP ERROR] Failed to send email to {recipient_email}: {e}")
 
