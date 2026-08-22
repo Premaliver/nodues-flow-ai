@@ -90,27 +90,58 @@
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
     <div id="app" style="display: flex;">
         <!-- Sidebar -->
+        <!-- Left Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem;">S</div>
-                    <div><div style="font-weight: 700; font-size: 0.875rem; font-family: var(--font-display);">Smart NoDues</div><div style="font-size: 0.75rem; color: var(--text-muted);">Student Portal</div></div>
+                <div class="sidebar-brand-wrap">
+                    <div class="sidebar-brand-emblem">⚡</div>
+                    <div class="sidebar-brand-info">
+                        <div class="sidebar-brand-title">Smart NoDues</div>
+                        <div class="sidebar-brand-badge">
+                            <span class="sidebar-beacon-dot"></span> STUDENT PORTAL
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <nav class="sidebar-nav">
-                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="/student/apply" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📝</span> New Application</a>
-                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📁</span> My Applications</a>
-                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">📄</span> Admit Cards</a>
-                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">👤</span> Profile</a>
+                <div class="sidebar-section-label">WORKSPACE</div>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon-badge">📊</span>
+                    <span>Dashboard Overview</span>
+                </a>
+                <a href="/student/apply" class="sidebar-nav-item active" onclick="toggleSidebar(false)">
+                    <span class="nav-icon-badge">📝</span>
+                    <span>New Application</span>
+                </a>
+
+                <div class="sidebar-section-label">DOCUMENTS & CLEARANCE</div>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon-badge">📋</span>
+                    <span>My Applications</span>
+                </a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon-badge">🎓</span>
+                    <span>Admit Cards</span>
+                </a>
+                <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
+                    <span class="nav-icon-badge">👤</span>
+                    <span>Student Profile</span>
+                </a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
+
+            <div class="sidebar-footer">
+                <a href="/auth/logout" class="sidebar-logout-btn" onclick="toggleSidebar(false)">
+                    <span class="logout-icon-box">🚪</span>
+                    <span>Secure Logout</span>
+                </a>
+            </div>
         </aside>
 
         <div class="app-main-wrapper">
             <header class="top-nav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
+                    <button class="btn btn-ghost btn-icon sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Sidebar" title="Toggle Sidebar">☰</button>
                     <span style="font-weight: 600; font-size: 0.95rem;">New No-Dues Application</span>
                 </div>
                 <div class="top-nav-actions">
