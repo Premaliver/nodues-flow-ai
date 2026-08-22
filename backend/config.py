@@ -54,10 +54,10 @@ class BaseConfig:
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "premkumar.pro03@gmail.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "nslszfdxedigekru")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "smartnodue@gmail.com")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "slidcseebrmtqxng")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <smartnodue@gmail.com>"
     )
 
     SESSION_COOKIE_SECURE = True

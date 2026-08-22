@@ -260,12 +260,12 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
         mail_server = current_app.config.get("MAIL_SERVER", "smtp.gmail.com")
         mail_port = current_app.config.get("MAIL_PORT", 465)
         mail_use_tls = current_app.config.get("MAIL_USE_TLS", True)
-        mail_user = current_app.config.get("MAIL_USERNAME", "premkumar.pro03@gmail.com")
-        mail_pass = current_app.config.get("MAIL_PASSWORD", "nslszfdxedigekru")
+        mail_user = current_app.config.get("MAIL_USERNAME", "smartnodue@gmail.com")
+        mail_pass = current_app.config.get("MAIL_PASSWORD", "slidcseebrmtqxng")
         
         # Official university sender branding
-        raw_sender = current_app.config.get("MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>")
-        sender_email = "noreply@smartnodue.in"
+        raw_sender = current_app.config.get("MAIL_DEFAULT_SENDER", "Smart NoDues AI <smartnodue@gmail.com>")
+        sender_email = "smartnodue@gmail.com"
         sender_name = "Smart NoDues AI"
             
         subject = f"[{app_name}] Password Reset OTP: {otp}"
