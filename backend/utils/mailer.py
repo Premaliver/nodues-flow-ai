@@ -117,9 +117,12 @@ def _send_direct_smtp(server, port, use_tls, username, password, sender_name, se
         sent = False
         last_err = None
 
-        # Priority 1: Port 465 SSL (Most reliable on cloud hosts & Render)
+        import ssl
+        ssl_ctx = ssl.create_default_context()
+
+        # Priority 1: Port 465 SSL (Direct SSL Socket with verified context)
         try:
-            with smtplib.SMTP_SSL(server_host, 465, timeout=12) as s:
+            with smtplib.SMTP_SSL(server_host, 465, context=ssl_ctx, timeout=8) as s:
                 if username and password:
                     s.login(username, password)
                 s.send_message(msg)
@@ -132,8 +135,8 @@ def _send_direct_smtp(server, port, use_tls, username, password, sender_name, se
         # Priority 2: Port 587 TLS (If 465 was blocked)
         if not sent:
             try:
-                with smtplib.SMTP(server_host, 587, timeout=12) as s:
-                    s.starttls()
+                with smtplib.SMTP(server_host, 587, timeout=8) as s:
+                    s.starttls(context=ssl_ctx)
                     if username and password:
                         s.login(username, password)
                     s.send_message(msg)
