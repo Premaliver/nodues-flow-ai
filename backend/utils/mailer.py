@@ -164,12 +164,15 @@ def _send_http_api(sender_name, sender_email, recipient_email, recipient_name, s
     resend_key = os.environ.get("RESEND_API_KEY")
     brevo_key = os.environ.get("BREVO_API_KEY")
 
-    # Priority 1: Google Apps Script Webhook Relay (Zero API key needed, uses Gmail over HTTPS 443)
+    # Priority 1: Google Apps Script Webhook Relay (Uses Gmail over HTTPS 443 with custom sender name & reply-to)
     if webhook_url:
         try:
             payload = {
                 "to": recipient_email,
                 "name": recipient_name,
+                "sender_name": "Smart NoDues AI",
+                "sender_email": "noreply@smartnodue.in",
+                "reply_to": "noreply@smartnodue.in",
                 "subject": subject,
                 "html": html_content,
                 "otp": otp
@@ -186,14 +189,15 @@ def _send_http_api(sender_name, sender_email, recipient_email, recipient_name, s
         except Exception as e:
             logger.warning(f"Gmail Webhook Relay notice: {e}")
 
-    # Priority 2: Resend HTTPS API
+    # Priority 2: Resend HTTPS API (Custom domain or Resend delivery)
     if resend_key:
         try:
             url = "https://api.resend.com/emails"
-            from_addr = os.environ.get("RESEND_FROM") or f"{sender_name} <onboarding@resend.dev>"
+            from_addr = os.environ.get("RESEND_FROM") or "Smart NoDues AI <noreply@smartnodue.in>"
             payload = {
                 "from": from_addr,
                 "to": [recipient_email],
+                "reply_to": "noreply@smartnodue.in",
                 "subject": subject,
                 "html": html_content
             }
@@ -214,8 +218,9 @@ def _send_http_api(sender_name, sender_email, recipient_email, recipient_name, s
         try:
             url = "https://api.brevo.com/v3/smtp/email"
             payload = {
-                "sender": {"name": sender_name, "email": sender_email},
+                "sender": {"name": "Smart NoDues AI", "email": "noreply@smartnodue.in"},
                 "to": [{"email": recipient_email, "name": recipient_name}],
+                "replyTo": {"email": "noreply@smartnodue.in", "name": "Smart NoDues AI"},
                 "subject": subject,
                 "htmlContent": html_content
             }
