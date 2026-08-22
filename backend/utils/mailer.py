@@ -162,8 +162,11 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
         subject = f"[{app_name}] Password Reset OTP: {otp}"
 
         # Always log OTP in terminal for instant dev/admin access
-        logger.info(f"🔑 [PASSWORD RESET OTP] Destination: {recipient_email} | OTP: >>> {otp} <<< (Valid: {expires_in_minutes}m)")
-        print(f"\n======================================================\n🔑 [OTP DISPATCH] Recipient: {recipient_email}\n🔑 [OTP CODE]     >>> {otp} <<<\n======================================================\n", flush=True)
+        try:
+            logger.info(f"[PASSWORD RESET OTP] Destination: {recipient_email} | OTP: >>> {otp} <<< (Valid: {expires_in_minutes}m)")
+            print(f"\n======================================================\n[OTP DISPATCH] Recipient: {recipient_email}\n[OTP CODE]     >>> {otp} <<<\n======================================================\n", flush=True)
+        except Exception:
+            pass
 
         # If SMTP password not available, log simulation
         if not mail_pass:
