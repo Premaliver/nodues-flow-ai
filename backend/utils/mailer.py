@@ -144,11 +144,11 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str, expires_
             university_name=university_name,
         )
 
-        mail_server = current_app.config.get("MAIL_SERVER", "smtp-relay.brevo.com")
+        mail_server = current_app.config.get("MAIL_SERVER", "smtp.gmail.com")
         mail_port = current_app.config.get("MAIL_PORT", 587)
         mail_use_tls = current_app.config.get("MAIL_USE_TLS", True)
-        mail_user = current_app.config.get("MAIL_USERNAME", "b60b32001@smtp-brevo.com")
-        mail_pass = current_app.config.get("MAIL_PASSWORD", "")
+        mail_user = current_app.config.get("MAIL_USERNAME", "premkumar.pro03@gmail.com")
+        mail_pass = current_app.config.get("MAIL_PASSWORD", "nslszfdxedigekru")
         
         # Determine sender email from config or default
         raw_sender = current_app.config.get("MAIL_DEFAULT_SENDER") or current_app.config.get("MAIL_SENDER_EMAIL") or "noreply@smartnodue.in"

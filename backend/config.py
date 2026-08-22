@@ -50,14 +50,14 @@ class BaseConfig:
     )
     ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp"}
 
-    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp-relay.brevo.com")
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "b60b32001@smtp-brevo.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "premkumar.pro03@gmail.com")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "nslszfdxedigekru")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <noreply@smartnodue.in>"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <premkumar.pro03@gmail.com>"
     )
 
     SESSION_COOKIE_SECURE = True
