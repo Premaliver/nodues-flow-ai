@@ -328,7 +328,9 @@
 
 <script>
 async function handleRegister(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+
     const alertBox = document.getElementById('alertBox');
     const submitBtn = document.getElementById('submitBtn');
     alertBox.style.display = 'none';
@@ -346,7 +348,7 @@ async function handleRegister(e) {
     if (payload.password.length < 6) {
         alertBox.textContent = "Password must be at least 6 characters long.";
         alertBox.style.display = 'block';
-        return;
+        return false;
     }
 
     submitBtn.disabled = true;
@@ -381,11 +383,13 @@ async function handleRegister(e) {
         }
     } catch (err) {
         console.error("Fetch Exception:", err);
-        alertBox.textContent = "Connection issue: " + (err.message || "Please check your network.");
+        alertBox.textContent = "Unable to reach server. Please check your connection and try again.";
         alertBox.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<span>Create University Account & View POV Demo</span>';
     }
+
+    return false;
 }
 </script>
 

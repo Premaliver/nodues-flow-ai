@@ -137,17 +137,17 @@
         <p class="brand-subtitle">Institutional Leadership & Subscription Management</p>
     </div>
 
-    <div id="alertBox" class="alert-error"></div>
+    <div id="alertBox" class="alert-error" {% if error %}style="display: block;"{% endif %}>{{ error if error else '' }}</div>
 
-    <form onsubmit="handleLogin(event)">
+    <form id="univLoginForm" onsubmit="handleLogin(event); return false;">
         <div class="form-group">
             <label class="form-label" for="email">Official Institutional Email</label>
-            <input type="email" id="email" class="form-control" placeholder="registrar@university.edu" required>
+            <input type="email" id="email" class="form-control" placeholder="registrar@university.edu" required autocomplete="email">
         </div>
 
         <div class="form-group">
             <label class="form-label" for="password">Password</label>
-            <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+            <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
         </div>
 
         <button type="submit" id="submitBtn" class="btn-submit">Sign In to University Portal</button>
@@ -161,13 +161,21 @@
 
 <script>
 async function handleLogin(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+
     const alertBox = document.getElementById('alertBox');
     const submitBtn = document.getElementById('submitBtn');
     alertBox.style.display = 'none';
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        alertBox.textContent = "Please enter both official email and password.";
+        alertBox.style.display = 'block';
+        return false;
+    }
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Verifying Account...';
@@ -194,18 +202,20 @@ async function handleLogin(e) {
         if (response.ok && data.success) {
             window.location.href = (data.data && data.data.redirect_url) ? data.data.redirect_url : '/university/dashboard';
         } else {
-            alertBox.textContent = data.message || "Invalid login credentials.";
+            alertBox.textContent = data.message || "Invalid email or password. Please verify your credentials.";
             alertBox.style.display = 'block';
             submitBtn.disabled = false;
             submitBtn.textContent = 'Sign In to University Portal';
         }
     } catch (err) {
         console.error("Login Exception:", err);
-        alertBox.textContent = "Connection issue: " + (err.message || "Please check your network.");
+        alertBox.textContent = "Unable to reach server. Please check your connection and try again.";
         alertBox.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.textContent = 'Sign In to University Portal';
     }
+
+    return false;
 }
 </script>
 
