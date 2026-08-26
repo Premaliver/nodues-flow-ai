@@ -313,7 +313,7 @@
         }
     </style>
 </head>
-<body>
+<body data-has-university="{{ 'true' if university else 'false' }}">
 
 <nav class="pricing-nav">
     <a href="/university/pov" class="nav-brand">
@@ -328,7 +328,6 @@
         <a href="/university/login" style="color: #A5B4FC; text-decoration: none; font-weight: 600; font-size: 0.9rem;">University Login</a>
     </div>
 </nav>
-
 
 <header class="pricing-header">
     <div class="pricing-tag">Commercial SaaS Subscriptions</div>
@@ -482,10 +481,11 @@ function setBilling(cycle) {
 }
 
 function openCheckout(planKey, planName) {
-    {% if not university %}
-    window.location.href = '/university/register';
-    return;
-    {% endif %}
+    const hasUniversity = document.body.getAttribute('data-has-university') === 'true';
+    if (!hasUniversity) {
+        window.location.href = '/university/register';
+        return;
+    }
 
     selectedPlan = planKey;
     document.getElementById('modalPlanTitle').textContent = 'Subscribe: ' + planName;
@@ -561,4 +561,3 @@ document.addEventListener('DOMContentLoaded', updatePricingThemeBtn);
 
 </body>
 </html>
-
