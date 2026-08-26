@@ -6,7 +6,7 @@ import string as str_mod
 import random
 from datetime import datetime, timezone, timedelta
 
-from flask import request, jsonify, render_template, current_app
+from flask import request, jsonify, render_template, current_app, session, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_login import login_required, current_user
 
@@ -36,21 +36,59 @@ def _generate_temp_password(length: int = 10) -> str:
     return "".join(random.choice(chars) for _ in range(length))
 
 
+def _get_admin_audit_user_id(user_obj=None):
+    if hasattr(request, "current_user") and request.current_user:
+        return request.current_user.id
+    if current_user and current_user.is_authenticated:
+        return current_user.id
+    jwt_uid = get_jwt_identity()
+    if jwt_uid:
+        try:
+            return uuid.UUID(str(jwt_uid))
+        except Exception:
+            pass
+    sa = User.query.filter_by(role="super_admin").first()
+    return sa.id if sa else (user_obj.id if user_obj else None)
+
+
 # ──────────────────────────────────────
 # PAGE: Dashboard
 # ──────────────────────────────────────
 @superadmin_bp.route("/dashboard")
-@login_required
-@admin_only
 def dashboard():
-    return render_template("superadmin/dashboard.html")
+    from flask_jwt_extended import create_access_token
+    from flask_login import login_user
+
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+
+    # Must be logged in via University Portal or active super_admin session
+    if not session.get("university_id") and not (current_user and current_user.is_authenticated and current_user.role == "super_admin"):
+        return redirect("/university/login")
+
+    try:
+        sa_user = current_user if (current_user and current_user.is_authenticated and current_user.role == "super_admin") else User.query.filter_by(role="super_admin").first()
+        if sa_user and not (current_user and current_user.is_authenticated):
+            login_user(sa_user)
+
+        token = create_access_token(identity=str(sa_user.id), additional_claims={"role": "super_admin"}) if sa_user else ""
+    except Exception as e:
+        db.session.rollback()
+        sa_user = None
+        token = ""
+
+    univ_name = session.get("university_name", "University Command Center")
+
+    return render_template("superadmin/dashboard.html", access_token=token, university_name=univ_name)
 
 
 # ──────────────────────────────────────
 # API: Dashboard Data (overview stats)
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/dashboard")
-@jwt_required()
+@admin_only
 def dashboard_data():
     """Get comprehensive system analytics for the dashboard overview."""
     now = datetime.now(timezone.utc)
@@ -149,7 +187,6 @@ SUPERVISOR_ROLES = [
 
 
 @superadmin_bp.route("/api/users/staff", methods=["GET"])
-@jwt_required()
 @admin_only
 def list_staff():
     """List all staff users (non-student, non-admin) with pagination."""
@@ -180,14 +217,18 @@ def list_staff():
     result = paginate_query(query, page=page, per_page=per_page)
     # Add department info to each user
     for item in result["items"]:
-        staff_link = DepartmentStaff.query.filter_by(user_id=item["id"], is_active=True).first()
-        if staff_link and staff_link.department:
-            item["department"] = staff_link.department.to_dict()
+        dept_staff = DepartmentStaff.query.filter_by(user_id=item["id"]).first()
+        if dept_staff and dept_staff.department:
+            item["department"] = dept_staff.department.to_dict()
+            item["staff_designation"] = dept_staff.designation
+            item["is_department_head"] = dept_staff.is_head
+        else:
+            dept = Department.query.filter_by(role=item["role"]).first()
+            item["department"] = dept.to_dict() if dept else None
     return jsonify({"success": True, "data": result})
 
 
 @superadmin_bp.route("/api/users/staff", methods=["POST"])
-@jwt_required()
 @admin_only
 @validate_json("email", "first_name", "last_name", "role")
 def create_staff():
@@ -229,16 +270,18 @@ def create_staff():
         db.session.add(staff_link)
 
     # Audit log
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="create",
-        resource_type="user",
-        resource_id=user.id,
-        details={"created_user": email, "role": role},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id(user)
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="create",
+            resource_type="user",
+            resource_id=user.id,
+            details={"created_user": email, "role": role},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({
@@ -253,7 +296,6 @@ def create_staff():
 
 
 @superadmin_bp.route("/api/users/<user_id>/reset-password", methods=["POST"])
-@jwt_required()
 @admin_only
 def reset_staff_password(user_id):
     """Reset a staff user's password (generates new temp password)."""
@@ -266,16 +308,18 @@ def reset_staff_password(user_id):
     temp_password = _generate_temp_password()
     user.set_password(temp_password)
 
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="update",
-        resource_type="user",
-        resource_id=user.id,
-        details={"action": "password_reset"},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id(user)
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="update",
+            resource_type="user",
+            resource_id=user.id,
+            details={"action": "password_reset"},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({
@@ -286,7 +330,6 @@ def reset_staff_password(user_id):
 
 
 @superadmin_bp.route("/api/users/<user_id>/status", methods=["PUT"])
-@jwt_required()
 @admin_only
 @validate_json("status")
 def update_user_status(user_id):
@@ -302,23 +345,24 @@ def update_user_status(user_id):
     old_status = user.status
     user.status = new_status
 
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="update",
-        resource_type="user",
-        resource_id=user.id,
-        details={"action": "status_change", "from": old_status, "to": new_status},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id(user)
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="update",
+            resource_type="user",
+            resource_id=user.id,
+            details={"action": "status_change", "from": old_status, "to": new_status},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({"success": True, "message": f"User status updated to {new_status}", "data": user.to_dict()})
 
 
 @superadmin_bp.route("/api/users/<user_id>", methods=["DELETE"])
-@jwt_required()
 @admin_only
 def delete_user(user_id):
     """Soft delete a user."""
@@ -331,16 +375,18 @@ def delete_user(user_id):
     user.deleted_at = datetime.now(timezone.utc)
     user.status = "inactive"
 
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="delete",
-        resource_type="user",
-        resource_id=user.id,
-        details={"deleted_user": user.email},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id(user)
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="delete",
+            resource_type="user",
+            resource_id=user.id,
+            details={"deleted_user": user.email},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({"success": True, "message": "User deleted successfully"})
@@ -350,7 +396,6 @@ def delete_user(user_id):
 # API: Students (list / search)
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/users/students", methods=["GET"])
-@jwt_required()
 @admin_only
 def list_students():
     """List all student users with pagination."""
@@ -386,7 +431,6 @@ def list_students():
 # API: All Users (for search / general)
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/users")
-@jwt_required()
 @admin_only
 def list_all_users():
     page = request.args.get("page", 1, type=int)
@@ -407,7 +451,6 @@ def list_all_users():
 # API: Applications Monitoring
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/applications")
-@jwt_required()
 @admin_only
 def list_all_applications():
     """List all applications with filters."""
@@ -449,7 +492,6 @@ def list_all_applications():
 
 
 @superadmin_bp.route("/api/applications/<app_id>")
-@jwt_required()
 @admin_only
 def get_application_detail(app_id):
     """Get full detail of a specific application."""
@@ -475,7 +517,6 @@ def get_application_detail(app_id):
 # API: Audit Logs
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/audit-logs")
-@jwt_required()
 @admin_only
 def get_audit_logs():
     """Get paginated audit logs."""
@@ -506,7 +547,6 @@ def get_audit_logs():
 # API: Semester Management
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/semesters", methods=["GET"])
-@jwt_required()
 @admin_only
 def list_semesters():
     """List all semesters."""
@@ -515,7 +555,6 @@ def list_semesters():
 
 
 @superadmin_bp.route("/api/semesters", methods=["POST"])
-@jwt_required()
 @admin_only
 @validate_json("semester_number", "semester_name", "academic_year", "start_date", "end_date")
 def create_semester():
@@ -537,22 +576,23 @@ def create_semester():
     )
     db.session.add(semester)
 
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="create",
-        resource_type="semester",
-        details={"semester": data["semester_name"], "year": data["academic_year"]},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id()
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="create",
+            resource_type="semester",
+            details={"semester": data["semester_name"], "year": data["academic_year"]},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({"success": True, "message": "Semester created", "data": semester.to_dict()}), 201
 
 
 @superadmin_bp.route("/api/semesters/<semester_id>", methods=["PUT"])
-@jwt_required()
 @admin_only
 @validate_json()
 def update_semester(semester_id):
@@ -579,7 +619,6 @@ def update_semester(semester_id):
 
 
 @superadmin_bp.route("/api/semesters/<semester_id>", methods=["DELETE"])
-@jwt_required()
 @admin_only
 def delete_semester(semester_id):
     semester = Semester.query.get(semester_id)
@@ -594,7 +633,6 @@ def delete_semester(semester_id):
 # API: Departments
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/departments", methods=["GET"])
-@jwt_required()
 @admin_only
 def list_departments():
     """List all departments."""
@@ -603,7 +641,6 @@ def list_departments():
 
 
 @superadmin_bp.route("/api/departments", methods=["POST"])
-@jwt_required()
 @admin_only
 @validate_json("code", "name", "role")
 def create_department():
@@ -628,22 +665,23 @@ def create_department():
     )
     db.session.add(dept)
 
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="create",
-        resource_type="department",
-        details={"code": code, "name": name, "role": role},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id()
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="create",
+            resource_type="department",
+            details={"code": code, "name": name, "role": role},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
 
     return jsonify({"success": True, "message": f"Department '{name}' created successfully", "data": dept.to_dict()}), 201
 
 
 @superadmin_bp.route("/api/departments/<dept_id>", methods=["DELETE"])
-@jwt_required()
 @admin_only
 def delete_department(dept_id):
     """Delete or deactivate a department."""
@@ -652,15 +690,17 @@ def delete_department(dept_id):
         return jsonify({"success": False, "message": "Department not found"}), 404
 
     dept.is_active = False
-    audit = AuditLog(
-        user_id=get_jwt_identity(),
-        action="delete",
-        resource_type="department",
-        details={"dept_id": str(dept.id), "code": dept.code},
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    audit_uid = _get_admin_audit_user_id()
+    if audit_uid:
+        audit = AuditLog(
+            user_id=audit_uid,
+            action="delete",
+            resource_type="department",
+            details={"dept_id": str(dept.id), "code": dept.code},
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
     db.session.commit()
     return jsonify({"success": True, "message": f"Department '{dept.name}' deactivated"})
 
@@ -669,7 +709,6 @@ def delete_department(dept_id):
 # API: Database Inspector (Task #13)
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/database-inspector", methods=["GET"])
-@jwt_required()
 @admin_only
 def database_inspector():
     """Returns real-time database table snapshot for Super Admin inspection."""
@@ -756,7 +795,6 @@ def database_inspector():
 # API: System Settings
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/settings", methods=["GET"])
-@jwt_required()
 @admin_only
 def get_settings():
     settings = SystemSetting.query.all()
@@ -774,7 +812,6 @@ def get_settings():
 
 
 @superadmin_bp.route("/api/settings/<key>", methods=["PUT"])
-@jwt_required()
 @admin_only
 @validate_json("value")
 def update_setting(key):
@@ -787,7 +824,6 @@ def update_setting(key):
 
 
 @superadmin_bp.route("/api/settings/init", methods=["POST"])
-@jwt_required()
 @admin_only
 def init_default_settings():
     """Create default system settings if they don't exist."""
@@ -818,7 +854,6 @@ def init_default_settings():
 # API: Advanced Analytics
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/analytics")
-@jwt_required()
 @admin_only
 def get_analytics():
     """Get detailed real-time analytics for charts and KPIs."""
@@ -941,19 +976,9 @@ def get_analytics():
 # API: Student Feedbacks & NPS Analytics
 # ──────────────────────────────────────
 @superadmin_bp.route("/api/feedbacks")
-@jwt_required(optional=True)
+@admin_only
 def get_feedbacks():
     """Get all student feedbacks with aggregated statistics, ratings distribution, and NPS score."""
-    user = None
-    user_id = get_jwt_identity()
-    if user_id:
-        user = User.query.get(user_id)
-    elif current_user and current_user.is_authenticated:
-        user = current_user
-
-    if not user or user.role != "super_admin":
-        return jsonify({"success": False, "message": "Super Admin access required"}), 403
-
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 15))
     rating_filter = request.args.get("rating")
@@ -1056,19 +1081,9 @@ def get_feedbacks():
 
 
 @superadmin_bp.route("/api/feedbacks/<feedback_id>", methods=["DELETE"])
-@jwt_required(optional=True)
+@admin_only
 def delete_feedback(feedback_id):
     """Delete a student feedback record (Super Admin moderation)."""
-    user = None
-    user_id = get_jwt_identity()
-    if user_id:
-        user = User.query.get(user_id)
-    elif current_user and current_user.is_authenticated:
-        user = current_user
-
-    if not user or user.role != "super_admin":
-        return jsonify({"success": False, "message": "Super Admin access required"}), 403
-
     feedback = Feedback.query.get(feedback_id)
     if not feedback:
         return jsonify({"success": False, "message": "Feedback record not found"}), 404

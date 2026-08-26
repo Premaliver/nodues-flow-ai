@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin — Smart NoDues AI</title>
+    <title>Super Admin — {{ university_name or 'Smart NoDues AI' }}</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
 <div class="floating-shapes">
@@ -21,8 +22,11 @@
 <aside class="super-sidebar" id="superSidebar">
     <div class="super-sidebar-header">
         <a href="/superadmin/dashboard" class="super-sidebar-brand">
-            <div class="brand-icon">S</div>
-            <div><div class="brand-text">Smart NoDues</div><div class="brand-sub">Super Admin Portal</div></div>
+            <div class="brand-icon">🏛️</div>
+            <div>
+                <div class="brand-text">{{ university_name or 'Smart NoDues' }}</div>
+                <div class="brand-sub">University Command Hub</div>
+            </div>
         </a>
     </div>
     <nav class="super-sidebar-nav">
@@ -41,7 +45,14 @@
         <a class="super-sidebar-item" data-section="settings" onclick="switchSection('settings')"><span class="icon">⚙️</span> System Settings</a>
         <a class="super-sidebar-item" data-section="profile" onclick="switchSection('profile')"><span class="icon">👤</span> My Profile</a>
     </nav>
-    <div class="super-sidebar-footer"><a href="/auth/logout" class="super-sidebar-item" style="margin:0;"><span class="icon">🚪</span> Logout</a></div>
+    <div class="super-sidebar-footer" style="display:flex; flex-direction:column; gap:0.4rem; padding: 0.85rem; border-top:1px solid var(--border-light);">
+        <a href="/university/dashboard" class="btn btn-secondary btn-sm" style="text-decoration:none; justify-content:center; display:flex; align-items:center; gap:0.4rem; font-size:0.82rem; font-weight:600; width:100%;">
+            <span>🏛️</span> Return to Univ Panel
+        </a>
+        <a href="/auth/logout" class="btn btn-ghost btn-sm" style="text-decoration:none; justify-content:center; display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--crimson); width:100%;">
+            <span>🚪</span> Logout
+        </a>
+    </div>
 </aside>
 
 <div class="super-main">
@@ -51,6 +62,9 @@
             <span class="page-title" id="pageTitle">Overview</span>
         </div>
         <div class="super-topbar-actions">
+            <a href="/university/dashboard" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-weight:600;">
+                <span>🏛️</span> University Panel
+            </a>
             <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
             <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
             <span style="font-size: 0.8rem; color: var(--text-muted);" id="clockDisplay"></span>
@@ -59,6 +73,20 @@
     <div class="super-content">
         <!-- OVERVIEW -->
         <div class="section active" id="section-overview">
+            <div class="glass-panel" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(124, 58, 237, 0.12) 100%); border: 1px solid rgba(99, 102, 241, 0.3);">
+                <div style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; letter-spacing: 0.05em;">🏛️ University Command Center</div>
+                        <h2 style="font-family: 'DM Serif Display', serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">{{ university_name or 'Smart NoDues AI University' }}</h2>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <a href="/university/dashboard" class="btn btn-secondary" style="text-decoration:none;">🔙 Return to Univ Portal</a>
+                        <button class="btn btn-primary" onclick="openCreateStaffModal()">➕ New Staff Member</button>
+                        <a href="/superadmin/api/export/full" class="btn btn-outline" style="text-decoration: none;">📦 Export Full Data</a>
+                    </div>
+                </div>
+            </div>
+
             <div class="stat-grid" id="overviewStats"></div>
             <div class="charts-grid">
                 <div class="glass-panel"><div class="glass-panel-header"><h3>📈 Applications (30 Days)</h3></div><div class="glass-panel-body"><canvas id="chartDailyApps" height="200"></canvas></div></div>
@@ -356,7 +384,15 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function confirmAction(title, msg, cb) { document.getElementById('confirmTitle').textContent = title; document.getElementById('confirmMessage').textContent = msg; confirmCallback = cb; openModal('confirmModal'); }
 function executeConfirm() { if (confirmCallback) confirmCallback(); confirmCallback = null; closeModal('confirmModal'); }
-function getToken() { return localStorage.getItem('access_token'); }
+function getToken() { return localStorage.getItem('access_token') || ''; }
+function getAuthHeaders(extra = {}) {
+    const token = getToken();
+    const headers = { ...extra };
+    if (token && token !== 'null' && token !== 'undefined' && token.trim() !== '') {
+        headers['Authorization'] = 'Bearer ' + token;
+    }
+    return headers;
+}
 const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', feedbacks:'💬 Student Feedbacks', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
 function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -370,40 +406,64 @@ function switchSection(name) {
 }
 let chartDailyApps = null, chartRoleDist = null, chartStatusDist = null, chartMonthlyApps = null;
 async function loadOverview() {
-    try { const res = await fetch('/superadmin/api/dashboard', { headers: { 'Authorization': 'Bearer ' + getToken() } }); const d = (await res.json()).data; if (!d) return;
+    try {
+        const res = await fetch('/superadmin/api/dashboard', { headers: getAuthHeaders() });
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const d = json.data;
         document.getElementById('overviewStats').innerHTML = '<div class="super-stat"><div class="stat-top"><div class="stat-label">Total Users</div><div class="stat-icon" style="background:var(--gradient-primary);color:white;">👥</div></div><div class="stat-value">' + d.users.total + '</div><div class="stat-label">' + d.users.active + ' active</div><div class="stat-accent" style="background:var(--gradient-primary);"></div></div><div class="super-stat"><div class="stat-top"><div class="stat-label">Students</div><div class="stat-icon" style="background:var(--gradient-info);color:white;">🎓</div></div><div class="stat-value">' + d.users.students + '</div><div class="stat-label">' + d.users.staff + ' staff members</div><div class="stat-accent" style="background:var(--gradient-info);"></div></div><div class="super-stat"><div class="stat-top"><div class="stat-label">Applications</div><div class="stat-icon" style="background:var(--gradient-warning);color:white;">📋</div></div><div class="stat-value">' + d.applications.total + '</div><div class="stat-label">' + d.applications.pending + ' pending</div><div class="stat-accent" style="background:var(--gradient-warning);"></div></div><div class="super-stat"><div class="stat-top"><div class="stat-label">Approved</div><div class="stat-icon" style="background:var(--gradient-success);color:white;">✅</div></div><div class="stat-value">' + d.applications.approved + '</div><div class="stat-label">' + d.applications.rejected + ' rejected</div><div class="stat-accent" style="background:var(--gradient-success);"></div></div><div class="super-stat"><div class="stat-top"><div class="stat-label">Today</div><div class="stat-icon" style="background:var(--gradient-purple);color:white;">📅</div></div><div class="stat-value">' + d.today.new_applications + '</div><div class="stat-label">' + d.today.admit_cards_issued + ' admit cards</div><div class="stat-accent" style="background:var(--gradient-purple);"></div></div>';
-        const deptBody = document.getElementById('deptQueueBody'); if (d.department_queues && d.department_queues.length) { deptBody.innerHTML = d.department_queues.map(dq => '<tr><td><strong>' + dq.name + '</strong></td><td>' + dq.code + '</td><td><span class="badge badge-' + (dq.pending > 0 ? 'warning' : 'success') + '">' + dq.pending + '</span></td></tr>').join(''); } else { deptBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No data</td></tr>'; }
-        const actBody = document.getElementById('activityBody'); if (d.recent_activity && d.recent_activity.length) { actBody.innerHTML = d.recent_activity.map(log => '<tr><td><span class="badge badge-info">' + log.action + '</span></td><td>' + log.resource_type + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.created_at ? new Date(log.created_at).toLocaleString() : '') + '</td></tr>').join(''); } else { actBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No activity</td></tr>'; }
+        const deptBody = document.getElementById('deptQueueBody');
+        if (d.department_queues && d.department_queues.length) {
+            deptBody.innerHTML = d.department_queues.map(dq => '<tr><td><strong>' + dq.name + '</strong></td><td>' + dq.code + '</td><td><span class="badge badge-' + (dq.pending > 0 ? 'warning' : 'success') + '">' + dq.pending + '</span></td></tr>').join('');
+        } else {
+            deptBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No data</td></tr>';
+        }
+        const actBody = document.getElementById('activityBody');
+        if (d.recent_activity && d.recent_activity.length) {
+            actBody.innerHTML = d.recent_activity.map(log => '<tr><td><span class="badge badge-info">' + log.action + '</span></td><td>' + log.resource_type + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.created_at ? new Date(log.created_at).toLocaleString() : '') + '</td></tr>').join('');
+        } else {
+            actBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">No activity</td></tr>';
+        }
         loadAnalyticsCharts();
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        console.error('loadOverview error:', e);
+    }
 }
 async function loadAnalyticsCharts() {
-    try { const res = await fetch('/superadmin/api/analytics?days=30', { headers: { 'Authorization': 'Bearer ' + getToken() } }); const a = (await res.json()).data; if (!a) return;
+    try {
+        const res = await fetch('/superadmin/api/analytics?days=30', { headers: getAuthHeaders() });
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const a = json.data;
         if (chartDailyApps) chartDailyApps.destroy(); chartDailyApps = new Chart(document.getElementById('chartDailyApps'), { type:'line', data:{ labels:a.daily_applications.map(d=>d.date), datasets:[{ label:'Applications', data:a.daily_applications.map(d=>d.count), borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.1)', fill:true, tension:0.4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' } }, x:{ grid:{ display:false } } } } });
         if (chartRoleDist) chartRoleDist.destroy(); chartRoleDist = new Chart(document.getElementById('chartRoleDist'), { type:'doughnut', data:{ labels:a.role_distribution.map(d=>d.role), datasets:[{ data:a.role_distribution.map(d=>d.count), backgroundColor:['#6366f1','#10b981','#f59e0b','#06b6d4','#3b82f6','#8b5cf6','#1e293b','#ef4444'] }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } } });
         if (chartStatusDist) chartStatusDist.destroy(); chartStatusDist = new Chart(document.getElementById('chartStatusDist'), { type:'bar', data:{ labels:a.application_status.map(d=>d.status), datasets:[{ label:'Count', data:a.application_status.map(d=>d.count), backgroundColor:['#94a3b8','#f59e0b','#3b82f6','#10b981','#ef4444'] }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' } } } } });
         if (chartMonthlyApps) chartMonthlyApps.destroy(); chartMonthlyApps = new Chart(document.getElementById('chartMonthlyApps'), { type:'bar', data:{ labels:a.monthly_applications.map(d=>d.month), datasets:[{ label:'Apps', data:a.monthly_applications.map(d=>d.count), backgroundColor:'rgba(139,92,246,0.5)', borderColor:'#8b5cf6', borderWidth:1 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,0.04)' } } } } });
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('loadAnalyticsCharts error:', e); }
 }
 let staffPage = 1;
 async function loadStaff() {
     const role = document.getElementById('staffRoleFilter').value, status = document.getElementById('staffStatusFilter').value, search = document.getElementById('staffSearch').value;
-    try { const res = await fetch('/superadmin/api/users/staff?page=' + staffPage + '&per_page=15&role=' + role + '&status=' + status + '&search=' + encodeURIComponent(search), { headers: { 'Authorization': 'Bearer ' + getToken() } }); const d = (await res.json()).data; if (!d) return;
+    try {
+        const res = await fetch('/superadmin/api/users/staff?page=' + staffPage + '&per_page=15&role=' + role + '&status=' + status + '&search=' + encodeURIComponent(search), { headers: getAuthHeaders() });
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const d = json.data;
         const items = d.items || []; const tbody = document.getElementById('staffTableBody');
         if (items.length) { tbody.innerHTML = items.map(u => '<tr><td><strong>' + (u.full_name || u.first_name + ' ' + u.last_name) + '</strong></td><td>' + u.email + '</td><td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--accent);">' + u.role + '</span></td><td>' + (u.department ? u.department.name : '-') + '</td><td><span class="badge badge-' + (u.status === 'active' ? 'success' : u.status === 'inactive' ? 'pending' : 'danger') + '">' + u.status + '</span></td><td style="font-size:0.8rem;color:var(--text-muted);">' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '-') + '</td><td><button class="btn btn-sm btn-outline" onclick="resetStaffPassword(\'' + u.id + '\')" title="Reset Password">🔑</button> <button class="btn btn-sm btn-outline" onclick="toggleStaffStatus(\'' + u.id + '\',\'' + u.status + '\')" title="Toggle Status">' + (u.status === 'active' ? '⏸️' : '▶️') + '</button> <button class="btn btn-sm btn-danger" onclick="confirmDeleteStaff(\'' + u.id + '\',\'' + (u.full_name || u.email) + '\')" title="Delete">🗑️</button></td></tr>').join(''); }
         else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No staff found</td></tr>'; }
         document.getElementById('staffPagination').innerHTML = paginateHtml(staffPage, d.pages || 1, p => { staffPage = p; loadStaff(); });
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('loadStaff error:', e); }
 }
 function openCreateStaffModal() { document.getElementById('createStaffForm').reset(); document.getElementById('staffResultBox').style.display = 'none'; document.getElementById('staffModalError').style.display = 'none'; document.getElementById('createStaffBtn').textContent = 'Create Account'; document.getElementById('createStaffBtn').disabled = false; openModal('createStaffModal'); }
-async function createStaff(e) { e.preventDefault(); const data = Object.fromEntries(new FormData(document.getElementById('createStaffForm'))); const btn = document.getElementById('createStaffBtn'); const errEl = document.getElementById('staffModalError'); const resultBox = document.getElementById('staffResultBox'); errEl.style.display = 'none'; resultBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'Creating...'; try { const res = await fetch('/superadmin/api/users/staff', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify(data) }); const resp = await res.json(); if (resp.success) { resultBox.innerHTML = '<div class="password">🔑 Temporary Password: <strong>' + resp.data.temporary_password + '</strong></div><div class="note">User: ' + resp.data.user.email + ' | Share this securely with the staff member.</div>'; resultBox.style.display = 'block'; showToast(resp.message); loadStaff(); btn.textContent = '✅ Created'; } else { errEl.textContent = resp.message; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } } catch(e) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } return false; }
+async function createStaff(e) { e.preventDefault(); const data = Object.fromEntries(new FormData(document.getElementById('createStaffForm'))); const btn = document.getElementById('createStaffBtn'); const errEl = document.getElementById('staffModalError'); const resultBox = document.getElementById('staffResultBox'); errEl.style.display = 'none'; resultBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'Creating...'; try { const res = await fetch('/superadmin/api/users/staff', { method:'POST', headers: getAuthHeaders({'Content-Type':'application/json'}), body:JSON.stringify(data) }); const resp = await res.json(); if (resp.success) { resultBox.innerHTML = '<div class="password">🔑 Temporary Password: <strong>' + resp.data.temporary_password + '</strong></div><div class="note">User: ' + resp.data.user.email + ' | Share this securely with the staff member.</div>'; resultBox.style.display = 'block'; showToast(resp.message); loadStaff(); btn.textContent = '✅ Created'; } else { errEl.textContent = resp.message; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } } catch(e) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Create Account'; } return false; }
 let currentRegenPass = "";
 async function resetStaffPassword(userId) {
     if (!confirm('Reset password for this staff account? A new temporary password will be generated.')) return;
     try {
         const res = await fetch('/superadmin/api/users/' + userId + '/reset-password', {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + getToken() }
+            headers: getAuthHeaders()
         });
         const d = await res.json();
         if (d.success && d.data) {
@@ -439,7 +499,7 @@ async function createDepartment(e) {
     try {
         const res = await fetch('/superadmin/api/departments', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(data)
         });
         const resp = await res.json();
@@ -462,7 +522,7 @@ async function loadDatabaseInspector() {
     const table = document.getElementById('dbTableSelector')?.value || 'users';
     try {
         const res = await fetch('/superadmin/api/database-inspector?table=' + table, {
-            headers: { 'Authorization': 'Bearer ' + getToken() }
+            headers: getAuthHeaders()
         });
         const resp = await res.json();
         if (!resp.success || !resp.rows) return;
@@ -484,22 +544,23 @@ async function loadDatabaseInspector() {
     }
 }
 
-async function toggleStaffStatus(userId, currentStatus) { const newStatus = currentStatus === 'active' ? 'inactive' : 'active'; confirmAction('Change Status', 'Set this user to "' + newStatus + '"?', async () => { try { const res = await fetch('/superadmin/api/users/' + userId + '/status', { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({status:newStatus}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
-function confirmDeleteStaff(userId, name) { confirmAction('Delete Staff', 'Permanently delete "' + name + '"? This cannot be undone.', async () => { try { const res = await fetch('/superadmin/api/users/' + userId, { method:'DELETE', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
+async function toggleStaffStatus(userId, currentStatus) { const newStatus = currentStatus === 'active' ? 'inactive' : 'active'; confirmAction('Change Status', 'Set this user to "' + newStatus + '"?', async () => { try { const res = await fetch('/superadmin/api/users/' + userId + '/status', { method:'PUT', headers: getAuthHeaders({'Content-Type':'application/json'}), body:JSON.stringify({status:newStatus}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
+function confirmDeleteStaff(userId, name) { confirmAction('Delete Staff', 'Permanently delete "' + name + '"? This cannot be undone.', async () => { try { const res = await fetch('/superadmin/api/users/' + userId, { method:'DELETE', headers: getAuthHeaders() }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadStaff(); } catch(e) { showToast('Error', 'error'); } }); }
 let studentPage = 1;
-async function loadStudents() { const search = document.getElementById('studentSearch').value; const status = document.getElementById('studentStatusFilter').value; try { const res = await fetch('/superadmin/api/users/students?page=' + studentPage + '&per_page=15&search=' + encodeURIComponent(search) + '&status=' + status, { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d.items || []; const tbody = document.getElementById('studentTableBody'); if (items.length) { tbody.innerHTML = items.map(u => '<tr><td><strong>' + (u.full_name || u.first_name + ' ' + u.last_name) + '</strong></td><td>' + u.email + '</td><td>' + (u.student ? u.student.roll_number : '-') + '</td><td>' + (u.student ? (u.student.course_name || '-') : '-') + '</td><td>' + (u.student ? 'Sem ' + (u.student.current_semester || '?') : '-') + '</td><td><span class="badge badge-' + (u.status === 'active' ? 'success' : 'danger') + '">' + u.status + '</span></td><td><button class="btn btn-sm btn-outline" onclick="toggleStaffStatus(\'' + u.id + '\',\'' + u.status + '\')">' + (u.status === 'active' ? '⏸️' : '▶️') + '</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No students found</td></tr>'; } document.getElementById('studentPagination').innerHTML = paginateHtml(studentPage, d.pages || 1, p => { studentPage = p; loadStudents(); }); } catch(e) { console.error(e); } }
+async function loadStudents() { const search = document.getElementById('studentSearch').value; const status = document.getElementById('studentStatusFilter').value; try { const res = await fetch('/superadmin/api/users/students?page=' + studentPage + '&per_page=15&search=' + encodeURIComponent(search) + '&status=' + status, { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; const items = d.items || []; const tbody = document.getElementById('studentTableBody'); if (items.length) { tbody.innerHTML = items.map(u => '<tr><td><strong>' + (u.full_name || u.first_name + ' ' + u.last_name) + '</strong></td><td>' + u.email + '</td><td>' + (u.student ? u.student.roll_number : '-') + '</td><td>' + (u.student ? (u.student.course_name || '-') : '-') + '</td><td>' + (u.student ? 'Sem ' + (u.student.current_semester || '?') : '-') + '</td><td><span class="badge badge-' + (u.status === 'active' ? 'success' : 'danger') + '">' + u.status + '</span></td><td><button class="btn btn-sm btn-outline" onclick="toggleStaffStatus(\'' + u.id + '\',\'' + u.status + '\')">' + (u.status === 'active' ? '⏸️' : '▶️') + '</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No students found</td></tr>'; } document.getElementById('studentPagination').innerHTML = paginateHtml(studentPage, d.pages || 1, p => { studentPage = p; loadStudents(); }); } catch(e) { console.error('loadStudents error:', e); } }
 let appPage = 1;
-async function loadApplications() { const status = document.getElementById('appStatusFilter').value; const search = document.getElementById('appSearch').value; try { const res = await fetch('/superadmin/api/applications?page=' + appPage + '&per_page=15&status=' + status + '&search=' + encodeURIComponent(search), { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d.items || []; const tbody = document.getElementById('appTableBody'); if (items.length) { tbody.innerHTML = items.map(a => { const student = a.student || {}; return '<tr><td><strong>' + (a.application_number || a.id?.slice(0,8) || 'N/A') + '</strong></td><td>' + (student.student_name || student.roll_number || 'N/A') + '</td><td>' + (student.roll_number || '-') + '</td><td>' + (a.total_steps ? 'Sem ' + a.total_steps : '-') + '</td><td><span class="badge badge-' + (a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'danger' : a.status === 'draft' ? 'pending' : 'warning') + '">' + a.status + '</span></td><td style="font-size:0.8rem;color:var(--text-muted);">' + (a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : a.created_at ? new Date(a.created_at).toLocaleDateString() : '-') + '</td><td><button class="btn btn-sm btn-outline" onclick="viewAppDetail(\'' + a.id + '\')">👁️ View</button></td></tr>'; }).join(''); } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No applications found</td></tr>'; } document.getElementById('appPagination').innerHTML = paginateHtml(appPage, d.pages || 1, p => { appPage = p; loadApplications(); }); } catch(e) { console.error(e); } }
-async function viewAppDetail(appId) { try { const res = await fetch('/superadmin/api/applications/' + appId, { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) { showToast('Could not load details', 'error'); return; } const app = d.application || {}; const student = d.student || {}; const approvals = d.department_approvals || []; document.getElementById('appDetailBody').innerHTML = '<div class="student-review-card"><div class="student-info-item"><span class="info-label">Application #</span><span class="info-val">📋 ' + (app.application_number || (app.id ? app.id.slice(0,8) : 'N/A')) + '</span></div><div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ' + (student.student_name || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ' + (student.roll_number || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Course / Sem</span><span class="info-val">🎓 ' + (student.course_name || 'N/A') + ' (Sem ' + (student.current_semester || app.total_steps || 'N/A') + ')</span></div><div class="student-info-item"><span class="info-label">Status</span><span class="info-val"><span class="badge badge-' + (app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning') + '">' + app.status + '</span></span></div><div class="student-info-item"><span class="info-label">Submitted</span><span class="info-val">' + (app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted') + '</span></div></div><hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Department Approvals</h4>' + (approvals.length ? approvals.map(ad => '<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border-light);"><span>' + (ad.department_name || 'Department') + '</span><span class="badge badge-' + (ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending') + '">' + ad.status + '</span></div>').join('') : '<p style="color:var(--text-muted);">No approvals yet</p>') + '<hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Uploaded Documents (' + (d.documents || []).length + ')</h4>' + ((d.documents || []).length ? d.documents.map(doc => '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;font-size:0.85rem;border-bottom:1px dashed var(--border-light);"><div><span>📄 <strong>' + (doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT') + ':</strong> ' + (doc.file_name || 'File') + '</span> <span class="badge badge-' + (doc.status === 'verified' ? 'success' : 'pending') + '">' + doc.status + '</span></div><a href="' + (doc.file_url || '/api/documents/file/' + doc.id) + '" target="_blank" class="btn btn-sm btn-outline" style="padding:0.2rem 0.6rem;font-size:0.75rem;">👁️ View Document</a></div>').join('') : '<p style="color:var(--text-muted);">No documents uploaded</p>'); openModal('appDetailModal'); } catch(e) { showToast('Error loading details', 'error'); } }
-async function loadDepartments() { try { const res = await fetch('/superadmin/api/departments', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d || []; const tbody = document.getElementById('deptTableBody'); if (items.length) { tbody.innerHTML = items.map(d => '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--accent);">' + d.role + '</span></td><td>' + d.display_order + '</td><td><span class="badge badge-' + (d.is_active ? 'success' : 'danger') + '">' + (d.is_active ? 'Active' : 'Inactive') + '</span></td><td><button class="btn btn-sm btn-outline" onclick="toggleDeptStatus(\'' + d.id + '\',' + d.is_active + ')">' + (d.is_active ? '⏸️' : '▶️') + '</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No departments</td></tr>'; } } catch(e) { console.error(e); } }
-async function toggleDeptStatus(deptId, current) { try { const res = await fetch('/superadmin/api/departments/' + deptId, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({is_active:!current}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadDepartments(); } catch(e) { showToast('Error', 'error'); } }
+async function loadApplications() { const status = document.getElementById('appStatusFilter').value; const search = document.getElementById('appSearch').value; try { const res = await fetch('/superadmin/api/applications?page=' + appPage + '&per_page=15&status=' + status + '&search=' + encodeURIComponent(search), { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; const items = d.items || []; const tbody = document.getElementById('appTableBody'); if (items.length) { tbody.innerHTML = items.map(a => { const student = a.student || {}; return '<tr><td><strong>' + (a.application_number || a.id?.slice(0,8) || 'N/A') + '</strong></td><td>' + (student.student_name || student.roll_number || 'N/A') + '</td><td>' + (student.roll_number || '-') + '</td><td>' + (a.total_steps ? 'Sem ' + a.total_steps : '-') + '</td><td><span class="badge badge-' + (a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'danger' : a.status === 'draft' ? 'pending' : 'warning') + '">' + a.status + '</span></td><td style="font-size:0.8rem;color:var(--text-muted);">' + (a.submitted_at ? new Date(a.submitted_at).toLocaleDateString() : a.created_at ? new Date(a.created_at).toLocaleDateString() : '-') + '</td><td><button class="btn btn-sm btn-outline" onclick="viewAppDetail(\'' + a.id + '\')">👁️ View</button></td></tr>'; }).join(''); } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No applications found</td></tr>'; } document.getElementById('appPagination').innerHTML = paginateHtml(appPage, d.pages || 1, p => { appPage = p; loadApplications(); }); } catch(e) { console.error('loadApplications error:', e); } }
+async function viewAppDetail(appId) { try { const res = await fetch('/superadmin/api/applications/' + appId, { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) { showToast('Could not load details', 'error'); return; } const d = json.data; const app = d.application || {}; const student = d.student || {}; const approvals = d.department_approvals || []; document.getElementById('appDetailBody').innerHTML = '<div class="student-review-card"><div class="student-info-item"><span class="info-label">Application #</span><span class="info-val">📋 ' + (app.application_number || (app.id ? app.id.slice(0,8) : 'N/A')) + '</span></div><div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ' + (student.student_name || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ' + (student.roll_number || 'N/A') + '</span></div><div class="student-info-item"><span class="info-label">Course / Sem</span><span class="info-val">🎓 ' + (student.course_name || 'N/A') + ' (Sem ' + (student.current_semester || app.total_steps || 'N/A') + ')</span></div><div class="student-info-item"><span class="info-label">Status</span><span class="info-val"><span class="badge badge-' + (app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning') + '">' + app.status + '</span></span></div><div class="student-info-item"><span class="info-label">Submitted</span><span class="info-val">' + (app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted') + '</span></div></div><hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Department Approvals</h4>' + (approvals.length ? approvals.map(ad => '<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border-light);"><span>' + (ad.department_name || 'Department') + '</span><span class="badge badge-' + (ad.status === 'approved' ? 'success' : ad.status === 'rejected' ? 'danger' : 'pending') + '">' + ad.status + '</span></div>').join('') : '<p style="color:var(--text-muted);">No approvals yet</p>') + '<hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><h4 style="margin-bottom:0.5rem;font-family:\'DM Serif Display\',serif;">Uploaded Documents (' + (d.documents || []).length + ')</h4>' + ((d.documents || []).length ? d.documents.map(doc => '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;font-size:0.85rem;border-bottom:1px dashed var(--border-light);"><div><span>📄 <strong>' + (doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT') + ':</strong> ' + (doc.file_name || 'File') + '</span> <span class="badge badge-' + (doc.status === 'verified' ? 'success' : 'pending') + '">' + doc.status + '</span></div><a href="' + (doc.file_url || '/api/documents/file/' + doc.id) + '" target="_blank" class="btn btn-sm btn-outline" style="padding:0.2rem 0.6rem;font-size:0.75rem;">👁️ View Document</a></div>').join('') : '<p style="color:var(--text-muted);">No documents uploaded</p>'); openModal('appDetailModal'); } catch(e) { showToast('Error loading details', 'error'); } }
+async function loadDepartments() { try { const res = await fetch('/superadmin/api/departments', { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; const items = d || []; const tbody = document.getElementById('deptTableBody'); if (items.length) { tbody.innerHTML = items.map(d => '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td><span class="role-badge" style="background:rgba(99,102,241,0.1);color:var(--accent);">' + d.role + '</span></td><td>' + d.display_order + '</td><td><span class="badge badge-' + (d.is_active ? 'success' : 'danger') + '">' + (d.is_active ? 'Active' : 'Inactive') + '</span></td><td><button class="btn btn-sm btn-outline" onclick="toggleDeptStatus(\'' + d.id + '\',' + d.is_active + ')">' + (d.is_active ? '⏸️' : '▶️') + '</button></td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No departments</td></tr>'; } } catch(e) { console.error('loadDepartments error:', e); } }
+async function toggleDeptStatus(deptId, current) { try { const res = await fetch('/superadmin/api/departments/' + deptId, { method:'PUT', headers: getAuthHeaders({'Content-Type':'application/json'}), body:JSON.stringify({is_active:!current}) }); const d = await res.json(); if (d.success) showToast(d.message); else showToast(d.message, 'error'); loadDepartments(); } catch(e) { showToast('Error', 'error'); } }
 let chartAnalyticsApps = null, chartAnalyticsReg = null, chartAnalyticsRoles = null, chartAnalyticsStatus = null, chartAnalyticsDept = null;
 async function loadAnalytics() {
     const days = document.getElementById('analyticsDays')?.value || 30;
     try {
-        const res = await fetch('/superadmin/api/analytics?days=' + days, { headers:{'Authorization':'Bearer ' + getToken()} });
-        const a = (await res.json()).data;
-        if (!a) return;
+        const res = await fetch('/superadmin/api/analytics?days=' + days, { headers: getAuthHeaders() });
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const a = json.data;
 
         // Update KPI Summary Cards
         if (a.kpi) {
@@ -560,11 +621,11 @@ async function loadAnalytics() {
     } catch(e) { console.error('Analytics load error:', e); }
 }
 let auditPage = 1;
-async function loadAuditLogs() { const action = document.getElementById('auditActionFilter').value; const resource = document.getElementById('auditResourceFilter').value; try { const res = await fetch('/superadmin/api/audit-logs?page=' + auditPage + '&per_page=20&action=' + action + '&resource_type=' + resource, { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const items = d.items || []; const tbody = document.getElementById('auditTableBody'); if (items.length) { tbody.innerHTML = items.map(log => '<tr><td><span class="badge badge-info">' + log.action + '</span></td><td>' + (log.user_name || log.user_email || log.user_id?.slice(0,8) || 'System') + '</td><td>' + log.resource_type + (log.resource_id ? ' #' + log.resource_id.slice(0,8) : '') + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.details ? JSON.stringify(log.details).slice(0,60) : '-') + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.created_at ? new Date(log.created_at).toLocaleString() : '') + '</td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No logs found</td></tr>'; } document.getElementById('auditPagination').innerHTML = paginateHtml(auditPage, d.pages || 1, p => { auditPage = p; loadAuditLogs(); }); } catch(e) { console.error(e); } }
-async function loadSettings() { try { const res = await fetch('/superadmin/api/settings', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; const keys = Object.keys(d); const body = document.getElementById('settingsBody'); if (keys.length) { body.innerHTML = keys.map(key => { const s = d[key]; return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-light);"><div><strong style="font-size:0.9rem;">' + key.replace(/_/g,' ') + '</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">' + (s.description || '') + '</span></div><div style="display:flex;align-items:center;gap:0.5rem;">' + (s.type === 'bool' ? '<input type="checkbox" ' + (s.value === 'true' ? 'checked' : '') + ' onchange="updateSetting(\'' + key + '\',this.checked?\'true\':\'false\')">' : '<input class="form-input" style="width:120px;" value="' + s.value + '" onchange="updateSetting(\'' + key + '\',this.value)">') + '<span style="font-size:0.7rem;color:var(--text-muted);">' + s.type + '</span></div></div>'; }).join(''); } else { body.innerHTML = '<p style="color:var(--text-muted);text-align:center;">No settings configured. Click "Load Default Settings" below.</p>'; } } catch(e) { console.error(e); } }
-async function updateSetting(key, value) { try { const res = await fetch('/superadmin/api/settings/' + key, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + getToken()}, body:JSON.stringify({value}) }); const d = await res.json(); if (d.success) showToast('Setting "' + key + '" updated'); else showToast(d.message, 'error'); } catch(e) { showToast('Error', 'error'); } }
-async function initDefaultSettings() { try { const res = await fetch('/superadmin/api/settings/init', { method:'POST', headers:{'Authorization':'Bearer ' + getToken()} }); const d = await res.json(); if (d.success) { showToast(d.message); loadSettings(); } else { showToast(d.message, 'error'); } } catch(e) { showToast('Error', 'error'); } }
-async function loadProfile() { try { const res = await fetch('/auth/profile', { headers:{'Authorization':'Bearer ' + getToken()} }); const d = (await res.json()).data; if (!d) return; document.getElementById('profileInfo').innerHTML = '<div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:400;margin:0 auto 1rem;font-family:\'DM Serif Display\',serif;">' + (d.first_name || 'A')[0] + '' + (d.last_name || 'D')[0] + '</div><h3 style="font-size:1.1rem;font-weight:400;font-family:\'DM Serif Display\',serif;">' + (d.full_name || d.first_name + ' ' + d.last_name) + '</h3><p style="color:var(--text-muted);">' + d.email + '</p><p><span class="badge badge-purple">' + d.role + '</span> <span class="badge badge-' + (d.status === 'active' ? 'success' : 'danger') + '">' + d.status + '</span></p><p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Member since ' + (d.created_at ? new Date(d.created_at).toLocaleDateString() : '') + '</p>'; } catch(e) { console.error(e); } }
+async function loadAuditLogs() { const action = document.getElementById('auditActionFilter').value; const resource = document.getElementById('auditResourceFilter').value; try { const res = await fetch('/superadmin/api/audit-logs?page=' + auditPage + '&per_page=20&action=' + action + '&resource_type=' + resource, { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; const items = d.items || []; const tbody = document.getElementById('auditTableBody'); if (items.length) { tbody.innerHTML = items.map(log => '<tr><td><span class="badge badge-info">' + log.action + '</span></td><td>' + (log.user_name || log.user_email || log.user_id?.slice(0,8) || 'System') + '</td><td>' + log.resource_type + (log.resource_id ? ' #' + log.resource_id.slice(0,8) : '') + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.details ? JSON.stringify(log.details).slice(0,60) : '-') + '</td><td style="font-size:0.8rem;color:var(--text-muted);">' + (log.created_at ? new Date(log.created_at).toLocaleString() : '') + '</td></tr>').join(''); } else { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No logs found</td></tr>'; } document.getElementById('auditPagination').innerHTML = paginateHtml(auditPage, d.pages || 1, p => { auditPage = p; loadAuditLogs(); }); } catch(e) { console.error('loadAuditLogs error:', e); } }
+async function loadSettings() { try { const res = await fetch('/superadmin/api/settings', { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; const keys = Object.keys(d); const body = document.getElementById('settingsBody'); if (keys.length) { body.innerHTML = keys.map(key => { const s = d[key]; return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border-light);"><div><strong style="font-size:0.9rem;">' + key.replace(/_/g,' ') + '</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">' + (s.description || '') + '</span></div><div style="display:flex;align-items:center;gap:0.5rem;">' + (s.type === 'bool' ? '<input type="checkbox" ' + (s.value === 'true' ? 'checked' : '') + ' onchange="updateSetting(\'' + key + '\',this.checked?\'true\':\'false\')">' : '<input class="form-input" style="width:120px;" value="' + s.value + '" onchange="updateSetting(\'' + key + '\',this.value)">') + '<span style="font-size:0.7rem;color:var(--text-muted);">' + s.type + '</span></div></div>'; }).join(''); } else { body.innerHTML = '<p style="color:var(--text-muted);text-align:center;">No settings configured. Click "Load Default Settings" below.</p>'; } } catch(e) { console.error('loadSettings error:', e); } }
+async function updateSetting(key, value) { try { const res = await fetch('/superadmin/api/settings/' + key, { method:'PUT', headers: getAuthHeaders({'Content-Type':'application/json'}), body:JSON.stringify({value}) }); const d = await res.json(); if (d.success) showToast('Setting "' + key + '" updated'); else showToast(d.message, 'error'); } catch(e) { showToast('Error', 'error'); } }
+async function initDefaultSettings() { try { const res = await fetch('/superadmin/api/settings/init', { method:'POST', headers: getAuthHeaders() }); const d = await res.json(); if (d.success) { showToast(d.message); loadSettings(); } else { showToast(d.message, 'error'); } } catch(e) { showToast('Error', 'error'); } }
+async function loadProfile() { try { const res = await fetch('/auth/profile', { headers: getAuthHeaders() }); const json = await res.json(); if (!json.success || !json.data) return; const d = json.data; document.getElementById('profileInfo').innerHTML = '<div style="width:80px;height:80px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:400;margin:0 auto 1rem;font-family:\'DM Serif Display\',serif;">' + (d.first_name || 'A')[0] + '' + (d.last_name || 'D')[0] + '</div><h3 style="font-size:1.1rem;font-weight:400;font-family:\'DM Serif Display\',serif;">' + (d.full_name || d.first_name + ' ' + d.last_name) + '</h3><p style="color:var(--text-muted);">' + d.email + '</p><p><span class="badge badge-purple">' + d.role + '</span> <span class="badge badge-' + (d.status === 'active' ? 'success' : 'danger') + '">' + d.status + '</span></p><p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">Member since ' + (d.created_at ? new Date(d.created_at).toLocaleDateString() : '') + '</p>'; } catch(e) { console.error('loadProfile error:', e); } }
 let fbPage = 1;
 async function loadFeedbacks(page) {
     if (page) fbPage = page;
@@ -574,10 +635,11 @@ async function loadFeedbacks(page) {
 
     try {
         const res = await fetch('/superadmin/api/feedbacks?page=' + fbPage + '&per_page=15&rating=' + rating + '&sentiment=' + sentiment + '&search=' + encodeURIComponent(search), {
-            headers: { 'Authorization': 'Bearer ' + getToken() }
+            headers: getAuthHeaders()
         });
-        const d = (await res.json()).data;
-        if (!d) return;
+        const json = await res.json();
+        if (!json.success || !json.data) return;
+        const d = json.data;
 
         // Render KPI Stats
         if (d.stats) {
@@ -655,7 +717,7 @@ function confirmDeleteFeedback(feedbackId) {
         try {
             const res = await fetch('/superadmin/api/feedbacks/' + feedbackId, {
                 method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + getToken() }
+                headers: getAuthHeaders()
             });
             const d = await res.json();
             if (d.success) {
@@ -672,7 +734,72 @@ function confirmDeleteFeedback(feedbackId) {
 
 function paginateHtml(current, total, onClick) { if (total <= 1) return ''; let html = '<button class="page-btn" onclick="(' + onClick + ')(' + (current - 1) + ')" ' + (current <= 1 ? 'disabled' : '') + '>◀</button>'; const start = Math.max(1, current - 2); const end = Math.min(total, current + 2); for (let i = start; i <= end; i++) { html += '<button class="page-btn ' + (i === current ? 'active' : '') + '" onclick="(' + onClick + ')(' + i + ')">' + i + '</button>'; } html += '<button class="page-btn" onclick="(' + onClick + ')(' + (current + 1) + ')" ' + (current >= total ? 'disabled' : '') + '>▶</button><span class="page-info">Page ' + current + ' of ' + total + '</span>'; return html; }
 function updateClock() { document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString(); }
-document.addEventListener('DOMContentLoaded', () => { if (!getToken()) { window.location.href = '/auth/login'; return; } loadOverview(); updateClock(); });
+
+// ── REAL-TIME SOCKET.IO ENGINE ──
+let liveSocket = null;
+function initRealtimeSocket() {
+    try {
+        if (typeof io !== 'undefined') {
+            liveSocket = io();
+            liveSocket.on('connect', () => {
+                console.log('⚡ Connected to Smart NoDues Live WebSocket Gateway');
+            });
+            liveSocket.on('application_status_changed', (data) => {
+                showToast(`Application update: #${(data.application_id || '').slice(0,8)} is now ${data.status}`, 'info');
+                loadOverview();
+                if (document.getElementById('section-applications').classList.contains('active')) {
+                    loadApplications();
+                }
+            });
+            liveSocket.on('new_application', (data) => {
+                showToast('New No-Dues Application received from student!', 'success');
+                loadOverview();
+                if (document.getElementById('section-applications').classList.contains('active')) {
+                    loadApplications();
+                }
+            });
+            liveSocket.on('department_approval', (data) => {
+                showToast(`Department ${data.department_name || 'Approval'} recorded`, 'info');
+                loadOverview();
+            });
+            liveSocket.on('student_feedback', () => {
+                showToast('New student feedback submitted', 'info');
+                if (document.getElementById('section-feedbacks').classList.contains('active')) {
+                    loadFeedbacks();
+                }
+            });
+        }
+    } catch(err) {
+        console.warn('Real-time socket initialization notice:', err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    {% if access_token %}
+    localStorage.setItem('access_token', '{{ access_token }}');
+    {% endif %}
+
+    if (!getToken()) {
+        {% if access_token %}
+        localStorage.setItem('access_token', '{{ access_token }}');
+        {% else %}
+        window.location.href = '/auth/login';
+        return;
+        {% endif %}
+    }
+    
+    loadOverview();
+    updateClock();
+    setInterval(updateClock, 1000);
+    initRealtimeSocket();
+
+    // Periodic live overview refresh every 30 seconds
+    setInterval(() => {
+        if (document.getElementById('section-overview').classList.contains('active')) {
+            loadOverview();
+        }
+    }, 30000);
+});
 </script>
 
 <!-- PERSISTENT PASSWORD RESET MODAL (Task #9) -->

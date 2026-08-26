@@ -174,6 +174,8 @@ def logout():
     session.pop("university_id", None)
     session.pop("university_name", None)
     session.pop("university_slug", None)
+    from flask_login import logout_user
+    logout_user()
     return redirect("/university/login")
 
 

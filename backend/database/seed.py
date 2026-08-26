@@ -86,63 +86,19 @@ def seed_data() -> None:
         db.session.add(dept)
     db.session.commit()
 
-    # 2. Create users & roles
-    users_data = [
-        ("kprem@rayatbahra.edu", "super_admin", "Prem", "Kumar", "+91-9876543210", "Prem@2004"),
-        ("accounts@rayatbahra.edu", "accounts", "Priya", "Sharma", "+91-9876543211", "123456"),
-        ("hostel@rayatbahra.edu", "hostel", "Rajesh", "Kumar", "+91-9876543212", "123456"),
-        ("mess@rayatbahra.edu", "mess", "Amit", "Verma", "+91-9876543213", "123456"),
-        ("transport@rayatbahra.edu", "transport", "Sneha", "Patel", "+91-9876543214", "123456"),
-        ("scholarship@rayatbahra.edu", "scholarship", "Vikram", "Singh", "+91-9876543215", "123456"),
-        ("hod.cse@rayatbahra.edu", "hod", "Dr. Arvind", "Gupta", "+91-9876543216", "123456"),
-        ("examination@rayatbahra.edu", "examination", "Neha", "Mehta", "+91-9876543217", "123456"),
-        ("student@rayatbahra.edu", "student", "Aditi", "Sharma", "+91-9876543218", "123456"),
-    ]
-
-    for email, role, fname, lname, phone, pw in users_data:
-        user = User(
-            email=email,
-            role=role,
-            first_name=fname,
-            last_name=lname,
-            phone=phone,
-            is_email_verified=True,
-            status="active",
-        )
-        user.set_password(pw)
-        db.session.add(user)
-        db.session.flush()
-
-        if role == "student":
-            student = Student(
-                user_id=user.id,
-                roll_number="RBU/22CSE/0142",
-                enrollment_number="ENR/2022/4257",
-                course_name="B.Tech Computer Science Engineering",
-                branch="Computer Science & Engineering",
-                current_semester=6,
-                batch_year="2022-2026",
-                admission_year=2022,
-                category="hosteller",
-                father_name="Mr. Rajesh Sharma",
-                mother_name="Mrs. Kavita Sharma",
-                guardian_phone="+91-9876543219",
-                guardian_email="rajesh.sharma@email.com",
-                permanent_address="123, Sector 15, Chandigarh",
-                city="Chandigarh",
-                state="Punjab",
-                pincode="160015",
-            )
-            db.session.add(student)
-        elif role in ["accounts", "hostel", "mess", "transport", "scholarship", "hod", "examination"]:
-            dept_record = Department.query.filter_by(role=role).first()
-            if dept_record:
-                staff_link = DepartmentStaff(
-                    user_id=user.id,
-                    department_id=dept_record.id,
-                    is_active=True,
-                )
-                db.session.add(staff_link)
+    # 2. Create Master Super Admin User (Campus Controller)
+    sa_user = User(
+        email="kprem@rayatbahra.edu",
+        role="super_admin",
+        first_name="Prem",
+        last_name="Admin",
+        phone="+91-9876543210",
+        is_email_verified=True,
+        status="active",
+    )
+    sa_user.set_password("Prem@2004")
+    db.session.add(sa_user)
+    db.session.flush()
 
     # 3. Create current semester
     semester = Semester(

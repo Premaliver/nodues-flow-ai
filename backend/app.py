@@ -135,6 +135,27 @@ def create_app(config_name: str = "default") -> Flask:
         from blueprints.examination.routes import public_verify_clearance
         return public_verify_clearance(card_number)
 
+    @app.before_request
+    def ensure_clean_db_session():
+        try:
+            # Clean up any lingering aborted transaction on the worker connection
+            if db.session.is_active:
+                pass
+        except Exception:
+            db.session.rollback()
+
+    @app.teardown_request
+    def teardown_request_cleanup(exception=None):
+        if exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+        try:
+            db.session.remove()
+        except Exception:
+            pass
+
     # Register error handlers
     register_error_handlers(app)
 

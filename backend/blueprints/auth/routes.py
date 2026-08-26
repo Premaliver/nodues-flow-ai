@@ -6,7 +6,7 @@ import uuid
 import time
 from datetime import datetime, timezone
 
-from flask import request, jsonify, render_template, current_app, redirect
+from flask import request, jsonify, render_template, current_app, redirect, session
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt,
@@ -46,47 +46,20 @@ def login():
     if not selected_role:
         return jsonify({"success": False, "message": "Please select your role"}), 400
 
-    # Super Admin logs in via username (stored in email field), others via email
-    user = None
-    login_field = ""
     if selected_role == "super_admin":
-        username = data.get("username", "").strip()
-        if not username:
-            return jsonify({"success": False, "message": "Username is required for Super Admin"}), 400
+        return jsonify({
+            "success": False,
+            "message": "Super Admin access is managed through the University Leadership Portal. Please log in at /university/login."
+        }), 403
 
-        # DEBUG: dump all super admins in DB
-        all_sa = User.query.filter_by(role="super_admin").all()
-        print(f"[DEBUG] Super admin login: username='{username}', total_sa_in_db={len(all_sa)}")
-        for sa in all_sa:
-            prefix = sa.email.split('@')[0].lower() if '@' in sa.email else sa.email.lower()
-            print(f"[DEBUG]   SA in DB: email='{sa.email}', prefix='{prefix}'")
-
-        # Try full email match
-        user = User.query.filter_by(email=username, role="super_admin").first()
-        # Try prefix match in Python (more reliable than SQL ILIKE)
-        if not user:
-            for sa in all_sa:
-                if '@' in sa.email:
-                    sa_prefix = sa.email.split('@')[0].lower()
-                    if sa_prefix == username.lower():
-                        user = sa
-                        break
-                elif sa.email.lower() == username.lower():
-                    user = sa
-                    break
-        print(f"[DEBUG]   found_user={'YES' if user else 'NO'}")
-        if user:
-            print(f"[DEBUG]   matched: email='{user.email}', pw_check={user.check_password(data.get('password', ''))}")
-        login_field = username
-    else:
-        email = data.get("email", "").strip().lower()
-        if not email:
-            return jsonify({"success": False, "message": "Email is required"}), 400
-        is_valid, error = validate_email(email)
-        if not is_valid:
-            return jsonify({"success": False, "message": error}), 400
-        user = User.query.filter_by(email=email).first()
-        login_field = email
+    email = data.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"success": False, "message": "Email is required"}), 400
+    is_valid, error = validate_email(email)
+    if not is_valid:
+        return jsonify({"success": False, "message": error}), 400
+    user = User.query.filter_by(email=email).first()
+    login_field = email
 
     if not user or not user.check_password(password):
         return jsonify({"success": False, "message": "Invalid credentials"}), 401
@@ -315,26 +288,32 @@ def change_password():
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
-@login_required
 def logout():
     """Handle user logout — supports both browser (GET) and API (POST) requests."""
-    user_id = current_user.id
+    user_id = current_user.id if current_user and current_user.is_authenticated else None
 
-    audit = AuditLog(
-        user_id=user_id,
-        action="logout",
-        resource_type="auth",
-        resource_id=user_id,
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
-    db.session.commit()
+    if user_id:
+        try:
+            audit = AuditLog(
+                user_id=user_id,
+                action="logout",
+                resource_type="auth",
+                resource_id=user_id,
+                ip_address=get_client_ip(),
+                user_agent=get_user_agent(),
+            )
+            db.session.add(audit)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
+    has_univ = bool(session.get("university_id"))
     logout_user()
 
-    # For browser GET requests, redirect to login page
+    # For browser GET requests, redirect to university dashboard if university session is active
     if request.method == "GET":
+        if has_univ:
+            return redirect("/university/dashboard")
         return redirect("/auth/login")
 
     return jsonify({"success": True, "message": "Logged out successfully"})

@@ -106,14 +106,10 @@
         <div class="login-card">
             <div class="card" style="padding: 2.5rem; box-shadow: var(--shadow-xl);">
                 <!-- Brand -->
-                <div class="animate-in del-1" id="brandLogo" style="text-align: center; margin-bottom: 1.5rem; cursor: pointer;" title="Triple click to toggle hidden admin mode">
+                <div class="animate-in del-1" style="text-align: center; margin-bottom: 1.5rem;">
                     <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; margin: 0 auto 0.75rem; font-family: 'DM Serif Display', serif;">S</div>
-                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Welcome Back</h1>
-                    <p style="color: var(--text-muted); font-size: 0.875rem;">Sign in to your account</p>
-                </div>
-
-                <div id="secretAdminBanner" style="display:none; text-align:center; padding:0.5rem; margin-bottom:1rem; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-size:0.75rem; font-weight:700; border-radius:var(--radius-md); letter-spacing:0.05em; text-transform:uppercase; box-shadow:var(--shadow-glow);">
-                    🔐 SECRET SUPER ADMIN LOGGER UNLOCKED
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Student & Staff Portal</h1>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Sign in to access clearance workflows</p>
                 </div>
 
                 <div id="errorMsg" class="error-msg animate-in del-2"></div>
@@ -150,14 +146,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group" id="usernameField" style="display: none;">
-                        <label class="form-label" for="username">Username</label>
-                        <div class="form-input-icon">
-                            <span class="icon">👤</span>
-                            <input type="text" id="username" name="username" class="form-input" placeholder="Enter Super Admin username" autocomplete="username">
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
                         <div class="form-input-icon" style="position: relative;">
@@ -189,11 +177,18 @@
                     </button>
                 </form>
 
-                <div class="animate-in del-5" style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">
+                <div class="animate-in del-5" style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-light);">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
                         Don't have an account?
                         <a href="{{ url_for('auth.register') }}" style="font-weight: 600; color: var(--accent);">Create one</a>
                     </p>
+
+                    <div style="margin-top: 0.75rem; padding: 0.75rem; border-radius: var(--radius-md); background: rgba(99, 102, 241, 0.06); border: 1px dashed rgba(99, 102, 241, 0.25); text-align: center;">
+                        <span style="font-size: 0.78rem; color: var(--text-secondary);">🏛️ University Leadership / Management?</span>
+                        <a href="/university/login" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--accent); margin-top: 0.2rem; text-decoration: none;">
+                            Open University SaaS Portal &rarr;
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
