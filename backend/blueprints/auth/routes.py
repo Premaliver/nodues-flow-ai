@@ -325,7 +325,12 @@ def change_password():
 @auth_bp.route("/logout", methods=["GET", "POST"])
 def logout():
     """Handle user logout — supports both browser (GET) and API (POST) requests."""
-    user_id = current_user.id if current_user and current_user.is_authenticated else None
+    user = None
+    if current_user and current_user.is_authenticated:
+        user = User.query.get(current_user.id)
+
+    user_id = user.id if user else None
+    user_role = user.role if user else session.get("user_role")
 
     if user_id:
         try:
@@ -343,24 +348,43 @@ def logout():
             db.session.rollback()
 
     is_master = bool(session.get("is_platform_master"))
-    has_univ = bool(session.get("university_id"))
+    portal_slug = session.get("portal_slug")
+    if not portal_slug and user and user.university_id:
+        from models.university import UniversityTenant
+        u_tenant = UniversityTenant.query.get(user.university_id)
+        if u_tenant:
+            portal_slug = u_tenant.slug
+    if not portal_slug:
+        portal_slug = session.get("university_slug")
+
+    login_source = session.get("login_source")
+
+    # Determine destination before wiping session
+    if is_master:
+        redirect_target = "/"
+    elif portal_slug and (login_source == "university_portal" or user_role in ("student", "accounts", "hostel", "mess", "transport", "scholarship", "hod", "examination", "library")):
+        redirect_target = f"/u/{portal_slug}"
+    elif login_source == "university_admin" or user_role == "super_admin":
+        redirect_target = "/university/login"
+    else:
+        redirect_target = "/auth/login"
 
     session.pop("is_platform_master", None)
     session.pop("master_username", None)
     session.pop("university_id", None)
     session.pop("university_slug", None)
+    session.pop("portal_slug", None)
     session.pop("university_name", None)
+    session.pop("login_source", None)
+    session.pop("user_role", None)
     logout_user()
 
     # Context-aware browser redirect
     if request.method == "GET":
-        if is_master:
-            return redirect("/")
-        if has_univ:
-            return redirect("/university/login")
-        return redirect("/auth/login")
+        return redirect(redirect_target)
 
-    return jsonify({"success": True, "message": "Logged out successfully"})
+    return jsonify({"success": True, "message": "Logged out successfully", "redirect_url": redirect_target})
+
 
 
 @auth_bp.route("/refresh", methods=["POST"])

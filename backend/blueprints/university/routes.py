@@ -484,9 +484,12 @@ def portal_student_register(slug):
         db.session.commit()
 
         login_user(user)
+        session["login_source"] = "university_portal"
+        session["portal_slug"] = univ.slug
         session["university_id"] = str(univ.id)
         session["university_name"] = univ.name
         session["university_slug"] = univ.slug
+        session["user_role"] = user.role
 
         return jsonify({
             "success": True,
@@ -534,9 +537,12 @@ def portal_student_login(slug):
         db.session.commit()
 
     login_user(user)
+    session["login_source"] = "university_portal"
+    session["portal_slug"] = univ.slug
     session["university_id"] = str(univ.id)
     session["university_name"] = univ.name
     session["university_slug"] = univ.slug
+    session["user_role"] = user.role
 
     return jsonify({
         "success": True,
@@ -584,11 +590,15 @@ def portal_staff_login(slug):
         db.session.commit()
 
     login_user(user)
+    session["login_source"] = "university_portal"
+    session["portal_slug"] = univ.slug
     session["university_id"] = str(univ.id)
     session["university_name"] = univ.name
     session["university_slug"] = univ.slug
+    session["user_role"] = user.role
 
     target_dashboard = f"/{user.role}/dashboard"
+
 
     return jsonify({
         "success": True,
