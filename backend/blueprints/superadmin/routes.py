@@ -1078,3 +1078,63 @@ def delete_feedback(feedback_id):
 
     return jsonify({"success": True, "message": "Feedback deleted successfully"})
 
+
+@superadmin_bp.route("/api/export/full", methods=["GET", "POST"])
+@jwt_required(optional=True)
+def export_institutional_data():
+    """Trigger and download comprehensive institutional data export archive."""
+    import os
+    import tempfile
+    import uuid
+    from flask import send_file, session
+    from export.data_exporter import UniversityDataExporter
+    
+    user = None
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+    elif current_user and current_user.is_authenticated:
+        user = current_user
+
+    univ_id = session.get("university_id")
+
+    # Authorized if super_admin OR logged in university leadership tenant
+    if not (user and user.role == "super_admin") and not univ_id:
+        return jsonify({"success": False, "message": "University Super Admin or Institutional Leader access required"}), 403
+
+    temp_dir = tempfile.mkdtemp()
+    timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    zip_path = os.path.join(temp_dir, f"university_export_{timestamp_str}.zip")
+
+    export_summary = UniversityDataExporter.export_to_zip(zip_path, include_documents=True)
+
+    # Record tamper-evident audit event
+    sa_user = User.query.filter_by(role="super_admin").first()
+    if sa_user:
+        try:
+            audit = AuditLog(
+                user_id=sa_user.id,
+                action="download",
+                resource_type="university_data",
+                resource_id=sa_user.id,
+                details={
+                    "sha256": export_summary["archive_sha256"],
+                    "counts": export_summary["manifest"]["counts"],
+                },
+                ip_address=get_client_ip(),
+                user_agent=get_user_agent(),
+            )
+            db.session.add(audit)
+            db.session.commit()
+        except Exception as audit_err:
+            db.session.rollback()
+            current_app.logger.warning(f"Audit log recording notice: {audit_err}")
+
+    return send_file(
+        zip_path,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"smartnodues_export_{timestamp_str}.zip",
+    )
+
+

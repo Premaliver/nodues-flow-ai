@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Subscription Plans & Pricing — Smart NoDues SaaS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #4F46E5;
+            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+            --dark-bg: #0B0F19;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: #F8FAFC;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .pricing-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--brand-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pricing-header {
+            text-align: center;
+            padding: 4rem 1.5rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .pricing-tag {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #A5B4FC;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        .pricing-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3.25rem;
+            line-height: 1.15;
+            margin: 0 0 1rem;
+        }
+        .pricing-subtitle {
+            font-size: 1.1rem;
+            color: #94A3B8;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Billing Toggle */
+        .toggle-container {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 0.35rem;
+            gap: 0.5rem;
+            margin-bottom: 3.5rem;
+        }
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 0.6rem 1.25rem;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .toggle-btn.active {
+            background: var(--brand-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+        .discount-badge {
+            background: #10B981;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            margin-left: 0.25rem;
+        }
+
+        /* Pricing Cards Grid */
+        .plans-grid {
+            max-width: 1200px;
+            margin: 0 auto 5rem;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            align-items: stretch;
+        }
+        .plan-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(16px);
+        }
+        .plan-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px -15px rgba(79, 70, 229, 0.3);
+        }
+        .plan-card.popular {
+            background: linear-gradient(180deg, rgba(49, 46, 129, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%);
+            border: 2px solid #6366F1;
+            box-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.4);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0 0 0.5rem;
+            color: white;
+        }
+        .plan-desc {
+            font-size: 0.875rem;
+            color: #94A3B8;
+            margin-bottom: 1.5rem;
+            min-height: 40px;
+        }
+        .plan-price-wrap {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .plan-price {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: white;
+            font-family: 'DM Serif Display', serif;
+        }
+        .plan-period {
+            font-size: 0.9rem;
+            color: #94A3B8;
+        }
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #CBD5E1;
+        }
+        .feat-icon {
+            color: #10B981;
+            font-weight: 800;
+        }
+        .btn-select-plan {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+        .btn-select-plan:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .btn-select-plan.primary {
+            background: var(--brand-gradient);
+            border: none;
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+        }
+        .btn-select-plan.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.6);
+        }
+
+        /* Modal Checkout Simulation */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+        .modal-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 24px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 100%;
+            color: white;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        @media (max-width: 960px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="pricing-nav">
+    <a href="/university/pov" class="nav-brand">
+        <div class="nav-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span>Smart NoDues AI</span>
+    </a>
+    <div>
+        <a href="/university/pov" style="color: #94A3B8; text-decoration: none; margin-right: 1.5rem; font-size: 0.9rem;">&larr; Back to POV Walkthrough</a>
+        <a href="/university/login" style="color: #A5B4FC; text-decoration: none; font-weight: 600; font-size: 0.9rem;">University Login</a>
+    </div>
+</nav>
+
+<header class="pricing-header">
+    <div class="pricing-tag">Commercial SaaS Subscriptions</div>
+    <h1 class="pricing-title">Simple, Predictable Institutional Pricing.</h1>
+    <p class="pricing-subtitle">Select the right tier for {{ university.name if university else 'your university' }}. Instant automated provisioning with zero vendor data lock-in.</p>
+
+    <!-- Billing Cycle Switcher -->
+    <div class="toggle-container">
+        <button id="btnAnnual" class="toggle-btn active" onclick="setBilling('annual')">
+            Annual Billing <span class="discount-badge">SAVE 20%</span>
+        </button>
+        <button id="btnMonthly" class="toggle-btn" onclick="setBilling('monthly')">
+            Monthly Billing
+        </button>
+    </div>
+</header>
+
+<section class="plans-grid">
+    <!-- Starter Plan -->
+    <div class="plan-card">
+        <div>
+            <h3 class="plan-name">Starter</h3>
+            <p class="plan-desc">For small institutes & single colleges digitizing their clearance pipeline.</p>
+            <div class="plan-price-wrap">
+                <span class="plan-price" id="priceStarter">₹49,999</span>
+                <span class="plan-period" id="periodStarter">/ year</span>
+            </div>
+            <ul class="plan-features">
+                <li><span class="feat-icon">✓</span> Up to 2,000 Active Students</li>
+                <li><span class="feat-icon">✓</span> 8 Department Review Dashboards</li>
+                <li><span class="feat-icon">✓</span> Multi-Role Clearance Pipeline</li>
+                <li><span class="feat-icon">✓</span> QR Admit Card Generation</li>
+                <li><span class="feat-icon">✓</span> Institutional Self-Service Data Export</li>
+            </ul>
+        </div>
+        <button class="btn-select-plan" onclick="openCheckout('starter', 'Starter Plan')">Subscribe to Starter</button>
+    </div>
+
+    <!-- Professional Plan (Popular) -->
+    <div class="plan-card popular">
+        <div class="popular-badge">RECOMMENDED FOR UNIVERSITIES</div>
+        <div>
+            <h3 class="plan-name">Professional</h3>
+            <p class="plan-desc">For full-scale universities requiring AI OCR fraud verification and high throughput.</p>
+            <div class="plan-price-wrap">
+                <span class="plan-price" id="pricePro">₹1,49,999</span>
+                <span class="plan-period" id="periodPro">/ year</span>
+            </div>
+            <ul class="plan-features">
+                <li><span class="feat-icon">✓</span> Up to 10,000 Active Students</li>
+                <li><span class="feat-icon">✓</span> 25 Department Review Dashboards</li>
+                <li><span class="feat-icon">✓</span> <strong>AI Automated Receipt OCR Verification</strong></li>
+                <li><span class="feat-icon">✓</span> <strong>Cryptographic Digital Signatures</strong></li>
+                <li><span class="feat-icon">✓</span> Priority Email & Phone SLA</li>
+                <li><span class="feat-icon">✓</span> Automated Encrypted Backups</li>
+            </ul>
+        </div>
+        <button class="btn-select-plan primary" onclick="openCheckout('professional', 'Professional Plan')">Subscribe to Professional</button>
+    </div>
+
+    <!-- Enterprise Plan -->
+    <div class="plan-card">
+        <div>
+            <h3 class="plan-name">Enterprise</h3>
+            <p class="plan-desc">For large multi-campus universities and state academic institutions.</p>
+            <div class="plan-price-wrap">
+                <span class="plan-price" id="priceEnterprise">₹3,99,999</span>
+                <span class="plan-period" id="periodEnterprise">/ year</span>
+            </div>
+            <ul class="plan-features">
+                <li><span class="feat-icon">✓</span> Up to 50,000 Active Students</li>
+                <li><span class="feat-icon">✓</span> Unlimited Departments & Campuses</li>
+                <li><span class="feat-icon">✓</span> Custom Departmental Workflow Builder</li>
+                <li><span class="feat-icon">✓</span> SAML 2.0 / SSO Institutional Login</li>
+                <li><span class="feat-icon">✓</span> 99.9% Uptime SLA & Dedicated Support</li>
+                <li><span class="feat-icon">✓</span> Private Cloud / VPC Deployment Ready</li>
+            </ul>
+        </div>
+        <button class="btn-select-plan" onclick="openCheckout('enterprise', 'Enterprise Plan')">Subscribe to Enterprise</button>
+    </div>
+</section>
+
+<!-- Checkout Modal Simulation -->
+<div id="checkoutModal" class="modal-overlay">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 id="modalPlanTitle" style="font-size: 1.4rem; margin: 0; font-weight: 800;">Complete Subscription</h2>
+            <button onclick="closeCheckout()" style="background: transparent; border: none; color: #94A3B8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="background: #0F172A; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #334155;">
+            <div style="font-size: 0.85rem; color: #94A3B8;">Institution:</div>
+            <div style="font-weight: 700; font-size: 1rem; color: white; margin-bottom: 0.5rem;">{{ university.name if university else 'Your University' }}</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #CBD5E1; border-top: 1px solid #1E293B; padding-top: 0.5rem;">
+                <span id="modalCycleText">Annual Billing Cycle</span>
+                <span id="modalPriceText" style="font-weight: 700; color: #10B981;">₹1,49,999</span>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.825rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.5rem;">Select Payment Method</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <button type="button" style="padding: 0.75rem; background: #0F172A; border: 1px solid #6366F1; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+                    💳 Credit / Debit Card
+                </button>
+                <button type="button" style="padding: 0.75rem; background: #0F172A; border: 1px solid #334155; border-radius: 8px; color: #94A3B8; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+                    🏦 Net Banking / UPI
+                </button>
+            </div>
+        </div>
+
+        <button id="btnPay" class="btn-select-plan primary" onclick="processPayment()">
+            <span>Confirm & Unlock SuperAdmin Portal</span>
+        </button>
+        <p style="font-size: 0.75rem; color: #64748B; text-align: center; margin-top: 0.75rem;">🔒 Bank-grade 256-bit encryption. Instant cryptographic license generated.</p>
+    </div>
+</div>
+
+<script>
+let currentCycle = 'annual';
+let selectedPlan = 'professional';
+
+const prices = {
+    annual: {
+        starter: '₹49,999',
+        professional: '₹1,49,999',
+        enterprise: '₹3,99,999',
+        period: '/ year'
+    },
+    monthly: {
+        starter: '₹4,999',
+        professional: '₹14,999',
+        enterprise: '₹39,999',
+        period: '/ month'
+    }
+};
+
+function setBilling(cycle) {
+    currentCycle = cycle;
+    document.getElementById('btnAnnual').classList.toggle('active', cycle === 'annual');
+    document.getElementById('btnMonthly').classList.toggle('active', cycle === 'monthly');
+
+    document.getElementById('priceStarter').textContent = prices[cycle].starter;
+    document.getElementById('periodStarter').textContent = prices[cycle].period;
+
+    document.getElementById('pricePro').textContent = prices[cycle].professional;
+    document.getElementById('periodPro').textContent = prices[cycle].period;
+
+    document.getElementById('priceEnterprise').textContent = prices[cycle].enterprise;
+    document.getElementById('periodEnterprise').textContent = prices[cycle].period;
+}
+
+function openCheckout(planKey, planName) {
+    {% if not university %}
+    window.location.href = '/university/register';
+    return;
+    {% endif %}
+
+    selectedPlan = planKey;
+    document.getElementById('modalPlanTitle').textContent = 'Subscribe: ' + planName;
+    document.getElementById('modalCycleText').textContent = currentCycle === 'annual' ? 'Annual Subscription (365 Days)' : 'Monthly Subscription (30 Days)';
+    document.getElementById('modalPriceText').textContent = prices[currentCycle][planKey];
+    document.getElementById('checkoutModal').style.display = 'flex';
+}
+
+function closeCheckout() {
+    document.getElementById('checkoutModal').style.display = 'none';
+}
+
+async function processPayment() {
+    const btn = document.getElementById('btnPay');
+    btn.disabled = true;
+    btn.innerHTML = '<span>Minting Cryptographic License & Provisioning...</span>';
+
+    try {
+        const response = await fetch('/university/api/subscribe', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                plan: selectedPlan,
+                billing_cycle: currentCycle
+            })
+        });
+
+        let data;
+        const responseText = await response.text();
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonErr) {
+            console.error("Non-JSON Server response:", responseText);
+            data = { success: false, message: "Server response error during subscription." };
+        }
+
+        if (response.ok && data.success) {
+            btn.innerHTML = '<span>Activation Complete! Launching...</span>';
+            setTimeout(() => {
+                window.location.href = (data.data && data.data.redirect_url) ? data.data.redirect_url : '/university/dashboard';
+            }, 1000);
+        } else {
+            alert(data.message || "Subscription activation failed.");
+            btn.disabled = false;
+            btn.innerHTML = '<span>Confirm & Unlock SuperAdmin Portal</span>';
+        }
+    } catch (err) {
+        console.error("Payment Exception:", err);
+        alert("Payment network error: " + (err.message || "Please check your connection."));
+        btn.disabled = false;
+        btn.innerHTML = '<span>Confirm & Unlock SuperAdmin Portal</span>';
+    }
+}
+</script>
+
+</body>
+</html>

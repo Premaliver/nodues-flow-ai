@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Leadership Login — Smart NoDues SaaS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(226, 232, 240, 0.8);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.9) 0%, rgba(245, 243, 255, 0.8) 50%, rgba(253, 242, 248, 0.9) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            color: #1E293B;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6);
+        }
+        .brand-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .brand-logo {
+            width: 52px;
+            height: 52px;
+            background: var(--brand-gradient);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 1rem;
+            box-shadow: 0 12px 20px -6px rgba(79, 70, 229, 0.45);
+        }
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0F172A;
+            letter-spacing: -0.02em;
+        }
+        .brand-subtitle {
+            font-size: 0.875rem;
+            color: #64748B;
+            margin-top: 0.25rem;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .form-label {
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: #334155;
+        }
+        .form-control {
+            padding: 0.8rem 1rem;
+            border: 1px solid #CBD5E1;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #6366F1;
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--brand-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-top: 0.5rem;
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.5);
+        }
+        .footer-links {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748B;
+        }
+        .footer-links a {
+            color: #4F46E5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .alert-error {
+            padding: 0.75rem 1rem;
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            color: #991B1B;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="brand-header">
+        <div class="brand-logo">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <h1 class="brand-title">University Portal</h1>
+        <p class="brand-subtitle">Institutional Leadership & Subscription Management</p>
+    </div>
+
+    <div id="alertBox" class="alert-error"></div>
+
+    <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+            <label class="form-label" for="email">Official Institutional Email</label>
+            <input type="email" id="email" class="form-control" placeholder="registrar@university.edu" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">Sign In to University Portal</button>
+    </form>
+
+    <div class="footer-links">
+        Don't have an institutional account yet?<br>
+        <a href="/university/register">Register Your University Here &rarr;</a>
+    </div>
+</div>
+
+<script>
+async function handleLogin(e) {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    alertBox.style.display = 'none';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verifying Account...';
+
+    try {
+        const response = await fetch('/university/login', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        let data;
+        const responseText = await response.text();
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonErr) {
+            console.error("Non-JSON Server response:", responseText);
+            data = { success: false, message: "Server response error. Please try again." };
+        }
+
+        if (response.ok && data.success) {
+            window.location.href = (data.data && data.data.redirect_url) ? data.data.redirect_url : '/university/dashboard';
+        } else {
+            alertBox.textContent = data.message || "Invalid login credentials.";
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign In to University Portal';
+        }
+    } catch (err) {
+        console.error("Login Exception:", err);
+        alertBox.textContent = "Connection issue: " + (err.message || "Please check your network.");
+        alertBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In to University Portal';
+    }
+}
+</script>
+
+</body>
+</html>

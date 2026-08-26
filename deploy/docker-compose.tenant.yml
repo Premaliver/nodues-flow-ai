@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # University Isolated Data Plane Backend
+  # ─────────────────────────────────────────────────────────────
+  nodues-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: nodues-dataplane-${TENANT_SLUG:-university}
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres_secure_pw}@nodues-db:5432/${DB_NAME:-nodues_tenant}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - TENANT_ID=${TENANT_ID:-tenant_01}
+      - TENANT_SLUG=${TENANT_SLUG:-univ}
+      - UNIVERSITY_NAME=${UNIVERSITY_NAME:-"Smart NoDues University"}
+      - LICENSE_PUBLIC_KEY=${LICENSE_PUBLIC_KEY}
+      - LICENSE_FILE_PATH=/app/license.key
+      - UPLOAD_FOLDER=/app/storage/uploads
+    volumes:
+      - nodues-storage:/app/storage/uploads
+      - ./license.key:/app/license.key:ro
+    depends_on:
+      nodues-db:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────────────────────
+  # University Dedicated Isolated PostgreSQL Database
+  # ─────────────────────────────────────────────────────────────
+  nodues-db:
+    image: postgres:16-alpine
+    container_name: nodues-db-${TENANT_SLUG:-university}
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres_secure_pw}
+      - POSTGRES_DB=${DB_NAME:-nodues_tenant}
+    volumes:
+      - nodues-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nodues-storage:
+    driver: local
+  nodues-db-data:
+    driver: local

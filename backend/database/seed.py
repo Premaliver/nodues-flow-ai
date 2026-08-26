@@ -147,4 +147,4 @@ def seed_data() -> None:
         db.session.add(wf)
 
     db.session.commit()
-    print("✓ Institutional database seeded successfully!")
+    print("[OK] Institutional database seeded successfully!")

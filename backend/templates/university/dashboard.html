@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Leadership Command Hub — {{ university.name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #4F46E5;
+            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+            --dark-bg: #0B0F19;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: #F8FAFC;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .hub-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--brand-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-container {
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+        .univ-header-card {
+            background: linear-gradient(145deg, #1E1B4B 0%, #312E81 50%, #1E293B 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        }
+        .univ-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.25rem;
+            margin: 0 0 0.5rem;
+            color: white;
+        }
+        .univ-meta {
+            color: #C7D2FE;
+            font-size: 0.95rem;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34D399;
+        }
+        .status-unsub {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #FBBF24;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .hub-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(16px);
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: white;
+            margin: 0 0 0.5rem;
+        }
+        .card-desc {
+            color: #94A3B8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .btn-launch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+            transition: all 0.2s ease;
+        }
+        .btn-launch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.6);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        @media (max-width: 860px) {
+            .univ-header-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="hub-nav">
+    <a href="/university/dashboard" class="nav-brand">
+        <div class="nav-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span>Smart NoDues SaaS Hub</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.85rem; color: #94A3B8;">{{ university.contact_person }} ({{ university.designation }})</span>
+        <a href="/university/logout" style="color: #EF4444; font-size: 0.85rem; text-decoration: none; font-weight: 600;">Sign Out</a>
+    </div>
+</nav>
+
+<div class="main-container">
+    <!-- Header Institution Card -->
+    <div class="univ-header-card">
+        <div>
+            <h1 class="univ-title">{{ university.name }}</h1>
+            <div class="univ-meta">
+                <span>Official Domain / Slug: <strong>{{ university.slug }}.nodues.app</strong></span> &bull; 
+                <span>Capacity: <strong>{{ university.estimated_students }} Students</strong></span>
+            </div>
+        </div>
+        <div>
+            {% if university.has_active_subscription %}
+            <div class="status-pill status-active">● Active Subscription ({{ university.subscription_plan|capitalize }})</div>
+            {% else %}
+            <div class="status-pill status-unsub">● Unsubscribed (Preview Mode)</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Hub Cards Grid -->
+    <div class="cards-grid">
+        <!-- Card 1: Dedicated SuperAdmin Portal -->
+        <div class="hub-card" style="border-color: rgba(99, 102, 241, 0.4);">
+            <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; margin-bottom: 0.5rem;">Production Environment</div>
+                <h3 class="card-title">Launch Dedicated SuperAdmin Portal</h3>
+                <p class="card-desc">Enter your live institutional administration console to manage department staff, academic terms, student records, and live No-Dues approvals.</p>
+            </div>
+            {% if university.has_active_subscription %}
+            <a href="/university/launch-superadmin" class="btn-launch">
+                <span>Open University SuperAdmin Portal</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+            {% else %}
+            <div>
+                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.825rem; color: #FCD34D; margin-bottom: 1rem;">
+                    🔒 Production portal is locked. Please purchase a subscription to activate your campus instance.
+                </div>
+                <a href="/university/pricing" class="btn-launch" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">Subscribe & Unlock Instance &rarr;</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Card 2: Interactive POV Walkthrough -->
+        <div class="hub-card">
+            <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #EC4899; text-transform: uppercase; margin-bottom: 0.5rem;">Demo & Sandbox</div>
+                <h3 class="card-title">Interactive POV Walkthrough</h3>
+                <p class="card-desc">Experience the interactive simulation showing how your students submit requests, AI OCR verifies fee receipts, and departments clear dues in real-time.</p>
+            </div>
+            <a href="/university/pov" class="btn-secondary">Explore Interactive POV Room &rarr;</a>
+        </div>
+
+        <!-- Card 3: Subscription & Billing Details -->
+        <div class="hub-card">
+            <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #10B981; text-transform: uppercase; margin-bottom: 0.5rem;">Billing & License</div>
+                <h3 class="card-title">Subscription & Cryptographic License</h3>
+                <p class="card-desc">
+                    Current Tier: <strong>{{ university.subscription_plan|capitalize if university.subscription_plan != 'none' else 'None' }}</strong><br>
+                    Expires: <strong>{{ university.expires_at.strftime('%d %b %Y') if university.expires_at else 'N/A' }}</strong><br>
+                    Isolation: <strong>Dedicated Database & Storage Boundary</strong>
+                </p>
+            </div>
+            <a href="/university/pricing" class="btn-secondary">Manage / Upgrade Subscription &rarr;</a>
+        </div>
+
+        <!-- Card 4: Zero-Trust Data Ownership -->
+        <div class="hub-card">
+            <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #60A5FA; text-transform: uppercase; margin-bottom: 0.5rem;">Data Ownership</div>
+                <h3 class="card-title">Data Privacy & Self-Service Export</h3>
+                <p class="card-desc">Your university maintains complete data sovereignty. Download all student profiles, clearance records, and receipts in encrypted ZIP packages anytime.</p>
+            </div>
+            <a href="/superadmin/api/export/full" class="btn-secondary">Download Complete Institutional Export (ZIP) &rarr;</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

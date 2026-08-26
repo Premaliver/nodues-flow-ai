@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart NoDues AI — Interactive Product POV & Live Simulation</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #4F46E5;
+            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+            --dark-surface: #0F172A;
+            --dark-card: #1E293B;
+            --dark-border: #334155;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0B0F19;
+            color: #F8FAFC;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        /* Top Navigation */
+        .pov-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--dark-border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--brand-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .univ-badge {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #C7D2FE;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 600;
+        }
+        .btn-subscribe-top {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.6rem 1.4rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+            transition: all 0.2s ease;
+        }
+        .btn-subscribe-top:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.6);
+        }
+
+        /* Hero Header */
+        .pov-header {
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .pov-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(236, 72, 153, 0.15);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            color: #F472B6;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+        }
+        .pov-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3.25rem;
+            line-height: 1.15;
+            margin: 0 0 1.25rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #CBD5E1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .pov-subtitle {
+            font-size: 1.15rem;
+            color: #94A3B8;
+            line-height: 1.7;
+            margin: 0 auto 2.5rem;
+        }
+
+        /* Interactive Simulation Hub */
+        .simulator-container {
+            max-width: 1200px;
+            margin: 0 auto 5rem;
+            padding: 0 1.5rem;
+        }
+        .sim-box {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .sim-tabs-bar {
+            background: #0F172A;
+            border-bottom: 1px solid var(--dark-border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+        }
+        .sim-tab {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94A3B8;
+            padding: 0.65rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .sim-tab:hover {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .sim-tab.active {
+            background: var(--brand-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        }
+
+        .sim-stage {
+            padding: 2.5rem;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        .stage-visual {
+            background: #090D16;
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            min-height: 380px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stage-info h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0 0 1rem;
+            color: white;
+        }
+        .stage-info p {
+            color: #94A3B8;
+            line-height: 1.7;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .feature-bullets {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .feature-bullets li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.925rem;
+            color: #CBD5E1;
+        }
+        .bullet-icon {
+            color: #10B981;
+            font-weight: 800;
+        }
+
+        /* Mock Interactive Terminal / Screen */
+        .mock-window-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .mock-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #EF4444; }
+        .dot-yellow { background: #F59E0B; }
+        .dot-green { background: #10B981; }
+
+        /* Approval Pipeline Flow */
+        .pipeline-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .flow-step {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .flow-step-left {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.3);
+            color: #A5B4FC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        .status-badge-cleared {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.25rem 0.65rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Banner CTA */
+        .subscribe-banner {
+            background: radial-gradient(circle at center, #1E1B4B 0%, #0F172A 100%);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto 6rem;
+            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.3);
+        }
+        .btn-subscribe-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--brand-gradient);
+            color: white;
+            padding: 1.1rem 2.5rem;
+            border-radius: 14px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.5);
+            transition: all 0.25s ease;
+            margin-top: 1.5rem;
+        }
+        .btn-subscribe-large:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 20px 35px -5px rgba(236, 72, 153, 0.7);
+        }
+
+        @media (max-width: 860px) {
+            .sim-stage {
+                grid-template-columns: 1fr;
+            }
+            .pov-title {
+                font-size: 2.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="pov-nav">
+    <div class="nav-brand">
+        <div class="nav-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <span>Smart NoDues AI</span>
+        {% if university %}
+        <span class="univ-badge">{{ university.name }}</span>
+        {% endif %}
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        {% if university and university.has_active_subscription %}
+        <a href="/university/launch-superadmin" class="btn-subscribe-top" style="background: #10B981;">Launch SuperAdmin Portal &rarr;</a>
+        {% else %}
+        <a href="/university/pricing" class="btn-subscribe-top">Select Subscription Plan &rarr;</a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Header Section -->
+<header class="pov-header">
+    <div class="pov-tag">Interactive POV & Live System Simulation</div>
+    <h1 class="pov-title">See How Smart NoDues Automates Your Campus Clearance.</h1>
+    <p class="pov-subtitle">Explore how students submit requests, AI verifies fee receipts in seconds, 7+ departments approve clearances in real time, and tamper-proof admit cards are minted.</p>
+</header>
+
+<!-- Simulation Hub -->
+<section class="simulator-container">
+    <div class="sim-box">
+        <!-- Interactive Switcher Tabs -->
+        <div class="sim-tabs-bar">
+            <button class="sim-tab active" onclick="switchStage(1, this)">
+                <span>1. Student Application</span>
+            </button>
+            <button class="sim-tab" onclick="switchStage(2, this)">
+                <span>2. AI Receipt OCR</span>
+            </button>
+            <button class="sim-tab" onclick="switchStage(3, this)">
+                <span>3. Multi-Dept Pipeline</span>
+            </button>
+            <button class="sim-tab" onclick="switchStage(4, this)">
+                <span>4. SuperAdmin Dashboard</span>
+            </button>
+            <button class="sim-tab" onclick="switchStage(5, this)">
+                <span>5. QR Admit Card</span>
+            </button>
+        </div>
+
+        <!-- Stage 1: Student Application -->
+        <div id="stage1" class="sim-stage">
+            <div class="stage-info">
+                <h3>1. One-Click Student Clearance Request</h3>
+                <p>Students select their academic semester, upload their semester fee receipts, and submit digital signatures right from their mobile or browser.</p>
+                <ul class="feature-bullets">
+                    <li><span class="bullet-icon">✓</span> Automatic category detection (Day Scholar / Hosteller / Transport / Scholarship)</li>
+                    <li><span class="bullet-icon">✓</span> Zero paper forms — 100% digital audit trail</li>
+                    <li><span class="bullet-icon">✓</span> Instant tracking with live progress percentage bar</li>
+                </ul>
+                <button class="btn-subscribe-top" onclick="switchStage(2, document.querySelectorAll('.sim-tab')[1])">Next Step: See AI OCR Verification &rarr;</button>
+            </div>
+            <div class="stage-visual">
+                <div class="mock-window-header">
+                    <div class="mock-dot dot-red"></div>
+                    <div class="mock-dot dot-yellow"></div>
+                    <div class="mock-dot dot-green"></div>
+                    <span style="font-size: 0.75rem; color: #64748B; margin-left: 0.5rem;">student-portal.nodues.app</span>
+                </div>
+                <div style="background: rgba(30, 41, 59, 0.5); padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="font-size: 0.85rem; color: #94A3B8;">Application #ND-2026-A89F</div>
+                    <div style="font-size: 1.15rem; font-weight: 700; color: white; margin: 0.25rem 0 0.75rem;">Rahul Verma (CSE - Semester 6)</div>
+                    <div style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                        <span style="font-size: 0.8rem; color: #C7D2FE;">Attached: <strong>Semester_6_Fee_Receipt.pdf</strong> (1.4 MB)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.8rem; color: #10B981;">● Status: Submitted for Review</span>
+                        <span style="font-weight: 700; font-size: 0.85rem; color: #A5B4FC;">Step 1 of 6</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 2: AI OCR Receipt Verification (Hidden initially) -->
+        <div id="stage2" class="sim-stage" style="display: none;">
+            <div class="stage-info">
+                <h3>2. Instant AI Receipt OCR & Fraud Detection</h3>
+                <p>Our intelligent OCR engine scans uploaded banking receipts, extracts transaction IDs, matches fee amounts against university records, and flags duplicates automatically.</p>
+                <ul class="feature-bullets">
+                    <li><span class="bullet-icon">✓</span> Sub-second receipt parsing (UTR, Bank Name, Date, Amount)</li>
+                    <li><span class="bullet-icon">✓</span> SHA-256 duplicate receipt fraud blocker</li>
+                    <li><span class="bullet-icon">✓</span> Reduces accounts verification time by 94%</li>
+                </ul>
+                <button class="btn-subscribe-top" onclick="switchStage(3, document.querySelectorAll('.sim-tab')[2])">Next Step: Department Clearance Pipeline &rarr;</button>
+            </div>
+            <div class="stage-visual">
+                <div class="mock-window-header">
+                    <div class="mock-dot dot-red"></div>
+                    <div class="mock-dot dot-yellow"></div>
+                    <div class="mock-dot dot-green"></div>
+                    <span style="font-size: 0.75rem; color: #64748B; margin-left: 0.5rem;">ai-ocr-engine // realtime</span>
+                </div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.825rem; color: #34D399; line-height: 1.6;">
+                    <div>&gt; Scanning: Semester_6_Fee_Receipt.pdf...</div>
+                    <div style="color: #60A5FA;">&gt; Extracted UTR: HDFC202603849102</div>
+                    <div style="color: #60A5FA;">&gt; Amount Detected: ₹54,500.00 [MATCHED]</div>
+                    <div style="color: #A78BFA;">&gt; Confidence Score: 99.4%</div>
+                    <div style="color: #10B981; font-weight: 700; margin-top: 0.5rem;">&gt; Status: AI_VERIFIED_AUTHENTIC (0.18s)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 3: Multi-Department Workflow (Hidden initially) -->
+        <div id="stage3" class="sim-stage" style="display: none;">
+            <div class="stage-info">
+                <h3>3. Parallel Multi-Department Approvals</h3>
+                <p>Every department (Accounts, Hostel, Mess, Library, Transport, Scholarship, HOD, Examination) gets their own isolated reviewer dashboard.</p>
+                <ul class="feature-bullets">
+                    <li><span class="bullet-icon">✓</span> Parallel processing eliminates campus line queues</li>
+                    <li><span class="bullet-icon">✓</span> One-click approvals with optional remark notes</li>
+                    <li><span class="bullet-icon">✓</span> Automated real-time email & in-app alerts to students</li>
+                </ul>
+                <button class="btn-subscribe-top" onclick="switchStage(4, document.querySelectorAll('.sim-tab')[3])">Next Step: SuperAdmin Control &rarr;</button>
+            </div>
+            <div class="stage-visual">
+                <div class="pipeline-flow">
+                    <div class="flow-step">
+                        <div class="flow-step-left">
+                            <div class="step-num">1</div>
+                            <span style="font-weight: 600;">Accounts Department</span>
+                        </div>
+                        <span class="status-badge-cleared">APPROVED ✓</span>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-left">
+                            <div class="step-num">2</div>
+                            <span style="font-weight: 600;">Hostel & Mess Warden</span>
+                        </div>
+                        <span class="status-badge-cleared">APPROVED ✓</span>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-left">
+                            <div class="step-num">3</div>
+                            <span style="font-weight: 600;">Central Library</span>
+                        </div>
+                        <span class="status-badge-cleared">APPROVED ✓</span>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-step-left">
+                            <div class="step-num">4</div>
+                            <span style="font-weight: 600;">Head of Department (HOD)</span>
+                        </div>
+                        <span class="status-badge-cleared">APPROVED ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 4: SuperAdmin Dashboard (Hidden initially) -->
+        <div id="stage4" class="sim-stage" style="display: none;">
+            <div class="stage-info">
+                <h3>4. University SuperAdmin Command Room</h3>
+                <p>Full institutional oversight. Track bottlenecks across departments, export compliance packages, manage staff accounts, and configure academic sessions.</p>
+                <ul class="feature-bullets">
+                    <li><span class="bullet-icon">✓</span> Comprehensive visual analytics on clearance velocity</li>
+                    <li><span class="bullet-icon">✓</span> Zero-trust security & full immutable audit logs</li>
+                    <li><span class="bullet-icon">✓</span> One-click full institutional data export (ZIP/CSV)</li>
+                </ul>
+                <button class="btn-subscribe-top" onclick="switchStage(5, document.querySelectorAll('.sim-tab')[4])">Next Step: View Generated Admit Card &rarr;</button>
+            </div>
+            <div class="stage-visual">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <div style="font-size: 0.75rem; color: #94A3B8;">TOTAL CLEARED</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #10B981;">98.2%</div>
+                    </div>
+                    <div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <div style="font-size: 0.75rem; color: #94A3B8;">AVG CLEARANCE TIME</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #60A5FA;">1.4 Hours</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; background: rgba(30, 41, 59, 0.4); padding: 1rem; border-radius: 12px; font-size: 0.8rem; color: #CBD5E1;">
+                    🔒 All institutional records reside strictly in your dedicated university database boundary.
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 5: QR Admit Card (Hidden initially) -->
+        <div id="stage5" class="sim-stage" style="display: none;">
+            <div class="stage-info">
+                <h3>5. High-Security QR-Verified Examination Admit Card</h3>
+                <p>Once all departmental approvals are secured, the system automatically seals the clearance with a cryptographic signature and mints an official Admit Card with a scannable verification QR code.</p>
+                <ul class="feature-bullets">
+                    <li><span class="bullet-icon">✓</span> Live public QR validation at exam hall doors</li>
+                    <li><span class="bullet-icon">✓</span> Instant PDF download with university header & watermark</li>
+                    <li><span class="bullet-icon">✓</span> Zero forgery guarantee</li>
+                </ul>
+                <a href="/university/pricing" class="btn-subscribe-top" style="display: inline-block;">Get This For Your University &rarr;</a>
+            </div>
+            <div class="stage-visual" style="text-align: center;">
+                <div style="background: white; color: #0F172A; padding: 1.5rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                    <div style="font-weight: 800; font-size: 1rem; color: #4338CA; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                        OFFICIAL EXAMINATION ADMIT CARD
+                    </div>
+                    <div style="font-size: 0.8rem; text-align: left; margin-bottom: 0.5rem;">
+                        <strong>Candidate:</strong> Rahul Verma (Roll: CS2026001)<br>
+                        <strong>Clearance No:</strong> ADC-2026-9812A<br>
+                        <strong>Status:</strong> <span style="color: #10B981; font-weight: 700;">100% ALL DUES CLEARED</span>
+                    </div>
+                    <div style="background: #F1F5F9; padding: 0.5rem; border-radius: 8px; font-size: 0.75rem; color: #475569;">
+                        [ Scannable Verification QR Code Embedded ]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<div class="subscribe-banner">
+    <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.5rem; margin: 0 0 1rem; color: white;">Ready to Deploy Smart NoDues for Your Campus?</h2>
+    <p style="color: #C7D2FE; font-size: 1.1rem; max-width: 600px; margin: 0 auto 1.5rem;">Purchase a subscription to instantly provision your university's isolated environment and receive full SuperAdmin access.</p>
+    <a href="/university/pricing" class="btn-subscribe-large">
+        <span>View Subscription Plans & Pricing</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+</div>
+
+<script>
+function switchStage(stageNum, btnEl) {
+    document.querySelectorAll('.sim-tab').forEach(t => t.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    for (let i = 1; i <= 5; i++) {
+        const stage = document.getElementById('stage' + i);
+        if (stage) {
+            stage.style.display = (i === stageNum) ? 'grid' : 'none';
+        }
+    }
+}
+</script>
+
+</body>
+</html>

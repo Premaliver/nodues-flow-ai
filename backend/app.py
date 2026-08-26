@@ -97,6 +97,8 @@ def create_app(config_name: str = "default") -> Flask:
     db.init_app(app)
     from utils.db_manager import init_db_manager
     init_db_manager(app)
+    with app.app_context():
+        db.create_all()
 
     bcrypt.init_app(app)
     jwt.init_app(app)
@@ -234,8 +236,8 @@ def register_login_callbacks(login_manager: LoginManager) -> None:
         from models.user import User
 
         try:
-            return User.query.get(uuid.UUID(user_id))
-        except (ValueError, AttributeError):
+            return User.query.get(uuid.UUID(str(user_id)))
+        except Exception:
             return None
 
     @login_manager.unauthorized_handler
@@ -265,9 +267,11 @@ def register_blueprints(app: Flask) -> None:
     from blueprints.examination import exam_bp
     from blueprints.superadmin import superadmin_bp
     from blueprints.api import api_bp
+    from blueprints.university import university_bp
 
     # Register with URL prefixes
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(university_bp, url_prefix="/university")
     app.register_blueprint(student_bp, url_prefix="/student")
     app.register_blueprint(accounts_bp, url_prefix="/accounts")
     app.register_blueprint(hostel_bp, url_prefix="/hostel")
@@ -279,8 +283,9 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(superadmin_bp, url_prefix="/superadmin")
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    # Exempt auth routes from CSRF (they use JWT, not session cookies)
+    # Exempt auth and university API routes from CSRF
     csrf.exempt(auth_bp)
+    csrf.exempt(university_bp)
 
     # Root route — serve landing page
     @app.route("/")

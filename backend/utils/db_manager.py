@@ -43,7 +43,7 @@ def auto_build_schema(app):
     """
     engine = db.engine
     dialect_name = engine.dialect.name
-    logger.info(f"⚡ Initializing self-building database architecture on dialect: {dialect_name}")
+    logger.info(f"[INFO] Initializing database architecture on dialect: {dialect_name}")
 
     # 1. PostgreSQL specific extension setup
     if dialect_name == "postgresql":
@@ -52,13 +52,13 @@ def auto_build_schema(app):
                 conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
                 conn.execute(text('CREATE EXTENSION IF NOT EXISTS "pg_trgm";'))
                 conn.commit()
-            logger.info("✓ PostgreSQL extensions (uuid-ossp, pg_trgm) ready.")
+            logger.info("[OK] PostgreSQL extensions (uuid-ossp, pg_trgm) ready.")
         except Exception as e:
             logger.warning(f"Could not enable PostgreSQL extensions (may require superuser privileges): {e}")
 
     # 2. Build missing tables using SQLAlchemy Metadata
     db.create_all()
-    logger.info("✓ SQLAlchemy db.create_all() executed — all model tables created.")
+    logger.info("[OK] SQLAlchemy db.create_all() executed — all model tables created.")
 
     # 3. Self-healing column check for model-database synchronization
     try:
@@ -87,7 +87,7 @@ def auto_build_schema(app):
                         with engine.connect() as conn:
                             conn.execute(text(alter_sql))
                             conn.commit()
-                        logger.info(f"✓ Column '{col_name}' added to '{table_name}'.")
+                        logger.info(f"[OK] Column '{col_name}' added to '{table_name}'.")
                     except Exception as err:
                         logger.warning(f"Failed to alter table '{table_name}' for column '{col_name}': {err}")
 

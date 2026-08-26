@@ -54,13 +54,13 @@ class BaseConfig:
     MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
     MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "smartnodue@gmail.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "slidcseebrmtqxng")
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.environ.get(
-        "MAIL_DEFAULT_SENDER", "Smart NoDues AI <smartnodue@gmail.com>"
+        "MAIL_DEFAULT_SENDER", "Smart NoDues Notification <no-reply@nodues.app>"
     )
 
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "true").lower() == "true"
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
@@ -73,10 +73,19 @@ class BaseConfig:
         "CORS_ORIGINS", "http://localhost:5000"
     ).split(",")
 
-    UNIVERSITY_NAME = "Rayat Bahra University"
-    APP_NAME = "Smart NoDues AI"
-    SUPPORT_EMAIL = "support@rayatbahra.edu"
-    ITEMS_PER_PAGE = 20
+    # University & Multi-Tenant Branding
+    TENANT_ID = os.environ.get("TENANT_ID", "default_tenant")
+    TENANT_SLUG = os.environ.get("TENANT_SLUG", "default")
+    UNIVERSITY_NAME = os.environ.get("UNIVERSITY_NAME", "Smart NoDues University")
+    APP_NAME = os.environ.get("APP_NAME", "Smart NoDues Enterprise")
+    SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "support@nodues.app")
+    ITEMS_PER_PAGE = int(os.environ.get("ITEMS_PER_PAGE", 20))
+
+    # Cryptographic License & Control Plane Configurations
+    LICENSE_PUBLIC_KEY = os.environ.get("LICENSE_PUBLIC_KEY", "")
+    LICENSE_FILE_PATH = os.environ.get("LICENSE_FILE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "license.key"))
+    CONTROL_PLANE_URL = os.environ.get("CONTROL_PLANE_URL", "https://api.nodues.app")
+    OFFLINE_GRACE_PERIOD_DAYS = int(os.environ.get("OFFLINE_GRACE_PERIOD_DAYS", 15))
 
 
 class DevelopmentConfig(BaseConfig):

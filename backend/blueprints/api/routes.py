@@ -32,6 +32,35 @@ def get_public_settings():
     })
 
 
+@api_bp.route("/license")
+def get_license_status():
+    """Get active university license status and entitlements."""
+    from licensing.license_manager import LicenseManager
+    info = LicenseManager.get_license_info()
+    return jsonify({
+        "success": True,
+        "data": info,
+    })
+
+
+@api_bp.route("/tenant/info")
+def get_tenant_info():
+    """Get university tenant information."""
+    from security.tenant_context import TenantContext
+    from licensing.license_manager import LicenseManager
+    license_info = LicenseManager.get_license_info()
+    return jsonify({
+        "success": True,
+        "data": {
+            "tenant_id": TenantContext.get_tenant_id(),
+            "tenant_slug": TenantContext.get_tenant_slug(),
+            "university_name": current_app.config.get("UNIVERSITY_NAME", "Smart NoDues University"),
+            "app_name": current_app.config.get("APP_NAME", "Smart NoDues Enterprise"),
+            "license": license_info,
+        }
+    })
+
+
 @api_bp.route("/departments")
 def get_departments():
     """Get all active departments."""
@@ -85,13 +114,26 @@ def get_workflow(category):
 
 @api_bp.route("/documents/file/<doc_id>")
 def view_document_file(doc_id):
-    """Serve an uploaded document file inline (PDF, Image, etc.)."""
+    """Serve an uploaded document file with strict zero-trust authorization check."""
+    from security.document_guard import get_current_authenticated_user, can_access_document, audit_document_access
+    user = get_current_authenticated_user()
+    if not user:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+
     doc = Document.query.get(doc_id)
     if not doc:
         return jsonify({"success": False, "message": "Document record not found"}), 404
 
+    # Enforce fine-grained ownership/role authorization
+    allowed, reason = can_access_document(user, doc)
+    if not allowed:
+        return jsonify({"success": False, "message": f"Access denied: {reason}"}), 403
+
     if not doc.file_path or not os.path.exists(doc.file_path):
         return jsonify({"success": False, "message": "Physical document file not found"}), 404
+
+    # Audit document access event
+    audit_document_access(user, doc, action="view")
 
     mime = doc.mime_type or ("application/pdf" if doc.file_name.lower().endswith(".pdf") else "image/jpeg")
     return send_file(
@@ -104,7 +146,22 @@ def view_document_file(doc_id):
 
 @api_bp.route("/documents/<app_id>")
 def get_documents_by_app(app_id):
-    """Get documents list for an application."""
+    """Get documents list for an application with access validation."""
+    from security.document_guard import get_current_authenticated_user
+    user = get_current_authenticated_user()
+    if not user:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+
+    app_record = NoDuesApplication.query.get(app_id)
+    if not app_record:
+        return jsonify({"success": False, "message": "Application not found"}), 404
+
+    # If student, verify they own this application
+    if user.role == "student":
+        student_profile = user.student_profile
+        if not student_profile or app_record.student_id != student_profile.id:
+            return jsonify({"success": False, "message": "Access denied"}), 403
+
     documents = Document.query.filter_by(application_id=app_id).all()
     return jsonify({
         "success": True,
