@@ -399,17 +399,24 @@
     </div>
 
     <!-- Server-Side Pre-Rendered Data Injection for 0ms Instant Loading -->
-    <script>
-        const PRELOADED_STUDENT = {{ student_data|tojson|safe }};
-    </script>
+    <script id="studentPreloadJson" type="application/json">{{ student_data|tojson|safe if student_data else '{}' }}</script>
 
     <script>
         // ───────────────────────────────
         // GLOBALS
         // ───────────────────────────────
-        let studentData = PRELOADED_STUDENT || null;
+        let studentData = null;
+        try {
+            const preloadElem = document.getElementById('studentPreloadJson');
+            if (preloadElem && preloadElem.textContent.trim()) {
+                studentData = JSON.parse(preloadElem.textContent.trim());
+            }
+        } catch (e) {
+            console.warn('Preloaded student data parse warning:', e);
+        }
         let uploadedFiles = { examFee: null, nextSemFee: null };
         let currentStep = 1;
+
 
         // ───────────────────────────────
         // TOGGLE THEME & SIDEBAR
