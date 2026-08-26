@@ -148,7 +148,12 @@ def login():
         session["university_name"] = tenant.name
         session["university_slug"] = tenant.slug
 
-        redirect_target = "/university/dashboard" if tenant.has_active_subscription else "/university/pov"
+        # Auto-login as SuperAdmin user for the platform
+        sa_user = User.query.filter_by(role="super_admin").first()
+        if sa_user:
+            login_user(sa_user)
+
+        redirect_target = "/superadmin/dashboard" if tenant.has_active_subscription else "/university/pov"
 
         if request.is_json:
             return jsonify({
@@ -161,6 +166,7 @@ def login():
             })
 
         return redirect(redirect_target)
+
     except Exception as e:
         current_app.logger.error(f"Login error: {e}")
         return jsonify({"success": False, "message": "Login error occurred. Please try again."}), 500
@@ -272,6 +278,7 @@ def activate_subscription():
             # Link / update name if needed
             sa_user.first_name = univ.contact_person.split()[0] if univ.contact_person else "University"
             sa_user.last_name = "Admin"
+            login_user(sa_user)
         
         db.session.commit()
 
@@ -281,9 +288,10 @@ def activate_subscription():
             "data": {
                 "university": univ.to_dict(),
                 "payment_id": payment_id,
-                "redirect_url": "/university/dashboard",
+                "redirect_url": "/superadmin/dashboard",
             }
         })
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Subscription activation error: {e}")

@@ -79,9 +79,35 @@ def dashboard():
         sa_user = None
         token = ""
 
-    univ_name = session.get("university_name", "University Command Center")
+    from models.university import UniversityTenant
+    import uuid
 
-    return render_template("superadmin/dashboard.html", access_token=token, university_name=univ_name)
+    univ = None
+    univ_id = session.get("university_id")
+    if univ_id:
+        try:
+            univ = UniversityTenant.query.get(uuid.UUID(str(univ_id)))
+        except Exception:
+            univ = None
+
+    if not univ:
+        # Fallback to university slug in session or first tenant
+        univ_slug = session.get("university_slug")
+        if univ_slug:
+            univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
+        if not univ:
+            univ = UniversityTenant.query.first()
+
+    univ_name = univ.name if univ else session.get("university_name", "University Command Center")
+    univ_slug = univ.slug if univ else session.get("university_slug", "campus")
+
+    return render_template(
+        "superadmin/dashboard.html",
+        access_token=token,
+        university_name=univ_name,
+        university_slug=univ_slug,
+        university=univ,
+    )
 
 
 # ──────────────────────────────────────

@@ -31,7 +31,9 @@
     </div>
     <nav class="super-sidebar-nav">
         <div class="super-sidebar-label">Main</div>
+
         <a class="super-sidebar-item active" data-section="overview" onclick="switchSection('overview')"><span class="icon">📊</span> Overview</a>
+        <a class="super-sidebar-item" data-section="campusRollout" onclick="switchSection('campusRollout')" style="background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(236,72,153,0.12)); border: 1px solid rgba(99,102,241,0.25); font-weight: 700; color: #6366F1;"><span class="icon">🚀</span> Campus Portal & Rollout</a>
         <a class="super-sidebar-item" data-section="staff" onclick="switchSection('staff')"><span class="icon">👥</span> Staff Management</a>
         <a class="super-sidebar-item" data-section="students" onclick="switchSection('students')"><span class="icon">🎓</span> Students</a>
         <a class="super-sidebar-item" data-section="applications" onclick="switchSection('applications')"><span class="icon">📋</span> Applications</a>
@@ -62,8 +64,8 @@
             <span class="page-title" id="pageTitle">Overview</span>
         </div>
         <div class="super-topbar-actions">
-            <a href="/university/dashboard" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-weight:600;">
-                <span>🏛️</span> University Panel
+            <a href="/u/{{ university_slug or 'campus' }}" target="_blank" class="btn btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; padding: 0.4rem 0.85rem; border-radius: 8px; font-weight:600;">
+                <span>🌐</span> Public Portal
             </a>
             <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
             <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
@@ -80,7 +82,7 @@
                         <h2 style="font-family: 'DM Serif Display', serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">{{ university_name or 'Smart NoDues AI University' }}</h2>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                        <a href="/university/dashboard" class="btn btn-secondary" style="text-decoration:none;">🔙 Return to Univ Portal</a>
+                        <button class="btn btn-secondary" onclick="switchSection('campusRollout')" style="text-decoration:none;">🚀 Campus Rollout Hub</button>
                         <button class="btn btn-primary" onclick="openCreateStaffModal()">➕ New Staff Member</button>
                         <a href="/superadmin/api/export/full" class="btn btn-outline" style="text-decoration: none;">📦 Export Full Data</a>
                     </div>
@@ -105,8 +107,134 @@
                 <div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Action</th><th>Resource</th><th>Time</th></tr></thead><tbody id="activityBody"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
             </div>
         </div>
+
+        <!-- CAMPUS ROLLOUT & WHITE-LABEL PORTAL HUB -->
+        <div class="section" id="section-campusRollout">
+            <div class="glass-panel" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(124, 58, 237, 0.12) 100%); border: 1px solid rgba(99, 102, 241, 0.3);">
+                <div style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #6366F1; text-transform: uppercase; letter-spacing: 0.05em;">🏛️ Institutional White-Label Hub</div>
+                        <h2 style="font-family: 'DM Serif Display', serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">Campus Clearance Portal & Distribution Hub</h2>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Deploy your branded clearance link, print notice board QR circulars, and provision department officers.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <a href="/u/{{ university_slug or 'campus' }}" target="_blank" class="btn btn-primary" style="text-decoration:none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <span>🌐 Open Public Portal</span>
+                        </a>
+                        <a href="/u/{{ university_slug or 'campus' }}/poster" target="_blank" class="btn btn-secondary" style="text-decoration:none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <span>🖨️ Notice Board Circular (PDF)</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portal URL Share Bar -->
+            <div class="glass-panel" style="margin-bottom: 1.5rem;">
+                <div class="glass-panel-header">
+                    <h3>🔗 Your University's Dedicated Public Portal Link</h3>
+                </div>
+                <div class="glass-panel-body">
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Share this link with your students, staff, and faculty. It opens the official clearance application portal with your institution's name and branding.
+                    </p>
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--accent);" id="superPortalLinkText">Loading link...</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="copySuperPortalLink()" id="btnCopySuperLink">📋 Copy Link</button>
+                            <a href="/u/{{ university_slug or 'campus' }}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none;">🚀 Launch Portal</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid" style="margin-bottom: 1.5rem;">
+                <!-- 7 Department Staff Provisioning -->
+                <div class="glass-panel">
+                    <div class="glass-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <h3>🏢 7 Clearance Departments</h3>
+                        <button class="btn btn-primary btn-sm" onclick="handleSuperProvisionStaff()">🔑 Auto-Provision Credentials</button>
+                    </div>
+                    <div class="glass-panel-body" style="padding:0; overflow-x:auto;">
+                        <table class="glass-table">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Role Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>💳 Accounts & Finance</strong></td><td style="font-family:monospace;">accounts@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>🏢 Hostel Warden</strong></td><td style="font-family:monospace;">hostel@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>🍲 Mess & Dining</strong></td><td style="font-family:monospace;">mess@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>🚌 Transport Fleet</strong></td><td style="font-family:monospace;">transport@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>🎓 Scholarship Cell</strong></td><td style="font-family:monospace;">scholarship@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>👔 HOD / Academics</strong></td><td style="font-family:monospace;">hod@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                                <tr><td><strong>📝 Examination Cell</strong></td><td style="font-family:monospace;">examination@{{ university_slug or 'campus' }}.nodues.edu</td><td><span class="badge badge-success">ACTIVE</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Student Master Bulk Import & Branding Studio -->
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    <!-- Student Bulk CSV -->
+                    <div class="glass-panel">
+                        <div class="glass-panel-header">
+                            <h3>🎓 Bulk Student Master Import (CSV)</h3>
+                        </div>
+                        <div class="glass-panel-body">
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                                Upload a CSV file of your enrolled students to pre-create their clearance accounts instantly.
+                            </p>
+                            <input type="file" id="super-csv-input" accept=".csv" style="display:none;" onchange="handleSuperCsvSelected(event)">
+                            <div style="border: 2px dashed var(--border-medium); border-radius: var(--radius-md); padding: 1.25rem; text-align: center; margin-bottom: 1rem;">
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('super-csv-input').click()">📁 Choose CSV File</button>
+                                <div id="super-csv-filename" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">No file selected</div>
+                            </div>
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="downloadSampleCsv()">Download CSV Template</button>
+                                <button class="btn btn-primary btn-sm" style="flex:1;" id="btnSuperUploadCsv" onclick="uploadSuperCsv()" disabled>Upload & Import</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Institutional Branding Studio -->
+                    <div class="glass-panel">
+                        <div class="glass-panel-header">
+                            <h3>🎨 Brand Appearance Studio</h3>
+                        </div>
+                        <div class="glass-panel-body">
+                            <form id="superBrandingForm" onsubmit="return saveSuperBranding(event)">
+                                <div class="form-group">
+                                    <label class="form-label">University Logo URL</label>
+                                    <input type="url" class="form-input" id="superBrandLogo" value="{{ university.logo_url if university and university.logo_url else '' }}" placeholder="https://example.com/logo.png">
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                    <div class="form-group">
+                                        <label class="form-label">Primary Color</label>
+                                        <input type="color" class="form-input" id="superBrandPrimary" value="{{ university.primary_color if university and university.primary_color else '#4f46e5' }}" style="height:38px; padding:2px;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Accent Color</label>
+                                        <input type="color" class="form-input" id="superBrandAccent" value="{{ university.accent_color if university and university.accent_color else '#7c3aed' }}" style="height:38px; padding:2px;">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Announcement Banner Text</label>
+                                    <input type="text" class="form-input" id="superBrandBanner" value="{{ university.banner_text if university and university.banner_text else '' }}" placeholder="Academic Year Final Clearance Window is Open!">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">💾 Save Institutional Branding</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- STAFF -->
         <div class="section" id="section-staff">
+
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
                 <div><h2 style="font-size:1.25rem;font-family:'DM Serif Display',serif;font-weight:400;">👥 Staff Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create and manage department staff accounts</p></div>
                 <button class="btn btn-primary" onclick="openCreateStaffModal()">➕ New Staff</button>
@@ -357,9 +485,27 @@
 .temp-password-box { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(129,140,248,0.08)); border: 2px dashed var(--accent); border-radius: 12px; padding: 1rem; text-align: center; margin: 1rem 0; }
 .temp-password-box .password { font-family: monospace; font-size: 1.15rem; font-weight: 700; letter-spacing: 2px; color: var(--accent); }
 .temp-password-box .note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
-.menu-toggle { display: none; cursor: pointer; padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border-light); background: transparent; font-size: 1.25rem; }
-@media (max-width: 768px) { .super-sidebar { transform: translateX(-100%); } .super-sidebar.open { transform: translateX(0); } .super-main { margin-left: 0; } .charts-grid { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } .menu-toggle { display: flex; } }
-@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { 
+    .charts-grid { grid-template-columns: 1fr; } 
+}
+@media (max-width: 768px) { 
+    .super-sidebar { transform: translateX(-100%); width: 280px; } 
+    .super-sidebar.open { transform: translateX(0); box-shadow: 0 0 50px rgba(0,0,0,0.5); } 
+    .super-main { margin-left: 0; } 
+    .super-topbar { padding: 0 1rem; }
+    .super-content { padding: 0.85rem; }
+    .charts-grid { grid-template-columns: 1fr; } 
+    .form-row { grid-template-columns: 1fr; } 
+    .menu-toggle { display: flex; } 
+    .stat-grid { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 0.65rem; }
+    .super-stat { padding: 0.85rem; border-radius: 16px; }
+    .super-stat .stat-value { font-size: 1.4rem; }
+    .glass-panel { border-radius: 16px; margin-bottom: 1rem; }
+    .glass-panel-header { padding: 0.85rem 1rem; }
+    .glass-panel-body { padding: 0.85rem 1rem; }
+    .filter-bar .form-input, .filter-bar .form-select { width: 100%; min-width: 100%; }
+}
+
 </style>
 
 <script>
@@ -393,7 +539,7 @@ function getAuthHeaders(extra = {}) {
     }
     return headers;
 }
-const sectionLabels = { overview:'📊 Overview', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', feedbacks:'💬 Student Feedbacks', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
+const sectionLabels = { overview:'📊 Overview', campusRollout:'🚀 Campus Portal & Rollout', staff:'👥 Staff Management', students:'🎓 Students', applications:'📋 Applications', feedbacks:'💬 Student Feedbacks', departments:'🏢 Departments', dbInspector:'🗄️ Database Inspector', analytics:'📈 Analytics', audit:'📜 Audit Logs', settings:'⚙️ System Settings', profile:'👤 My Profile' };
 function switchSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
@@ -401,9 +547,10 @@ function switchSection(name) {
     document.querySelector('.super-sidebar-item[data-section="' + name + '"]')?.classList.add('active');
     document.getElementById('pageTitle').textContent = sectionLabels[name] || name;
     toggleSuperSidebar(false);
-    const loaders = { overview: loadOverview, staff: loadStaff, students: loadStudents, applications: loadApplications, feedbacks: () => loadFeedbacks(1), departments: loadDepartments, dbInspector: loadDatabaseInspector, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
+    const loaders = { overview: loadOverview, campusRollout: loadCampusRollout, staff: loadStaff, students: loadStudents, applications: loadApplications, feedbacks: () => loadFeedbacks(1), departments: loadDepartments, dbInspector: loadDatabaseInspector, analytics: loadAnalytics, audit: loadAuditLogs, settings: loadSettings, profile: loadProfile };
     if (loaders[name]) loaders[name]();
 }
+
 let chartDailyApps = null, chartRoleDist = null, chartStatusDist = null, chartMonthlyApps = null;
 async function loadOverview() {
     try {
@@ -800,10 +947,185 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 30000);
 });
+
+// ── CAMPUS ROLLOUT & WHITE-LABEL JS HANDLERS ──
+const UNIV_SLUG = "{{ university_slug or 'campus' }}";
+let superProvisionedCreds = [];
+let superSelectedCsvFile = null;
+
+function loadCampusRollout() {
+    const portalUrl = window.location.origin + "/u/" + UNIV_SLUG;
+    const linkEl = document.getElementById("superPortalLinkText");
+    if (linkEl) linkEl.innerText = portalUrl;
+}
+
+function copySuperPortalLink() {
+    const portalUrl = window.location.origin + "/u/" + UNIV_SLUG;
+    navigator.clipboard.writeText(portalUrl).then(() => {
+        showToast('Portal URL copied to clipboard!', 'success');
+        const btn = document.getElementById("btnCopySuperLink");
+        if (btn) {
+            btn.innerText = '✅ Copied!';
+            setTimeout(() => { btn.innerText = '📋 Copy Link'; }, 2000);
+        }
+    });
+}
+
+async function handleSuperProvisionStaff() {
+    try {
+        const res = await fetch('/university/api/staff/provision', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ default_password: 'Staff@' + UNIV_SLUG.toUpperCase() + '2025' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            superProvisionedCreds = data.credentials;
+            const tbody = document.getElementById('superCredTableBody');
+            tbody.innerHTML = '';
+            data.credentials.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${c.department}</strong></td>
+                        <td style="font-family:monospace;">${c.email}</td>
+                        <td><span style="background:var(--bg-secondary); padding:2px 8px; border-radius:4px; font-family:monospace; font-weight:700; color:var(--accent);">${c.password}</span></td>
+                    </tr>
+                `;
+            });
+            openModal('superCredModal');
+            showToast('All 7 clearance department accounts provisioned!', 'success');
+        } else {
+            showToast('Error: ' + data.message, 'error');
+        }
+    } catch (e) {
+        showToast('Failed to provision staff: ' + e, 'error');
+    }
+}
+
+function copyAllSuperCreds() {
+    if (!superProvisionedCreds.length) return;
+    const portalUrl = window.location.origin + "/u/" + UNIV_SLUG;
+    let text = `=== ${UNIV_SLUG.toUpperCase()} CLEARANCE DEPARTMENT CREDENTIALS ===\nPortal: ${portalUrl}\n\n`;
+    superProvisionedCreds.forEach(c => {
+        text += `${c.department}:\n  Email: ${c.email}\n  Password: ${c.password}\n\n`;
+    });
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('All 7 department credentials copied to clipboard!', 'success');
+    });
+}
+
+function handleSuperCsvSelected(e) {
+    if (e.target.files.length > 0) {
+        superSelectedCsvFile = e.target.files[0];
+        document.getElementById('super-csv-filename').innerText = 'Selected: ' + superSelectedCsvFile.name;
+        document.getElementById('btnSuperUploadCsv').disabled = false;
+    }
+}
+
+function downloadSampleCsv() {
+    const sample = "roll_number,first_name,last_name,email,branch,course,category\n21BCS1001,Aarav,Sharma,aarav.sharma@example.edu,Computer Science,B.Tech,day_scholar\n21BCS1002,Priya,Verma,priya.verma@example.edu,Information Technology,B.Tech,hosteller\n21BCS1003,Rohan,Gupta,rohan.gupta@example.edu,Mechanical,B.Tech,transport_user";
+    const blob = new Blob([sample], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'sample_students_import.csv');
+    a.click();
+    showToast('Sample CSV template downloaded.', 'info');
+}
+
+async function uploadSuperCsv() {
+    if (!superSelectedCsvFile) return;
+    const formData = new FormData();
+    formData.append('file', superSelectedCsvFile);
+
+    const btn = document.getElementById('btnSuperUploadCsv');
+    btn.disabled = true;
+    btn.innerText = 'Importing...';
+
+    try {
+        const res = await fetch('/university/api/students/bulk-import', {
+            method: 'POST',
+            body: formData,
+            headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.message, 'success');
+            loadStudents();
+        } else {
+            showToast(data.message, 'error');
+        }
+        btn.innerText = 'Upload & Import';
+        btn.disabled = false;
+    } catch (e) {
+        showToast('Import error: ' + e, 'error');
+        btn.innerText = 'Upload & Import';
+        btn.disabled = false;
+    }
+}
+
+async function saveSuperBranding(e) {
+    e.preventDefault();
+    const payload = {
+        logo_url: document.getElementById('superBrandLogo').value.trim(),
+        primary_color: document.getElementById('superBrandPrimary').value,
+        accent_color: document.getElementById('superBrandAccent').value,
+        banner_text: document.getElementById('superBrandBanner').value.trim()
+    };
+
+    try {
+        const res = await fetch('/university/api/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Institutional branding saved successfully!', 'success');
+        } else {
+            showToast('Error: ' + data.message, 'error');
+        }
+    } catch (e) {
+        showToast('Failed to save branding: ' + e, 'error');
+    }
+    return false;
+}
 </script>
+
+<!-- MODAL: 7 DEPARTMENT CREDENTIALS EXPORT -->
+<div class="modal-overlay" id="superCredModal">
+    <div class="modal-box" style="max-width: 620px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem;">🔑 7 Department Clearance Logins</h3>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal('superCredModal')">✕</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            These credentials grant access to each respective department's clearance verification panel.
+        </p>
+        <div style="overflow-x: auto; margin-bottom: 1.25rem;">
+            <table class="glass-table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Login Email</th>
+                        <th>Default Password</th>
+                    </tr>
+                </thead>
+                <tbody id="superCredTableBody">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button class="btn btn-secondary" onclick="closeModal('superCredModal')">Close</button>
+            <button class="btn btn-primary" onclick="copyAllSuperCreds()">📋 Copy All Credentials</button>
+        </div>
+    </div>
+</div>
 
 <!-- PERSISTENT PASSWORD RESET MODAL (Task #9) -->
 <div class="modal-overlay" id="persistentPasswordModal">
+
     <div class="modal-box" style="max-width: 440px; text-align: center;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔑</div>
         <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; margin-bottom: 0.5rem;">Staff Password Regenerated</h3>
