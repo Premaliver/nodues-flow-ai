@@ -5,20 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ university.name }} — Digital No-Dues Clearance Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        // Init theme immediately to prevent flashing
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <style>
         :root {
             --univ-primary: {{ university.primary_color or '#4F46E5' }};
             --univ-accent: {{ university.accent_color or '#7C3AED' }};
             --univ-glow: {{ university.primary_color or '#4F46E5' }}33;
-            --bg-dark: #080C14;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        /* ── Dark Mode Variables (Default) ── */
+        [data-theme="dark"] {
+            --bg-page: #080C14;
             --surface-1: rgba(15, 23, 42, 0.85);
             --surface-2: rgba(30, 41, 59, 0.7);
             --border-glass: rgba(255, 255, 255, 0.12);
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
+            --text-muted: #64748B;
+            --header-bg: rgba(11, 15, 25, 0.9);
+            --notice-bg: linear-gradient(90deg, rgba(79, 70, 229, 0.2), rgba(124, 58, 237, 0.2));
+            --notice-text: #C7D2FE;
+            --input-bg: rgba(15, 23, 42, 0.85);
+            --input-border: rgba(255, 255, 255, 0.14);
+            --tab-bg: rgba(15, 23, 42, 0.75);
+            --dept-btn-bg: rgba(15, 23, 42, 0.7);
+            --card-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5), 0 0 35px var(--univ-glow);
+            --glow-1: var(--univ-glow);
+            --glow-2: rgba(124, 58, 237, 0.12);
+            --footer-border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ── Light Mode Variables ── */
+        [data-theme="light"] {
+            --bg-page: #F8FAFC;
+            --surface-1: rgba(255, 255, 255, 0.95);
+            --surface-2: rgba(241, 245, 249, 0.9);
+            --border-glass: rgba(203, 213, 225, 0.8);
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --notice-bg: linear-gradient(90deg, rgba(238, 242, 255, 0.95), rgba(245, 243, 255, 0.95));
+            --notice-text: #3730A3;
+            --input-bg: #FFFFFF;
+            --input-border: rgba(203, 213, 225, 0.9);
+            --tab-bg: #E2E8F0;
+            --dept-btn-bg: #F1F5F9;
+            --card-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 4px 20px rgba(79, 70, 229, 0.08);
+            --glow-1: rgba(79, 70, 229, 0.08);
+            --glow-2: rgba(236, 72, 153, 0.06);
+            --footer-border: #E2E8F0;
         }
 
         * {
@@ -30,21 +75,22 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-page);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 10% 10%, var(--univ-glow) 0%, transparent 45%),
-                radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.12) 0%, transparent 45%);
+                radial-gradient(circle at 10% 10%, var(--glow-1) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, var(--glow-2) 0%, transparent 45%);
             background-attachment: fixed;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* ── Top Header Navigation ── */
         .portal-header {
-            background: rgba(11, 15, 25, 0.9);
+            background: var(--header-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border-glass);
@@ -52,6 +98,7 @@
             position: sticky;
             top: 0;
             z-index: 50;
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
         .header-content {
@@ -68,7 +115,7 @@
             align-items: center;
             gap: 0.85rem;
             text-decoration: none;
-            color: white;
+            color: var(--text-primary);
             min-width: 0;
         }
 
@@ -153,25 +200,47 @@
             border: 1px solid var(--border-glass);
             transition: all 0.2s ease;
             white-space: nowrap;
+            font-weight: 600;
         }
 
         .portal-link-btn:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .theme-toggle-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: rotate(15deg) scale(1.05);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         /* ── Notice Banner ── */
         .notice-bar {
-            background: linear-gradient(90deg, rgba(79, 70, 229, 0.15), rgba(124, 58, 237, 0.15));
+            background: var(--notice-bg);
             border-bottom: 1px solid var(--border-glass);
             padding: 0.65rem clamp(1rem, 3vw, 2rem);
             text-align: center;
             font-size: clamp(0.75rem, 2.5vw, 0.85rem);
-            color: #C7D2FE;
+            color: var(--notice-text);
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 0.5rem;
+            font-weight: 600;
         }
 
         /* ── Main Layout ── */
@@ -202,7 +271,7 @@
             border-radius: 20px;
             background: rgba(99, 102, 241, 0.15);
             border: 1px solid rgba(99, 102, 241, 0.3);
-            color: #A5B4FC;
+            color: var(--univ-primary);
             font-size: 0.78rem;
             font-weight: 700;
             width: fit-content;
@@ -214,11 +283,11 @@
             font-weight: 800;
             line-height: 1.15;
             letter-spacing: -0.03em;
-            color: white;
+            color: var(--text-primary);
         }
 
         .portal-headline span {
-            background: linear-gradient(135deg, #A5B4FC 0%, #FFFFFF 100%);
+            background: linear-gradient(135deg, var(--univ-primary) 0%, var(--univ-accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -238,6 +307,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            box-shadow: var(--card-shadow);
         }
 
         .step-item {
@@ -256,13 +326,14 @@
             justify-content: center;
             font-weight: 800;
             font-size: 0.8rem;
+            color: white;
             flex-shrink: 0;
         }
 
         .step-info h4 {
             font-size: 0.9rem;
             font-weight: 700;
-            color: white;
+            color: var(--text-primary);
             margin-bottom: 0.15rem;
         }
 
@@ -280,7 +351,7 @@
             border: 1px solid var(--border-glass);
             border-radius: 22px;
             padding: clamp(1.25rem, 4vw, 2.25rem);
-            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5), 0 0 35px var(--univ-glow);
+            box-shadow: var(--card-shadow);
             position: relative;
         }
 
@@ -289,11 +360,11 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.4rem;
-            background: rgba(15, 23, 42, 0.7);
+            background: var(--tab-bg);
             padding: 0.35rem;
             border-radius: 14px;
             margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
         }
 
         .tab-btn {
@@ -349,19 +420,19 @@
             display: block;
             font-size: 0.8rem;
             font-weight: 600;
-            color: #CBD5E1;
+            color: var(--text-secondary);
             margin-bottom: 0.35rem;
         }
 
         .form-input, .form-select {
             width: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid var(--border-glass);
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
             border-radius: 12px;
             padding: 0.75rem 0.95rem;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 16px; /* Prevents iOS auto zoom */
-            color: white;
+            color: var(--text-primary);
             outline: none;
             transition: all 0.2s ease;
             min-height: 44px;
@@ -373,13 +444,18 @@
         }
 
         .form-input::placeholder {
-            color: #64748B;
+            color: var(--text-muted);
             font-size: 0.88rem;
         }
 
-        .form-select option {
+        [data-theme="dark"] .form-select option {
             background: #0F172A;
             color: white;
+        }
+
+        [data-theme="light"] .form-select option {
+            background: #FFFFFF;
+            color: #0F172A;
         }
 
         .btn-submit {
@@ -426,7 +502,7 @@
         }
 
         .toggle-auth-mode a {
-            color: #A5B4FC;
+            color: var(--univ-primary);
             font-weight: 700;
             text-decoration: none;
             cursor: pointer;
@@ -448,13 +524,13 @@
         .alert-error {
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #FCA5A5;
+            color: var(--danger);
         }
 
         .alert-success {
             background: rgba(16, 185, 129, 0.15);
             border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #6EE7B7;
+            color: var(--success);
         }
 
         /* ── 7 Department Grid ── */
@@ -466,11 +542,11 @@
         }
 
         .dept-btn {
-            background: rgba(15, 23, 42, 0.7);
+            background: var(--dept-btn-bg);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
             padding: 0.65rem 0.75rem;
-            color: #CBD5E1;
+            color: var(--text-secondary);
             font-size: 0.78rem;
             font-weight: 600;
             display: flex;
@@ -482,24 +558,25 @@
         }
 
         .dept-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--text-primary);
         }
 
         .dept-btn.selected {
-            background: rgba(99, 102, 241, 0.2);
+            background: rgba(99, 102, 241, 0.18);
             border-color: var(--univ-primary);
-            color: white;
+            color: var(--univ-primary);
             font-weight: 700;
         }
 
         /* ── Footer ── */
         .portal-footer {
-            border-top: 1px solid var(--border-glass);
+            border-top: 1px solid var(--footer-border);
             padding: 1.5rem clamp(1rem, 3vw, 2rem);
             margin-top: auto;
             text-align: center;
             font-size: 0.78rem;
-            color: #64748B;
+            color: var(--text-muted);
         }
 
         .footer-content {
@@ -525,7 +602,7 @@
             .dept-grid {
                 grid-template-columns: 1fr;
             }
-            .header-actions span {
+            .header-actions .portal-link-btn span {
                 display: none;
             }
             .portal-link-btn {
@@ -560,6 +637,9 @@
                 </div>
             </a>
             <div class="header-actions">
+                <button class="theme-toggle-btn" onclick="togglePortalTheme()" id="portalThemeBtn" title="Toggle Light/Dark Theme">
+                    🌙
+                </button>
                 <a href="/u/{{ university.slug }}/poster" target="_blank" class="portal-link-btn" title="Campus Notice Board Circular">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                     <span>Campus Circular</span>
@@ -816,6 +896,26 @@
 
     <script>
         const UNIV_SLUG = "{{ university.slug }}";
+
+        // Theme Toggle
+        function updateThemeBtn() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const btn = document.getElementById('portalThemeBtn');
+            if (btn) {
+                btn.innerHTML = currentTheme === 'dark' ? '🌙' : '☀️';
+            }
+        }
+
+        function togglePortalTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeBtn();
+        }
+
+        document.addEventListener('DOMContentLoaded', updateThemeBtn);
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));

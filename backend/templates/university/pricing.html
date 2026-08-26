@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Subscription Plans & Pricing — Smart NoDues SaaS</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
         :root {
             --brand-primary: #4F46E5;
@@ -14,6 +20,43 @@
             --card-bg: rgba(30, 41, 59, 0.7);
             --card-border: rgba(255, 255, 255, 0.1);
         }
+        [data-theme="light"] {
+            --dark-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --card-border: #E2E8F0;
+        }
+        [data-theme="light"] body {
+            background: #F8FAFC !important;
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pricing-nav {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+        }
+        [data-theme="light"] .nav-brand {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pricing-title {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pricing-subtitle {
+            color: #64748B !important;
+        }
+        [data-theme="light"] .plan-card {
+            background: #FFFFFF !important;
+            border-color: #E2E8F0 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="light"] .plan-name {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .plan-price {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .plan-features li {
+            color: #475569 !important;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: var(--dark-bg);
@@ -279,11 +322,13 @@
         </div>
         <span>Smart NoDues AI</span>
     </a>
-    <div>
-        <a href="/university/pov" style="color: #94A3B8; text-decoration: none; margin-right: 1.5rem; font-size: 0.9rem;">&larr; Back to POV Walkthrough</a>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <button class="theme-toggle" onclick="togglePricingTheme()" id="pricingThemeBtn" style="padding: 0.4rem 0.65rem; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); font-size: 1.1rem;" title="Toggle Light/Dark Theme">🌙</button>
+        <a href="/university/pov" style="color: #94A3B8; text-decoration: none; font-size: 0.9rem;">&larr; Back to POV</a>
         <a href="/university/login" style="color: #A5B4FC; text-decoration: none; font-weight: 600; font-size: 0.9rem;">University Login</a>
     </div>
 </nav>
+
 
 <header class="pricing-header">
     <div class="pricing-tag">Commercial SaaS Subscriptions</div>
@@ -497,7 +542,23 @@ async function processPayment() {
         btn.innerHTML = '<span>Confirm & Unlock SuperAdmin Portal</span>';
     }
 }
+
+// Theme Toggle Logic
+function updatePricingThemeBtn() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const btn = document.getElementById('pricingThemeBtn');
+    if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
+}
+function togglePricingTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updatePricingThemeBtn();
+}
+document.addEventListener('DOMContentLoaded', updatePricingThemeBtn);
 </script>
 
 </body>
 </html>
+

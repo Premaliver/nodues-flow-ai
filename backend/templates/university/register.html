@@ -6,12 +6,37 @@
     <title>University Onboarding & Registration — Smart NoDues SaaS</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
         :root {
             --brand-primary: #4F46E5;
             --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
             --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(226, 232, 240, 0.8);
+        }
+        [data-theme="dark"] {
+            --glass-bg: rgba(15, 23, 42, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+        [data-theme="dark"] body {
+            background: radial-gradient(circle at 10% 20%, rgba(15, 23, 42, 0.95) 0%, rgba(11, 15, 25, 0.95) 100%) !important;
+            color: #F8FAFC !important;
+        }
+        [data-theme="dark"] .form-input, [data-theme="dark"] .form-select {
+            background: rgba(30, 41, 59, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #F8FAFC !important;
+        }
+        [data-theme="dark"] .form-title {
+            color: #F8FAFC !important;
+        }
+        [data-theme="dark"] .form-label {
+            color: #CBD5E1 !important;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -22,7 +47,9 @@
             justify-content: center;
             padding: 2rem 1rem;
             color: #1E293B;
+            position: relative;
         }
+
         .register-container {
             width: 100%;
             max-width: 960px;
@@ -227,9 +254,12 @@
     </style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleRegisterTheme()" id="regThemeBtn" style="position:fixed; top:1.25rem; right:1.25rem; z-index:100; padding:0.5rem 0.75rem; border-radius:12px; cursor:pointer; background:var(--glass-bg); border:1px solid var(--glass-border); font-size:1.2rem;" title="Toggle Light/Dark Theme">🌙</button>
+
 
 <div class="register-container">
     <!-- Left Feature Banner -->
+
     <div class="left-banner">
         <div>
             <div class="banner-logo">
@@ -391,7 +421,23 @@ async function handleRegister(e) {
 
     return false;
 }
+
+// Theme Toggle Logic
+function updateRegThemeBtn() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const btn = document.getElementById('regThemeBtn');
+    if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
+}
+function toggleRegisterTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateRegThemeBtn();
+}
+document.addEventListener('DOMContentLoaded', updateRegThemeBtn);
 </script>
 
 </body>
 </html>
+

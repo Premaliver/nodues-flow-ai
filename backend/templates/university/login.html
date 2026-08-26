@@ -6,11 +6,33 @@
     <title>University Leadership Login — Smart NoDues SaaS</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
         :root {
             --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
             --glass-bg: rgba(255, 255, 255, 0.9);
             --glass-border: rgba(226, 232, 240, 0.8);
+        }
+        [data-theme="dark"] {
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+        [data-theme="dark"] body {
+            background: radial-gradient(circle at 10% 20%, rgba(15, 23, 42, 0.95) 0%, rgba(11, 15, 25, 0.95) 100%) !important;
+            color: #F8FAFC !important;
+        }
+        [data-theme="dark"] .brand-title {
+            color: #F8FAFC !important;
+        }
+        [data-theme="dark"] .form-input {
+            background: rgba(30, 41, 59, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #F8FAFC !important;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -21,8 +43,11 @@
             justify-content: center;
             padding: 2rem 1rem;
             color: #1E293B;
+            position: relative;
         }
+
         .login-card {
+
             width: 100%;
             max-width: 440px;
             background: var(--glass-bg);
@@ -127,8 +152,10 @@
     </style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleLoginTheme()" id="loginThemeBtn" style="position:fixed; top:1.25rem; right:1.25rem; z-index:100; padding:0.5rem 0.75rem; border-radius:12px; cursor:pointer; background:var(--glass-bg); border:1px solid var(--glass-border); font-size:1.2rem;" title="Toggle Light/Dark Theme">🌙</button>
 
 <div class="login-card">
+
     <div class="brand-header">
         <div class="brand-logo">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
@@ -311,14 +338,22 @@ async function handleMasterAdminLogin(e) {
     }
 }
 
-// Global Secret Shortcut: Ctrl + Shift + P
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p' || e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 's' || e.key === 'S'))) {
-        e.preventDefault();
-        openMasterAdminModal();
-    }
-});
+// Theme Toggle Logic
+function updateLoginThemeBtn() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const btn = document.getElementById('loginThemeBtn');
+    if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
+}
+function toggleLoginTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateLoginThemeBtn();
+}
+document.addEventListener('DOMContentLoaded', updateLoginThemeBtn);
 </script>
 
 </body>
 </html>
+

@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart NoDues AI — Interactive Product POV & Live Simulation</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
         :root {
             --brand-primary: #4F46E5;
@@ -13,7 +19,61 @@
             --dark-surface: #0F172A;
             --dark-card: #1E293B;
             --dark-border: #334155;
+            --bg-body: #0B0F19;
+            --text-color: #F8FAFC;
         }
+        [data-theme="light"] {
+            --dark-surface: #FFFFFF;
+            --dark-card: #F8FAFC;
+            --dark-border: #E2E8F0;
+            --bg-body: #F1F5F9;
+            --text-color: #0F172A;
+        }
+        [data-theme="light"] body {
+            background: #F1F5F9 !important;
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pov-nav {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .nav-brand {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pov-title {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .pov-subtitle {
+            color: #64748B !important;
+        }
+        [data-theme="light"] .sim-card {
+            background: #FFFFFF !important;
+            border-color: #E2E8F0 !important;
+            color: #0F172A !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+        [data-theme="light"] .sim-body {
+            color: #475569 !important;
+        }
+        [data-theme="light"] .metric-box {
+            background: #F8FAFC !important;
+            border-color: #E2E8F0 !important;
+        }
+        [data-theme="light"] .metric-label {
+            color: #64748B !important;
+        }
+        [data-theme="light"] .feature-card {
+            background: #FFFFFF !important;
+            border-color: #E2E8F0 !important;
+        }
+        [data-theme="light"] .feature-card h3 {
+            color: #0F172A !important;
+        }
+        [data-theme="light"] .feature-card p {
+            color: #64748B !important;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #0B0F19;
@@ -328,6 +388,7 @@
     </div>
 
     <div style="display: flex; align-items: center; gap: 1rem;">
+        <button class="theme-toggle" onclick="togglePovTheme()" id="povThemeBtn" style="padding: 0.4rem 0.65rem; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid var(--dark-border); font-size: 1.1rem;" title="Toggle Light/Dark Theme">🌙</button>
         {% if university and university.has_active_subscription %}
         <a href="/university/launch-superadmin" class="btn-subscribe-top" style="background: #10B981;">Launch SuperAdmin Portal &rarr;</a>
         {% else %}
@@ -335,6 +396,7 @@
         {% endif %}
     </div>
 </nav>
+
 
 <!-- Header Section -->
 <header class="pov-header">
@@ -556,7 +618,23 @@ function switchStage(stageNum, btnEl) {
         }
     }
 }
+
+// Theme Toggle Logic
+function updatePovThemeBtn() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const btn = document.getElementById('povThemeBtn');
+    if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
+}
+function togglePovTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updatePovThemeBtn();
+}
+document.addEventListener('DOMContentLoaded', updatePovThemeBtn);
 </script>
 
 </body>
 </html>
+
