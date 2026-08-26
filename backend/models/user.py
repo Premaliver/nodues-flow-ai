@@ -46,7 +46,11 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     deleted_at = db.Column(db.DateTime(timezone=True))
 
+    # Tenant Isolation
+    university_id = db.Column(GUID, db.ForeignKey("university_tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+
     # Relationships
+    university = db.relationship("UniversityTenant", backref=db.backref("users", lazy="dynamic"))
     student_profile = db.relationship("Student", back_populates="user", uselist=False)
     notifications = db.relationship("Notification", back_populates="user", lazy="dynamic")
     audit_logs = db.relationship("AuditLog", back_populates="user", lazy="dynamic")
@@ -118,6 +122,7 @@ class User(UserMixin, db.Model):
             "profile_image_url": self.profile_image_url,
             "is_email_verified": self.is_email_verified,
             "is_mfa_enabled": self.is_mfa_enabled,
+            "university_id": str(self.university_id) if self.university_id else None,
             "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

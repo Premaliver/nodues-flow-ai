@@ -44,7 +44,11 @@ class Student(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    # Tenant Isolation
+    university_id = db.Column(GUID, db.ForeignKey("university_tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+
     # Relationships
+    university = db.relationship("UniversityTenant", backref=db.backref("students", lazy="dynamic"))
     user = db.relationship("User", back_populates="student_profile")
     course = db.relationship("Course", back_populates="students")
     academic_department = db.relationship("Department", foreign_keys=[academic_department_id])
@@ -85,6 +89,7 @@ class Student(db.Model):
             "guardian_phone": self.guardian_phone,
             "phone": self.user.phone if self.user else None,
             "email": self.user.email if self.user else None,
+            "university_id": str(self.university_id) if self.university_id else None,
             "city": self.city,
             "state": self.state,
         }

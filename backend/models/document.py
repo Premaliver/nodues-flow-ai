@@ -37,6 +37,10 @@ class Document(db.Model):
     verified_at = db.Column(db.DateTime(timezone=True))
     rejection_reason = db.Column(db.Text)
     uploaded_by = db.Column(GUID, db.ForeignKey("users.id"), nullable=False)
+    
+    # Tenant Isolation
+    university_id = db.Column(GUID, db.ForeignKey("university_tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+
     created_at = db.Column(
         db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
     )

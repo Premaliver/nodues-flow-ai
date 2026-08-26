@@ -53,7 +53,7 @@ def role_required(*roles: str):
                 sa = User.query.filter_by(role="super_admin").first()
                 if sa:
                     request.current_user = sa
-                    return f(*args, **kwargs)
+                return f(*args, **kwargs)
 
             return jsonify({"success": False, "message": "Authentication required"}), 401
 

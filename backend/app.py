@@ -123,6 +123,10 @@ def create_app(config_name: str = "default") -> Flask:
     # Register blueprints
     register_blueprints(app)
 
+    # Initialize multi-tenant context resolution
+    from utils.tenant_resolver import init_tenant_resolver
+    init_tenant_resolver(app)
+
     @app.route("/health")
     @app.route("/api/health")
     @limiter.exempt
@@ -138,11 +142,12 @@ def create_app(config_name: str = "default") -> Flask:
     @app.before_request
     def ensure_clean_db_session():
         try:
-            # Clean up any lingering aborted transaction on the worker connection
-            if db.session.is_active:
-                pass
-        except Exception:
             db.session.rollback()
+        except Exception:
+            try:
+                db.session.remove()
+            except Exception:
+                pass
 
     @app.teardown_request
     def teardown_request_cleanup(exception=None):
@@ -289,10 +294,12 @@ def register_blueprints(app: Flask) -> None:
     from blueprints.superadmin import superadmin_bp
     from blueprints.api import api_bp
     from blueprints.university import university_bp
+    from blueprints.platform import platform_bp
 
     # Register with URL prefixes
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(university_bp, url_prefix="/university")
+    app.register_blueprint(platform_bp, url_prefix="/platform")
     app.register_blueprint(student_bp, url_prefix="/student")
     app.register_blueprint(accounts_bp, url_prefix="/accounts")
     app.register_blueprint(hostel_bp, url_prefix="/hostel")
@@ -304,9 +311,10 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(superadmin_bp, url_prefix="/superadmin")
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    # Exempt auth and university API routes from CSRF
+    # Exempt auth, university, and platform API routes from CSRF
     csrf.exempt(auth_bp)
     csrf.exempt(university_bp)
+    csrf.exempt(platform_bp)
 
     # Root route — serve landing page
     @app.route("/")

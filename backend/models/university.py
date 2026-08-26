@@ -25,6 +25,16 @@ class UniversityTenant(db.Model):
     country = db.Column(db.String(100), default="India")
     estimated_students = db.Column(db.Integer, default=5000)
 
+    # Whitelabel Branding & Custom Domain Configuration
+    custom_domain = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    logo_url = db.Column(db.String(500), nullable=True)
+    favicon_url = db.Column(db.String(500), nullable=True)
+    primary_color = db.Column(db.String(50), default="#4f46e5")
+    accent_color = db.Column(db.String(50), default="#6366f1")
+    banner_text = db.Column(db.String(255), nullable=True)
+    sso_config = db.Column(db.JSON, default=dict)
+    workflow_order = db.Column(db.JSON, default=list)
+
     # Subscription Lifecycle
     subscription_status = db.Column(
         db.Enum(
@@ -97,6 +107,14 @@ class UniversityTenant(db.Model):
             "state": self.state,
             "country": self.country,
             "estimated_students": self.estimated_students,
+            "custom_domain": self.custom_domain,
+            "logo_url": self.logo_url,
+            "favicon_url": self.favicon_url,
+            "primary_color": self.primary_color,
+            "accent_color": self.accent_color,
+            "banner_text": self.banner_text,
+            "sso_config": self.sso_config or {},
+            "workflow_order": self.workflow_order or [],
             "subscription_status": self.subscription_status,
             "subscription_plan": self.subscription_plan,
             "billing_cycle": self.billing_cycle,

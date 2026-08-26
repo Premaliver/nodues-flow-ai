@@ -219,5 +219,106 @@ async function handleLogin(e) {
 }
 </script>
 
+<!-- PLATFORM MASTER SUPERADMIN SECRET MODAL -->
+<div id="masterAdminModalBackdrop" style="position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5, 8, 22, 0.88); backdrop-filter: blur(16px); z-index: 9999; padding: 1rem;">
+    <div style="background: #0d1127; border: 1px solid rgba(99, 102, 241, 0.4); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85); width: 100%; max-width: 440px; border-radius: 24px; padding: 2.25rem; position: relative; box-sizing: border-box;">
+        <button type="button" onclick="closeMasterAdminModal()" title="Close" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;">&times;</button>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.85rem; box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);">
+                👑
+            </div>
+            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.45rem; font-weight: 700; color: #fff; margin: 0 0 0.25rem; letter-spacing: -0.02em;">
+                Master Platform Controller
+            </h3>
+            <div style="display: inline-block; font-size: 0.72rem; font-weight: 700; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(6, 182, 212, 0.12); padding: 0.25rem 0.65rem; border-radius: 100px; border: 1px solid rgba(6, 182, 212, 0.3);">
+                ⚡ Platform SuperAdmin Access
+            </div>
+        </div>
+
+        <div id="masterAdminAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+
+        <form id="masterAdminForm" onsubmit="handleMasterAdminLogin(event)">
+            <div style="margin-bottom: 1.25rem;">
+                <label for="masterUsername" style="color: #cbd5e1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.4rem;">Master Operator ID</label>
+                <input type="text" id="masterUsername" value="PREMK" required style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label for="masterPassword" style="color: #cbd5e1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.4rem;">Master Security Key</label>
+                <input type="password" id="masterPassword" placeholder="••••••••" required style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; font-size: 0.9rem; box-sizing: border-box;">
+            </div>
+
+            <button type="submit" id="masterLoginBtn" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); cursor: pointer;">
+                ⚡ Authenticate as Master SuperAdmin
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openMasterAdminModal() {
+    const modal = document.getElementById('masterAdminModalBackdrop');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('masterPassword').focus();
+    }
+}
+
+function closeMasterAdminModal() {
+    const modal = document.getElementById('masterAdminModalBackdrop');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handleMasterAdminLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('masterLoginBtn');
+    const alertBox = document.getElementById('masterAdminAlert');
+    alertBox.style.display = 'none';
+
+    const username = document.getElementById('masterUsername').value.trim();
+    const password = document.getElementById('masterPassword').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Verifying Master Credentials...';
+
+    try {
+        const res = await fetch('/platform/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            btn.textContent = 'Access Granted! Launching...';
+            if (data.data && data.data.access_token) {
+                localStorage.setItem('access_token', data.data.access_token);
+            }
+            setTimeout(() => {
+                window.location.href = data.data.redirect_url || '/platform/dashboard';
+            }, 400);
+        } else {
+            alertBox.textContent = data.message || 'Invalid Master SuperAdmin credentials.';
+            alertBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '⚡ Authenticate as Master SuperAdmin';
+        }
+    } catch (err) {
+        alertBox.textContent = 'Unable to reach server. Please check connection.';
+        alertBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '⚡ Authenticate as Master SuperAdmin';
+    }
+}
+
+// Global Secret Shortcut: Ctrl + Shift + P
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p' || e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 's' || e.key === 'S'))) {
+        e.preventDefault();
+        openMasterAdminModal();
+    }
+});
+</script>
+
 </body>
 </html>

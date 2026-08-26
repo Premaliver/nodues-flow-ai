@@ -65,17 +65,19 @@ class NoDuesApplication(db.Model):
     )
     deleted_at = db.Column(db.DateTime(timezone=True))
 
+    # Tenant Isolation
+    university_id = db.Column(GUID, db.ForeignKey("university_tenants.id", ondelete="CASCADE"), nullable=True, index=True)
+
     # Relationships
+    university = db.relationship("UniversityTenant", backref=db.backref("applications", lazy="dynamic"))
     student = db.relationship("Student", back_populates="applications")
     semester = db.relationship("Semester", back_populates="applications")
+    hod_department = db.relationship("Department", foreign_keys=[hod_department_id])
     department_approvals = db.relationship(
         "ApplicationDepartment", back_populates="application",
-        cascade="all, delete-orphan", lazy="joined",
+        lazy="joined", order_by="ApplicationDepartment.display_order",
     )
-    documents = db.relationship(
-        "Document", back_populates="application",
-        cascade="all, delete-orphan", lazy="dynamic",
-    )
+    documents = db.relationship("Document", back_populates="application", lazy="joined")
     admit_card = db.relationship(
         "AdmitCard", back_populates="application",
         uselist=False, cascade="all, delete-orphan",
@@ -104,6 +106,7 @@ class NoDuesApplication(db.Model):
             "current_step": self.current_step,
             "total_steps": self.total_steps,
             "progress_percentage": self.progress_percentage,
+            "university_id": str(self.university_id) if self.university_id else None,
             "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "remarks": self.remarks,

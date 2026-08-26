@@ -6,7 +6,7 @@ import string as str_mod
 import random
 from datetime import datetime, timezone, timedelta
 
-from flask import request, jsonify, render_template, current_app, session, redirect
+from flask import request, jsonify, render_template, current_app, session, redirect, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_login import login_required, current_user
 
@@ -189,7 +189,7 @@ SUPERVISOR_ROLES = [
 @superadmin_bp.route("/api/users/staff", methods=["GET"])
 @admin_only
 def list_staff():
-    """List all staff users (non-student, non-admin) with pagination."""
+    """List all staff users (non-student, non-admin) with pagination, scoped to current university tenant."""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     role_filter = request.args.get("role")
@@ -200,6 +200,11 @@ def list_staff():
         User.role.in_(SUPERVISOR_ROLES),
         User.deleted_at.is_(None),
     )
+    # Scope to active tenant if present
+    tenant_id = getattr(g, "university_id", None)
+    if tenant_id:
+        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+
     if role_filter:
         query = query.filter_by(role=role_filter)
     if status_filter:
@@ -244,6 +249,7 @@ def create_staff():
         return jsonify({"success": False, "message": "A user with this email already exists"}), 409
 
     temp_password = _generate_temp_password()
+    tenant_id = getattr(g, "university_id", None)
 
     user = User(
         email=email,
@@ -253,13 +259,19 @@ def create_staff():
         phone=data.get("phone", "").strip(),
         is_email_verified=True,
         status="active",
+        university_id=tenant_id,
     )
     user.set_password(temp_password)
     db.session.add(user)
     db.session.flush()
 
     # Link to department by role
-    dept = Department.query.filter_by(role=role, is_active=True).first()
+    dept = None
+    if tenant_id:
+        dept = Department.query.filter_by(role=role, is_active=True, university_id=tenant_id).first()
+    if not dept:
+        dept = Department.query.filter_by(role=role, is_active=True).first()
+
     if dept:
         staff_link = DepartmentStaff(
             user_id=user.id,
@@ -277,6 +289,7 @@ def create_staff():
             action="create",
             resource_type="user",
             resource_id=user.id,
+            university_id=tenant_id,
             details={"created_user": email, "role": role},
             ip_address=get_client_ip(),
             user_agent=get_user_agent(),
@@ -398,13 +411,18 @@ def delete_user(user_id):
 @superadmin_bp.route("/api/users/students", methods=["GET"])
 @admin_only
 def list_students():
-    """List all student users with pagination."""
+    """List all student users with pagination, scoped to university tenant."""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     search = request.args.get("search", "").strip().lower()
     status_filter = request.args.get("status")
 
     query = User.query.filter_by(role="student").filter(User.deleted_at.is_(None))
+    
+    tenant_id = getattr(g, "university_id", None)
+    if tenant_id:
+        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+
     if status_filter:
         query = query.filter_by(status=status_filter)
     if search:
@@ -438,6 +456,10 @@ def list_all_users():
     status_filter = request.args.get("status")
 
     query = User.query.filter(User.deleted_at.is_(None))
+    tenant_id = getattr(g, "university_id", None)
+    if tenant_id:
+        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+
     if role_filter:
         query = query.filter_by(role=role_filter)
     if status_filter:
@@ -1141,15 +1163,240 @@ def export_institutional_data():
             )
             db.session.add(audit)
             db.session.commit()
-        except Exception as audit_err:
+        except Exception:
             db.session.rollback()
-            current_app.logger.warning(f"Audit log recording notice: {audit_err}")
 
     return send_file(
         zip_path,
         mimetype="application/zip",
         as_attachment=True,
-        download_name=f"smartnodues_export_{timestamp_str}.zip",
+        download_name=f"SmartNoDues_Backup_{timestamp_str}.zip",
     )
 
 
+# ──────────────────────────────────────
+# API: Bulk CSV Student & Staff Imports
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/users/students/import-csv", methods=["POST"])
+@admin_only
+def import_students_csv():
+    """Bulk import student roster via CSV or JSON rows."""
+    import csv
+    import io
+    from utils.tenant_resolver import get_current_tenant_id
+
+    tenant_id = get_current_tenant_id()
+    rows = []
+
+    if "file" in request.files:
+        file = request.files["file"]
+        if not file.filename.endswith((".csv", ".txt")):
+            return jsonify({"success": False, "message": "Please upload a valid .csv file."}), 400
+        stream = io.StringIO(file.stream.read().decode("utf-8-sig", errors="ignore"))
+        reader = csv.DictReader(stream)
+        rows = list(reader)
+    elif request.is_json:
+        rows = request.json.get("rows", [])
+    else:
+        return jsonify({"success": False, "message": "CSV file or JSON rows required."}), 400
+
+    created_count = 0
+    skipped_count = 0
+    errors = []
+
+    for idx, row in enumerate(rows, start=1):
+        email = (row.get("email") or row.get("Email") or "").strip().lower()
+        roll_no = (row.get("roll_number") or row.get("Roll Number") or row.get("roll_no") or "").strip()
+        first_name = (row.get("first_name") or row.get("First Name") or row.get("name") or "Student").strip()
+        last_name = (row.get("last_name") or row.get("Last Name") or "").strip()
+        course_name = (row.get("course_name") or row.get("Course") or "B.Tech").strip()
+        branch = (row.get("branch") or row.get("Branch") or "CSE").strip()
+        semester = int(row.get("current_semester") or row.get("Semester") or 1)
+        batch = (row.get("batch_year") or row.get("Batch") or "2022-2026").strip()
+
+        if not email or not roll_no:
+            skipped_count += 1
+            continue
+
+        existing_user = User.query.filter_by(email=email).first()
+        existing_student = Student.query.filter_by(roll_number=roll_no).first()
+
+        if existing_user or existing_student:
+            skipped_count += 1
+            continue
+
+        try:
+            temp_pass = _generate_temp_password()
+            user = User(
+                email=email,
+                role="student",
+                first_name=first_name,
+                last_name=last_name,
+                is_email_verified=True,
+                status="active",
+                university_id=tenant_id,
+            )
+            user.set_password(temp_pass)
+            db.session.add(user)
+            db.session.flush()
+
+            student = Student(
+                user_id=user.id,
+                roll_number=roll_no,
+                enrollment_number=f"EN-{roll_no}",
+                course_name=course_name,
+                branch=branch,
+                current_semester=semester,
+                batch_year=batch,
+                admission_year=int(batch.split("-")[0]) if "-" in batch else 2022,
+                category="day_scholar",
+                university_id=tenant_id,
+            )
+            db.session.add(student)
+            created_count += 1
+        except Exception as e:
+            errors.append(f"Row {idx} ({email}): {str(e)}")
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "message": f"Successfully imported {created_count} students ({skipped_count} skipped/existing).",
+        "data": {
+            "created": created_count,
+            "skipped": skipped_count,
+            "errors": errors,
+        }
+    })
+
+
+@superadmin_bp.route("/api/users/staff/import-csv", methods=["POST"])
+@admin_only
+def import_staff_csv():
+    """Bulk import staff roster via CSV or JSON rows."""
+    import csv
+    import io
+    from utils.tenant_resolver import get_current_tenant_id
+
+    tenant_id = get_current_tenant_id()
+    rows = []
+
+    if "file" in request.files:
+        file = request.files["file"]
+        if not file.filename.endswith((".csv", ".txt")):
+            return jsonify({"success": False, "message": "Please upload a valid .csv file."}), 400
+        stream = io.StringIO(file.stream.read().decode("utf-8-sig", errors="ignore"))
+        reader = csv.DictReader(stream)
+        rows = list(reader)
+    elif request.is_json:
+        rows = request.json.get("rows", [])
+    else:
+        return jsonify({"success": False, "message": "CSV file or JSON rows required."}), 400
+
+    created_count = 0
+    skipped_count = 0
+    errors = []
+
+    for idx, row in enumerate(rows, start=1):
+        email = (row.get("email") or row.get("Email") or "").strip().lower()
+        role = (row.get("role") or row.get("Role") or "accounts").strip().lower()
+        first_name = (row.get("first_name") or row.get("First Name") or row.get("name") or "Staff").strip()
+        last_name = (row.get("last_name") or row.get("Last Name") or "").strip()
+        designation = (row.get("designation") or row.get("Designation") or "Officer").strip()
+
+        if not email or role not in SUPERVISOR_ROLES:
+            skipped_count += 1
+            continue
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            skipped_count += 1
+            continue
+
+        try:
+            temp_pass = _generate_temp_password()
+            user = User(
+                email=email,
+                role=role,
+                first_name=first_name,
+                last_name=last_name,
+                is_email_verified=True,
+                status="active",
+                university_id=tenant_id,
+            )
+            user.set_password(temp_pass)
+            db.session.add(user)
+            db.session.flush()
+
+            # Link department
+            dept = Department.query.filter_by(role=role, is_active=True).first()
+            if dept:
+                staff_link = DepartmentStaff(
+                    user_id=user.id,
+                    department_id=dept.id,
+                    designation=designation,
+                    is_active=True,
+                )
+                db.session.add(staff_link)
+
+            created_count += 1
+        except Exception as e:
+            errors.append(f"Row {idx} ({email}): {str(e)}")
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "message": f"Successfully imported {created_count} staff members ({skipped_count} skipped/existing).",
+        "data": {
+            "created": created_count,
+            "skipped": skipped_count,
+            "errors": errors,
+        }
+    })
+
+
+# ──────────────────────────────────────
+# API: University Whitelabel Branding
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/university/branding", methods=["GET", "PUT"])
+@admin_only
+def manage_branding():
+    """Retrieve or update university whitelabel branding."""
+    from utils.tenant_resolver import get_current_tenant
+    tenant = get_current_tenant()
+    if not tenant:
+        return jsonify({"success": False, "message": "University tenant context required."}), 404
+
+    if request.method == "GET":
+        return jsonify({
+            "success": True,
+            "data": {
+                "university_name": tenant.name,
+                "slug": tenant.slug,
+                "custom_domain": tenant.custom_domain,
+                "logo_url": tenant.logo_url,
+                "favicon_url": tenant.favicon_url,
+                "primary_color": tenant.primary_color,
+                "accent_color": tenant.accent_color,
+                "banner_text": tenant.banner_text,
+                "sso_config": tenant.sso_config or {},
+            }
+        })
+
+    data = request.get_json(silent=True) or request.form
+    if "logo_url" in data:
+        tenant.logo_url = data.get("logo_url")
+    if "primary_color" in data:
+        tenant.primary_color = data.get("primary_color")
+    if "accent_color" in data:
+        tenant.accent_color = data.get("accent_color")
+    if "banner_text" in data:
+        tenant.banner_text = data.get("banner_text")
+    if "custom_domain" in data:
+        tenant.custom_domain = data.get("custom_domain")
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "message": "University branding updated successfully.",
+        "data": tenant.to_dict()
+    })

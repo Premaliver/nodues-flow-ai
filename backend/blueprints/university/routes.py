@@ -313,4 +313,15 @@ def launch_superadmin():
         login_user(sa_user)
         return redirect("/superadmin/dashboard")
 
-    return redirect("/auth/login")
+    return redirect("/university/login")
+
+
+@university_bp.route("/logout")
+def university_logout():
+    """Logout of university portal session and return to university login."""
+    session.pop("university_id", None)
+    session.pop("university_slug", None)
+    session.pop("university_name", None)
+    logout_user()
+    return redirect("/university/login")
+
