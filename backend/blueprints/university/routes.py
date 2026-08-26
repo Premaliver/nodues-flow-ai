@@ -325,3 +325,489 @@ def university_logout():
     logout_user()
     return redirect("/university/login")
 
+
+# ─────────────────────────────────────────────────────────────
+# 9. WHITE-LABEL INSTITUTIONAL PORTAL & ROLLOUT HUB
+# ─────────────────────────────────────────────────────────────
+
+def render_university_portal(slug: str):
+    """Render the official branded clearance portal for a specific university."""
+    db.create_all()
+    univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
+    if not univ:
+        univ = UniversityTenant.query.filter(UniversityTenant.slug.ilike(f"%{slug}%")).first()
+    
+    if not univ:
+        return render_template(
+            "errors/error.html",
+            title="University Portal Not Found",
+            message=f"No institution found registered with slug '{slug}'. Please check the URL or contact your campus administration.",
+            code=404
+        ), 404
+
+    return render_template("university/portal.html", university=univ)
+
+
+@university_bp.route("/portal/<slug>")
+def university_portal_alias(slug):
+    """Direct alias to institutional portal."""
+    return render_university_portal(slug)
+
+
+@university_bp.route("/poster")
+def university_poster():
+    """Render ready-to-print official Campus Notice Board Circular & QR Poster."""
+    univ = get_current_university()
+    if not univ:
+        return redirect("/university/login")
+    return render_template("university/poster.html", university=univ)
+
+
+@university_bp.route("/portal/<slug>/poster")
+def university_slug_poster(slug):
+    """Public printable poster for the university."""
+    univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
+    if not univ:
+        return redirect("/university/login")
+    return render_template("university/poster.html", university=univ)
+
+
+# ─────────────────────────────────────────────────────────────
+# 10. SCOPED STUDENT REGISTRATION & LOGIN VIA UNIVERSITY PORTAL
+# ─────────────────────────────────────────────────────────────
+
+@university_bp.route("/portal/<slug>/api/student-register", methods=["POST"])
+def portal_student_register(slug):
+    """Self-registration for students on the university's branded portal."""
+    univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
+    if not univ:
+        return jsonify({"success": False, "message": "Invalid university portal."}), 404
+
+    data = request.get_json(silent=True) or request.form
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    roll_number = data.get("roll_number", "").strip().upper()
+    enrollment_number = data.get("enrollment_number", "").strip().upper() or roll_number
+    branch = data.get("branch", "Computer Science & Engineering").strip()
+    course_name = data.get("course_name", "B.Tech").strip()
+    category = data.get("category", "day_scholar").strip().lower()
+    
+    try:
+        current_semester = int(data.get("current_semester", 8))
+    except (ValueError, TypeError):
+        current_semester = 8
+
+    if not first_name or not email or not password or not roll_number:
+        return jsonify({"success": False, "message": "First name, official email, roll number, and password are required."}), 400
+
+    from models.student import Student
+    from models.audit_log import AuditLog
+
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"success": False, "message": "An account with this email already exists. Please log in directly."}), 409
+
+    existing_student = Student.query.filter_by(roll_number=roll_number).first()
+    if existing_student:
+        return jsonify({"success": False, "message": f"Roll number {roll_number} is already registered. Please log in directly."}), 409
+
+    try:
+        user = User(
+            email=email,
+            role="student",
+            first_name=first_name,
+            last_name=last_name,
+            status="active",
+            is_email_verified=True,
+            university_id=univ.id
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+
+        student = Student(
+            user_id=user.id,
+            roll_number=roll_number,
+            enrollment_number=enrollment_number,
+            course_name=course_name,
+            branch=branch,
+            current_semester=current_semester,
+            batch_year=f"{datetime.now(timezone.utc).year - 4}-{datetime.now(timezone.utc).year}",
+            admission_year=datetime.now(timezone.utc).year - 4,
+            category=category if category in ("day_scholar", "hosteller", "transport_user", "scholarship", "hosteller_transport", "scholarship_hosteller", "scholarship_transport", "hosteller_scholarship_transport") else "day_scholar",
+            university_id=univ.id,
+        )
+        db.session.add(student)
+
+        audit = AuditLog(
+            user_id=user.id,
+            action="create",
+            resource_type="student",
+            resource_id=user.id,
+            details={"portal": univ.slug, "roll_number": roll_number}
+        )
+        db.session.add(audit)
+        db.session.commit()
+
+        login_user(user)
+        session["university_id"] = str(univ.id)
+        session["university_name"] = univ.name
+        session["university_slug"] = univ.slug
+
+        return jsonify({
+            "success": True,
+            "message": f"Registration successful! Welcome to {univ.name} Digital No-Dues Portal.",
+            "data": {
+                "redirect_url": "/student/dashboard",
+                "user": user.to_dict(),
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Student registration error: {e}")
+        return jsonify({"success": False, "message": f"Registration failed: {str(e)}"}), 500
+
+
+@university_bp.route("/portal/<slug>/api/student-login", methods=["POST"])
+def portal_student_login(slug):
+    """Login for students on the university's branded portal using Roll No or Email."""
+    univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
+    if not univ:
+        return jsonify({"success": False, "message": "Invalid university portal."}), 404
+
+    data = request.get_json(silent=True) or request.form
+    identifier = data.get("identifier", "").strip().lower()
+    password = data.get("password", "")
+
+    if not identifier or not password:
+        return jsonify({"success": False, "message": "Roll number/Email and password are required."}), 400
+
+    from models.student import Student
+
+    user = None
+    if "@" in identifier:
+        user = User.query.filter_by(email=identifier, role="student").first()
+    else:
+        student_rec = Student.query.filter(Student.roll_number.ilike(identifier)).first()
+        if student_rec and student_rec.user:
+            user = student_rec.user
+
+    if not user or not user.check_password(password):
+        return jsonify({"success": False, "message": "Invalid roll number/email or password."}), 401
+
+    if not user.university_id:
+        user.university_id = univ.id
+        db.session.commit()
+
+    login_user(user)
+    session["university_id"] = str(univ.id)
+    session["university_name"] = univ.name
+    session["university_slug"] = univ.slug
+
+    return jsonify({
+        "success": True,
+        "message": f"Welcome back, {user.first_name}!",
+        "data": {
+            "redirect_url": "/student/dashboard",
+            "user": user.to_dict(),
+        }
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+# 11. SCOPED DEPARTMENT STAFF LOGIN VIA UNIVERSITY PORTAL
+# ─────────────────────────────────────────────────────────────
+
+@university_bp.route("/portal/<slug>/api/staff-login", methods=["POST"])
+def portal_staff_login(slug):
+    """Department staff login for Accounts, Hostel, Mess, Transport, Scholarship, HOD, Examination."""
+    univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
+    if not univ:
+        return jsonify({"success": False, "message": "Invalid university portal."}), 404
+
+    data = request.get_json(silent=True) or request.form
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    department_role = data.get("role", "accounts").strip().lower()
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "Official departmental email and password are required."}), 400
+
+    valid_roles = ["accounts", "hostel", "mess", "transport", "scholarship", "hod", "examination"]
+    if department_role not in valid_roles:
+        department_role = "accounts"
+
+    user = User.query.filter_by(email=email, role=department_role).first()
+    
+    if not user:
+        user = User.query.filter_by(email=email).first()
+
+    if not user or not user.check_password(password):
+        return jsonify({"success": False, "message": "Invalid staff credentials. Please contact your University SuperAdmin."}), 401
+
+    if not user.university_id:
+        user.university_id = univ.id
+        db.session.commit()
+
+    login_user(user)
+    session["university_id"] = str(univ.id)
+    session["university_name"] = univ.name
+    session["university_slug"] = univ.slug
+
+    target_dashboard = f"/{user.role}/dashboard"
+
+    return jsonify({
+        "success": True,
+        "message": f"Authenticated as {user.first_name} ({user.role.upper()})",
+        "data": {
+            "redirect_url": target_dashboard,
+            "user": user.to_dict(),
+        }
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+# 12. UNIVERSITY ADMIN: BRANDING & CUSTOMIZATION API
+# ─────────────────────────────────────────────────────────────
+
+@university_bp.route("/api/branding", methods=["POST"])
+def update_branding():
+    """Update institutional branding (Logo, theme colors, notice text)."""
+    univ = get_current_university()
+    if not univ:
+        return jsonify({"success": False, "message": "Please log in to your university account."}), 401
+
+    data = request.get_json(silent=True) or request.form
+    logo_url = data.get("logo_url", "").strip()
+    primary_color = data.get("primary_color", "").strip()
+    accent_color = data.get("accent_color", "").strip()
+    banner_text = data.get("banner_text", "").strip()
+    phone = data.get("phone", "").strip()
+    website = data.get("website", "").strip()
+
+    if logo_url:
+        univ.logo_url = logo_url
+    if primary_color and primary_color.startswith("#"):
+        univ.primary_color = primary_color
+    if accent_color and accent_color.startswith("#"):
+        univ.accent_color = accent_color
+    if banner_text is not None:
+        univ.banner_text = banner_text
+    if phone:
+        univ.phone = phone
+    if website:
+        univ.website = website
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "message": "University branding updated successfully!",
+        "data": univ.to_dict()
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+# 13. UNIVERSITY ADMIN: DEPARTMENT STAFF DISPATCH & MANAGEMENT
+# ─────────────────────────────────────────────────────────────
+
+STANDARD_DEPARTMENTS = [
+    {"role": "accounts", "code": "ACC", "name": "Accounts & Finance Department", "icon": "💳"},
+    {"role": "hostel", "code": "HST", "name": "Hostel & Residence Department", "icon": "🏢"},
+    {"role": "mess", "code": "MSS", "name": "Mess & Dining Services", "icon": "🍲"},
+    {"role": "transport", "code": "TRN", "name": "Transport & Bus Fleet", "icon": "🚌"},
+    {"role": "scholarship", "code": "SCH", "name": "Scholarship & Financial Aid Cell", "icon": "🎓"},
+    {"role": "hod", "code": "HOD", "name": "Head of Department (HOD - Academics)", "icon": "👔"},
+    {"role": "examination", "code": "EXM", "name": "Examination & Evaluation Cell", "icon": "📝"},
+]
+
+@university_bp.route("/api/staff", methods=["GET"])
+def get_department_staff():
+    """Retrieve all 7 departmental accounts for the university."""
+    univ = get_current_university()
+    if not univ:
+        return jsonify({"success": False, "message": "Please log in."}), 401
+
+    staff_list = []
+    for dept in STANDARD_DEPARTMENTS:
+        role = dept["role"]
+        user = User.query.filter_by(university_id=univ.id, role=role).first()
+        if not user:
+            user = User.query.filter_by(role=role).first()
+
+        default_email = f"{role}@{univ.slug}.nodues.edu"
+        staff_list.append({
+            "role": role,
+            "code": dept["code"],
+            "name": dept["name"],
+            "icon": dept["icon"],
+            "assigned_user": {
+                "id": str(user.id) if user else None,
+                "first_name": user.first_name if user else f"{dept['name'].split()[0]}",
+                "last_name": user.last_name if user else "Officer",
+                "email": user.email if user else default_email,
+                "status": user.status if user else "active",
+            } if user else None,
+            "default_email": default_email,
+        })
+
+    return jsonify({"success": True, "departments": staff_list})
+
+
+@university_bp.route("/api/staff/provision", methods=["POST"])
+def provision_department_staff():
+    """Auto-provision / reset default accounts for all 7 clearance departments."""
+    univ = get_current_university()
+    if not univ:
+        return jsonify({"success": False, "message": "Please log in."}), 401
+
+    data = request.get_json(silent=True) or {}
+    default_pwd = data.get("default_password", "Staff@Clearance2025")
+
+    provisioned = []
+    try:
+        for dept in STANDARD_DEPARTMENTS:
+            role = dept["role"]
+            email = f"{role}@{univ.slug}.nodues.edu".lower()
+
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                user = User(
+                    email=email,
+                    role=role,
+                    first_name=univ.name.split()[0],
+                    last_name=f"{dept['code']} Officer",
+                    status="active",
+                    is_email_verified=True,
+                    university_id=univ.id,
+                )
+                user.set_password(default_pwd)
+                db.session.add(user)
+            else:
+                user.university_id = univ.id
+                user.set_password(default_pwd)
+
+            provisioned.append({
+                "role": role,
+                "department": dept["name"],
+                "email": email,
+                "password": default_pwd,
+                "login_url": f"/u/{univ.slug}",
+            })
+
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "All 7 Department accounts provisioned successfully!",
+            "credentials": provisioned,
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Staff provisioning error: {e}")
+        return jsonify({"success": False, "message": f"Provisioning failed: {str(e)}"}), 500
+
+
+# ─────────────────────────────────────────────────────────────
+# 14. UNIVERSITY ADMIN: BULK STUDENT CSV IMPORT
+# ─────────────────────────────────────────────────────────────
+
+@university_bp.route("/api/students/bulk-import", methods=["POST"])
+def bulk_import_students():
+    """Bulk import student roster via CSV."""
+    univ = get_current_university()
+    if not univ:
+        return jsonify({"success": False, "message": "Please log in."}), 401
+
+    from models.student import Student
+    import csv
+    import io
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "message": "No CSV file uploaded."}), 400
+
+    csv_file = request.files["file"]
+    if not csv_file.filename.endswith((".csv", ".txt")):
+        return jsonify({"success": False, "message": "Please upload a valid CSV file."}), 400
+
+    try:
+        stream = io.StringIO(csv_file.stream.read().decode("utf-8-sig"), newline=None)
+        reader = csv.DictReader(stream)
+
+        imported_count = 0
+        skipped_count = 0
+        default_pwd = "Student@123"
+
+        for row in reader:
+            roll_no = row.get("roll_number") or row.get("Roll Number") or row.get("roll_no") or ""
+            roll_no = roll_no.strip().upper()
+            
+            email = row.get("email") or row.get("Email") or ""
+            email = email.strip().lower()
+
+            first_name = row.get("first_name") or row.get("First Name") or row.get("name") or "Student"
+            first_name = first_name.strip()
+            last_name = row.get("last_name") or row.get("Last Name") or ""
+            last_name = last_name.strip()
+
+            branch = row.get("branch") or row.get("Branch") or "Computer Science"
+            course = row.get("course") or row.get("Course") or "B.Tech"
+            category = (row.get("category") or "day_scholar").strip().lower()
+
+            if not roll_no:
+                continue
+
+            if not email:
+                email = f"{roll_no.lower()}@{univ.slug}.nodues.edu"
+
+            existing_student = Student.query.filter_by(roll_number=roll_no).first()
+            if existing_student:
+                skipped_count += 1
+                continue
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                skipped_count += 1
+                continue
+
+            user = User(
+                email=email,
+                role="student",
+                first_name=first_name,
+                last_name=last_name,
+                status="active",
+                is_email_verified=True,
+                university_id=univ.id,
+            )
+            user.set_password(f"{roll_no}@2025" if len(roll_no) > 3 else default_pwd)
+            db.session.add(user)
+            db.session.flush()
+
+            student = Student(
+                user_id=user.id,
+                roll_number=roll_no,
+                enrollment_number=roll_no,
+                course_name=course,
+                branch=branch,
+                current_semester=8,
+                batch_year=f"{datetime.now(timezone.utc).year - 4}-{datetime.now(timezone.utc).year}",
+                admission_year=datetime.now(timezone.utc).year - 4,
+                category=category if category in ("day_scholar", "hosteller", "transport_user", "scholarship") else "day_scholar",
+                university_id=univ.id,
+            )
+            db.session.add(student)
+            imported_count += 1
+
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": f"Successfully imported {imported_count} students! ({skipped_count} duplicates skipped)",
+            "imported_count": imported_count,
+            "skipped_count": skipped_count,
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Bulk student import error: {e}")
+        return jsonify({"success": False, "message": f"CSV processing error: {str(e)}"}), 500
+
+

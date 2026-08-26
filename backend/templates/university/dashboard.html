@@ -1,45 +1,66 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Leadership Command Hub — {{ university.name }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-primary: #4F46E5;
-            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
-            --dark-bg: #0B0F19;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --card-border: rgba(255, 255, 255, 0.1);
+            --brand-primary: {{ university.primary_color or '#4F46E5' }};
+            --brand-accent: {{ university.accent_color or '#7C3AED' }};
+            --brand-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 50%, #EC4899 100%);
+            --dark-bg: #090D16;
+            --surface-1: rgba(15, 23, 42, 0.75);
+            --surface-2: rgba(30, 41, 59, 0.65);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --success: #10B981;
+            --warning: #F59E0B;
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--dark-bg);
-            color: #F8FAFC;
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
         }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(79, 70, 229, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 85% 90%, rgba(236, 72, 153, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
         .hub-nav {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
             padding: 1rem 2rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
+
         .nav-brand {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: 1.15rem;
             color: white;
             text-decoration: none;
         }
+
         .nav-logo-icon {
             width: 36px;
             height: 36px;
@@ -49,52 +70,186 @@
             align-items: center;
             justify-content: center;
         }
+
         .main-container {
-            max-width: 1100px;
-            margin: 3rem auto;
+            max-width: 1200px;
+            margin: 2.5rem auto;
             padding: 0 1.5rem;
         }
+
+        /* ── University Header Card ── */
         .univ-header-card {
             background: linear-gradient(145deg, #1E1B4B 0%, #312E81 50%, #1E293B 100%);
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            border: 1px solid rgba(99, 102, 241, 0.4);
             border-radius: 24px;
             padding: 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2.5rem;
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+            flex-wrap: wrap;
+            gap: 1.5rem;
         }
+
         .univ-title {
-            font-family: 'DM Serif Display', serif;
-            font-size: 2.25rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
             margin: 0 0 0.5rem;
             color: white;
+            letter-spacing: -0.02em;
         }
+
         .univ-meta {
             color: #C7D2FE;
             font-size: 0.95rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
+
         .status-pill {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.4rem 1rem;
+            padding: 0.45rem 1.1rem;
             border-radius: 20px;
             font-size: 0.825rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
         .status-active {
             background: rgba(16, 185, 129, 0.2);
             border: 1px solid rgba(16, 185, 129, 0.4);
             color: #34D399;
         }
+
         .status-unsub {
             background: rgba(245, 158, 11, 0.2);
             border: 1px solid rgba(245, 158, 11, 0.4);
             color: #FBBF24;
+        }
+
+        /* ── Rollout & Distribution Box (Hero Section) ── */
+        .rollout-hero-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1.5px solid rgba(99, 102, 241, 0.4);
+            border-radius: 24px;
+            padding: 2.25rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+        }
+
+        .rollout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .rollout-badge {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #818CF8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .rollout-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .link-share-bar {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 16px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .link-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: #A5B4FC;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .share-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-copy {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy:hover {
+            background: #4338CA;
+            transform: translateY(-1px);
+        }
+
+        .btn-poster {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-poster:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        /* ── Grid Sections ── */
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .cards-grid {
@@ -103,8 +258,9 @@
             gap: 1.5rem;
             margin-bottom: 2.5rem;
         }
+
         .hub-card {
-            background: var(--card-bg);
+            background: var(--surface-1);
             border: 1px solid var(--card-border);
             border-radius: 20px;
             padding: 2rem;
@@ -113,18 +269,21 @@
             justify-content: space-between;
             backdrop-filter: blur(16px);
         }
+
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 800;
             color: white;
             margin: 0 0 0.5rem;
         }
+
         .card-desc {
             color: #94A3B8;
             font-size: 0.9rem;
             line-height: 1.6;
             margin-bottom: 1.5rem;
         }
+
         .btn-launch {
             display: inline-flex;
             align-items: center;
@@ -140,10 +299,12 @@
             box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
             transition: all 0.2s ease;
         }
+
         .btn-launch:hover {
             transform: translateY(-2px);
             box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.6);
         }
+
         .btn-secondary {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -155,19 +316,150 @@
             text-decoration: none;
             text-align: center;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
+
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.15);
         }
 
+        /* ── Department List ── */
+        .dept-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dept-row {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dept-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dept-icon {
+            font-size: 1.25rem;
+        }
+
+        .dept-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .dept-email {
+            font-size: 0.8rem;
+            color: #94A3B8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── Form Inputs ── */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: #CBD5E1;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            color: white;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #6366F1;
+        }
+
+        /* ── Modal Overlay ── */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 1.5rem;
+        }
+
+        .modal-box {
+            background: #0F172A;
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            max-width: 650px;
+            width: 100%;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .cred-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+            font-size: 0.85rem;
+        }
+
+        .cred-table th, .cred-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cred-table th {
+            color: #94A3B8;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .cred-table td {
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         @media (max-width: 860px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
             .univ-header-card {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 1.5rem;
-            }
-            .cards-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -177,7 +469,7 @@
 <nav class="hub-nav">
     <a href="/university/dashboard" class="nav-brand">
         <div class="nav-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         </div>
         <span>Smart NoDues SaaS Hub</span>
     </a>
@@ -193,8 +485,9 @@
         <div>
             <h1 class="univ-title">{{ university.name }}</h1>
             <div class="univ-meta">
-                <span>Official Domain / Slug: <strong>{{ university.slug }}.nodues.app</strong></span> &bull; 
-                <span>Capacity: <strong>{{ university.estimated_students }} Students</strong></span>
+                <span>Slug: <strong>{{ university.slug }}</strong></span> &bull; 
+                <span>Capacity: <strong>{{ university.estimated_students }} Students</strong></span> &bull;
+                <span>Expires: <strong>{{ university.expires_at.strftime('%d %b %Y') if university.expires_at else 'Active' }}</strong></span>
             </div>
         </div>
         <div>
@@ -206,65 +499,369 @@
         </div>
     </div>
 
-    <!-- Hub Cards Grid -->
-    <div class="cards-grid">
-        <!-- Card 1: Dedicated SuperAdmin Portal -->
-        <div class="hub-card" style="border-color: rgba(99, 102, 241, 0.4);">
+    <!-- ── STAR FEATURE: Campus Rollout & Distribution Launchpad ── -->
+    <div class="rollout-hero-card">
+        <div class="rollout-header">
             <div>
-                <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; margin-bottom: 0.5rem;">Production Environment</div>
-                <h3 class="card-title">Launch Dedicated SuperAdmin Portal</h3>
-                <p class="card-desc">Enter your live institutional administration console to manage department staff, academic terms, student records, and live No-Dues approvals.</p>
-            </div>
-            {% if university.has_active_subscription %}
-            <a href="/university/launch-superadmin" class="btn-launch">
-                <span>Open University SuperAdmin Portal</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            </a>
-            {% else %}
-            <div>
-                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.825rem; color: #FCD34D; margin-bottom: 1rem;">
-                    🔒 Production portal is locked. Please purchase a subscription to activate your campus instance.
+                <div class="rollout-badge">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    <span>Instant Campus Deployment Toolkit</span>
                 </div>
-                <a href="/university/pricing" class="btn-launch" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">Subscribe & Unlock Instance &rarr;</a>
+                <h2 class="rollout-title">Your Dedicated University Clearance Portal</h2>
             </div>
-            {% endif %}
+            <div>
+                <a href="/u/{{ university.slug }}" target="_blank" class="btn-launch" style="background: linear-gradient(135deg, #10B981, #059669);">
+                    <span>Open Public Student Portal</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+            </div>
         </div>
 
-        <!-- Card 2: Interactive POV Walkthrough -->
+        <p style="color: #94A3B8; font-size: 0.925rem; line-height: 1.5; margin-bottom: 1.25rem;">
+            Give this link to your students and department heads. It features <strong>{{ university.name }}</strong>'s custom branding, official letterhead, and automatic student routing.
+        </p>
+
+        <!-- Share Bar -->
+        <div class="link-share-bar">
+            <span class="link-text" id="univ-portal-link">Loading portal URL...</span>
+            <div class="share-actions">
+                <button onclick="copyPortalLink()" class="btn-copy" id="btn-copy-link">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>Copy Link</span>
+                </button>
+                <a href="/u/{{ university.slug }}/poster" target="_blank" class="btn-poster">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                    <span>Print Notice Board Poster (PDF)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2 COLUMN MAIN GRID ── -->
+    <div class="cards-grid">
+        <!-- Card 1: 7 Department Officers & Staff Hub -->
         <div class="hub-card">
             <div>
-                <div style="font-size: 0.8rem; font-weight: 700; color: #EC4899; text-transform: uppercase; margin-bottom: 0.5rem;">Demo & Sandbox</div>
-                <h3 class="card-title">Interactive POV Walkthrough</h3>
-                <p class="card-desc">Experience the interactive simulation showing how your students submit requests, AI OCR verifies fee receipts, and departments clear dues in real-time.</p>
+                <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; margin-bottom: 0.5rem;">Campus Department Clearance</div>
+                <h3 class="card-title">7 Clearance Department Staff</h3>
+                <p class="card-desc">Your university's 7 standard clearance departments: Accounts, Hostel, Mess, Transport, Scholarship, HOD, and Examination.</p>
+                
+                <div class="dept-list">
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">💳</span>
+                            <div>
+                                <div class="dept-name">Accounts & Finance</div>
+                                <div class="dept-email">accounts@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">🏢</span>
+                            <div>
+                                <div class="dept-name">Hostel Warden</div>
+                                <div class="dept-email">hostel@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">🍲</span>
+                            <div>
+                                <div class="dept-name">Mess & Dining</div>
+                                <div class="dept-email">mess@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">🚌</span>
+                            <div>
+                                <div class="dept-name">Transport Fleet</div>
+                                <div class="dept-email">transport@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">🎓</span>
+                            <div>
+                                <div class="dept-name">Scholarship Cell</div>
+                                <div class="dept-email">scholarship@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">👔</span>
+                            <div>
+                                <div class="dept-name">HOD / Academics</div>
+                                <div class="dept-email">hod@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                    <div class="dept-row">
+                        <div class="dept-info">
+                            <span class="dept-icon">📝</span>
+                            <div>
+                                <div class="dept-name">Examination Cell</div>
+                                <div class="dept-email">examination@{{ university.slug }}.nodues.edu</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: #34D399; font-weight: 700;">ACTIVE</span>
+                    </div>
+                </div>
             </div>
-            <a href="/university/pov" class="btn-secondary">Explore Interactive POV Room &rarr;</a>
+
+            <button onclick="handleProvisionStaff()" class="btn-launch">
+                <span>Auto-Generate & Export Staff Passwords</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
         </div>
 
-        <!-- Card 3: Subscription & Billing Details -->
-        <div class="hub-card">
-            <div>
-                <div style="font-size: 0.8rem; font-weight: 700; color: #10B981; text-transform: uppercase; margin-bottom: 0.5rem;">Billing & License</div>
-                <h3 class="card-title">Subscription & Cryptographic License</h3>
-                <p class="card-desc">
-                    Current Tier: <strong>{{ university.subscription_plan|capitalize if university.subscription_plan != 'none' else 'None' }}</strong><br>
-                    Expires: <strong>{{ university.expires_at.strftime('%d %b %Y') if university.expires_at else 'N/A' }}</strong><br>
-                    Isolation: <strong>Dedicated Database & Storage Boundary</strong>
-                </p>
+        <!-- Card 2: Student Master Bulk CSV Import & Branding -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Bulk CSV Box -->
+            <div class="hub-card">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #EC4899; text-transform: uppercase; margin-bottom: 0.5rem;">Student Onboarding</div>
+                    <h3 class="card-title">Bulk Student Master Import</h3>
+                    <p class="card-desc">Upload a CSV or Excel roster with Roll Numbers, Names, and Branches to provision all student accounts at once.</p>
+
+                    <div style="background: rgba(15, 23, 42, 0.8); border: 2px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1.25rem;">
+                        <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleCsvSelected(event)">
+                        <button onclick="document.getElementById('csv-file-input').click()" class="btn-secondary" style="margin-bottom: 0.5rem; display: inline-block;">
+                            📁 Select CSV Student File
+                        </button>
+                        <div id="csv-status" style="font-size: 0.8rem; color: #94A3B8;">Supported: .CSV with roll_number, first_name, email, branch</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="downloadSampleCsv()" class="btn-secondary" style="flex: 1; font-size: 0.85rem;">Download Template</button>
+                    <button onclick="uploadCsv()" id="btn-upload-csv" class="btn-launch" style="flex: 1; font-size: 0.85rem;" disabled>Upload & Import</button>
+                </div>
             </div>
-            <a href="/university/pricing" class="btn-secondary">Manage / Upgrade Subscription &rarr;</a>
+
+            <!-- Branding Studio Box -->
+            <div class="hub-card">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #F59E0B; text-transform: uppercase; margin-bottom: 0.5rem;">Institutional Customization</div>
+                    <h3 class="card-title">Brand Appearance & Theme Studio</h3>
+                    
+                    <form id="form-branding" onsubmit="saveBranding(event)" style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">University Logo Image URL</label>
+                            <input type="url" id="brand-logo" class="form-input" value="{{ university.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Primary Color</label>
+                                <input type="color" id="brand-primary" class="form-input" style="height: 42px; padding: 0.2rem;" value="{{ university.primary_color or '#4F46E5' }}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Accent Color</label>
+                                <input type="color" id="brand-accent" class="form-input" style="height: 42px; padding: 0.2rem;" value="{{ university.accent_color or '#7C3AED' }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Notice Bar Announcement Text</label>
+                            <input type="text" id="brand-banner" class="form-input" value="{{ university.banner_text or '' }}" placeholder="e.g. Academic Year Final Clearance is now live!">
+                        </div>
+                        <button type="submit" class="btn-launch" style="width: 100%;">Save Institutional Branding</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dedicated SuperAdmin Card -->
+    <div class="hub-card" style="border-color: rgba(99, 102, 241, 0.4); margin-bottom: 2.5rem;">
+        <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; margin-bottom: 0.5rem;">SuperAdmin Console</div>
+            <h3 class="card-title">Live SuperAdmin Platform Access</h3>
+            <p class="card-desc">Enter your live institutional administration console to manage live clearance requests, view analytics, and inspect audit logs.</p>
+        </div>
+        {% if university.has_active_subscription %}
+        <a href="/university/launch-superadmin" class="btn-launch">
+            <span>Enter University SuperAdmin Platform</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        {% else %}
+        <div>
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.75rem; border-radius: 8px; font-size: 0.825rem; color: #FCD34D; margin-bottom: 1rem;">
+                🔒 Production portal is locked. Please purchase a subscription to activate your campus instance.
+            </div>
+            <a href="/university/pricing" class="btn-launch" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">Subscribe & Unlock Instance &rarr;</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Department Credentials Export -->
+<div class="modal-backdrop" id="cred-modal">
+    <div class="modal-box">
+        <h3 class="modal-title">🔐 7 Department Officer Credentials</h3>
+        <p style="font-size: 0.85rem; color: #94A3B8; margin-bottom: 1rem;">
+            Here are the default login credentials provisioned for your campus clearance officers. Share these with each respective department head.
+        </p>
+
+        <div style="overflow-x: auto;">
+            <table class="cred-table">
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Login Email</th>
+                        <th>Password</th>
+                    </tr>
+                </thead>
+                <tbody id="cred-table-body">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
         </div>
 
-        <!-- Card 4: Zero-Trust Data Ownership -->
-        <div class="hub-card">
-            <div>
-                <div style="font-size: 0.8rem; font-weight: 700; color: #60A5FA; text-transform: uppercase; margin-bottom: 0.5rem;">Data Ownership</div>
-                <h3 class="card-title">Data Privacy & Self-Service Export</h3>
-                <p class="card-desc">Your university maintains complete data sovereignty. Download all student profiles, clearance records, and receipts in encrypted ZIP packages anytime.</p>
-            </div>
-            <a href="/superadmin/api/export/full" class="btn-secondary">Download Complete Institutional Export (ZIP) &rarr;</a>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+            <button onclick="document.getElementById('cred-modal').style.display='none'" class="btn-secondary">Close</button>
+            <button onclick="copyAllCreds()" class="btn-launch">Copy All Credentials</button>
         </div>
     </div>
 </div>
+
+<script>
+    const UNIV_SLUG = "{{ university.slug }}";
+    const portalUrl = window.location.origin + "/u/" + UNIV_SLUG;
+    document.getElementById("univ-portal-link").innerText = portalUrl;
+
+    let provisionedCreds = [];
+
+    function copyPortalLink() {
+        navigator.clipboard.writeText(portalUrl).then(() => {
+            const btn = document.getElementById("btn-copy-link");
+            btn.innerHTML = '<span>Copied!</span>';
+            setTimeout(() => {
+                btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy Link</span>';
+            }, 2000);
+        });
+    }
+
+    async function handleProvisionStaff() {
+        try {
+            const res = await fetch('/university/api/staff/provision', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ default_password: 'Staff@' + UNIV_SLUG.toUpperCase() + '2025' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                provisionedCreds = data.credentials;
+                const tbody = document.getElementById('cred-table-body');
+                tbody.innerHTML = '';
+                data.credentials.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${c.department}</strong></td>
+                            <td>${c.email}</td>
+                            <td><span style="background: rgba(99,102,241,0.2); padding: 2px 6px; border-radius: 4px;">${c.password}</span></td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('cred-modal').style.display = 'flex';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (e) {
+            alert('Failed to provision staff: ' + e);
+        }
+    }
+
+    function copyAllCreds() {
+        if (!provisionedCreds.length) return;
+        let text = `=== ${UNIV_SLUG.toUpperCase()} CLEARANCE DEPARTMENT CREDENTIALS ===\nPortal: ${portalUrl}\n\n`;
+        provisionedCreds.forEach(c => {
+            text += `${c.department}:\n  Email: ${c.email}\n  Password: ${c.password}\n\n`;
+        });
+        navigator.clipboard.writeText(text).then(() => {
+            alert('All credentials copied to clipboard!');
+        });
+    }
+
+    // CSV Handling
+    let selectedCsvFile = null;
+
+    function handleCsvSelected(e) {
+        if (e.target.files.length > 0) {
+            selectedCsvFile = e.target.files[0];
+            document.getElementById('csv-status').innerText = 'Selected: ' + selectedCsvFile.name;
+            document.getElementById('btn-upload-csv').disabled = false;
+        }
+    }
+
+    function downloadSampleCsv() {
+        const sample = "roll_number,first_name,last_name,email,branch,course,category\n21BCS1001,Aarav,Sharma,aarav.sharma@example.edu,Computer Science,B.Tech,day_scholar\n21BCS1002,Priya,Verma,priya.verma@example.edu,Information Technology,B.Tech,hosteller\n21BCS1003,Rohan,Gupta,rohan.gupta@example.edu,Mechanical,B.Tech,transport_user";
+        const blob = new Blob([sample], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'sample_students_import.csv');
+        a.click();
+    }
+
+    async function uploadCsv() {
+        if (!selectedCsvFile) return;
+        const formData = new FormData();
+        formData.append('file', selectedCsvFile);
+
+        const btn = document.getElementById('btn-upload-csv');
+        btn.disabled = true;
+        btn.innerText = 'Importing...';
+
+        try {
+            const res = await fetch('/university/api/students/bulk-import', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            alert(data.message);
+            btn.innerText = 'Upload & Import';
+            btn.disabled = false;
+        } catch (e) {
+            alert('Import failed: ' + e);
+            btn.innerText = 'Upload & Import';
+            btn.disabled = false;
+        }
+    }
+
+    async function saveBranding(e) {
+        e.preventDefault();
+        const payload = {
+            logo_url: document.getElementById('brand-logo').value.trim(),
+            primary_color: document.getElementById('brand-primary').value,
+            accent_color: document.getElementById('brand-accent').value,
+            banner_text: document.getElementById('brand-banner').value.trim()
+        };
+
+        try {
+            const res = await fetch('/university/api/branding', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('University branding saved successfully!');
+            }
+        } catch (e) {
+            alert('Failed to save branding: ' + e);
+        }
+    }
+</script>
 
 </body>
 </html>

@@ -321,6 +321,21 @@ def register_blueprints(app: Flask) -> None:
     def index():
         return app.send_static_file("index.html")
 
+    # White-label university institutional portals (/u/slug and /portal/slug)
+    @app.route("/u/<slug>")
+    @app.route("/portal/<slug>")
+    def university_portal_root(slug):
+        from blueprints.university.routes import render_university_portal
+        return render_university_portal(slug)
+
+    @app.route("/u/<slug>/poster")
+    @app.route("/portal/<slug>/poster")
+    def university_poster_root(slug):
+        from blueprints.university.routes import university_slug_poster
+        return university_slug_poster(slug)
+
+
+
 
 def _is_api_request():
     """Check if the request is an API call (vs browser navigation)."""
