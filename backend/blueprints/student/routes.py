@@ -63,14 +63,15 @@ def dashboard():
 def apply_page():
     """Render student application form page with pre-fetched student data for instant loading."""
     student_data = {}
-    if current_user:
-        student_data = current_user.to_dict()
-        student_prof = getattr(current_user, "student_profile", None)
-        if not student_prof and hasattr(current_user, "id"):
-            student_prof = Student.query.filter_by(user_id=current_user.id).first()
-        if student_prof:
-            student_data.update(student_prof.to_dict())
+    if current_user and current_user.is_authenticated:
+        user = User.query.get(current_user.id)
+        if user:
+            student_data = user.to_dict()
+            student_prof = Student.query.filter_by(user_id=user.id).first()
+            if student_prof:
+                student_data.update(student_prof.to_dict())
     return render_template("student/apply.html", student_data=student_data)
+
 
 
 @student_bp.route("/api/profile", methods=["GET", "PUT"])
@@ -82,14 +83,13 @@ def get_profile():
     if user_id:
         user = User.query.get(user_id)
     elif current_user and current_user.is_authenticated:
-        user = current_user
+        user = User.query.get(current_user.id)
 
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 404
 
-    student_prof = getattr(user, "student_profile", None)
-    if not student_prof and hasattr(user, "id"):
-        student_prof = Student.query.filter_by(user_id=user.id).first()
+    student_prof = Student.query.filter_by(user_id=user.id).first()
+
 
     # Handle Profile Update
     if request.method == "PUT":
@@ -119,6 +119,14 @@ def get_profile():
                 student_prof.guardian_phone = req_data.get("father_phone", "").strip() or None
             if "category" in req_data and req_data.get("category"):
                 student_prof.category = req_data.get("category")
+            if "course_name" in req_data and req_data.get("course_name"):
+                student_prof.course_name = req_data.get("course_name").strip()
+            if "branch" in req_data and req_data.get("branch"):
+                student_prof.branch = req_data.get("branch").strip()
+                from models.department import Department
+                acad = Department.query.filter(Department.name.ilike(f"%{student_prof.branch}%")).first()
+                if acad:
+                    student_prof.academic_department_id = acad.id
             if "city" in req_data:
                 student_prof.city = req_data.get("city", "").strip() or None
             if "state" in req_data:
@@ -128,6 +136,7 @@ def get_profile():
                     student_prof.current_semester = int(req_data.get("current_semester"))
                 except (ValueError, TypeError):
                     pass
+
 
         # 3. Create Audit Log
         audit = AuditLog(

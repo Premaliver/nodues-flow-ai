@@ -586,45 +586,53 @@
             const branchName = s.branch || '—';
             const sem = s.current_semester ? `Semester ${s.current_semester}` : 'Semester 1';
             const cat = (s.category || 'day_scholar').replace(/_/g, ' ').toUpperCase();
-            const phone = s.guardian_phone || s.phone || '—';
+            const fatherName = s.father_name || s.parent_name || '—';
+            const motherName = s.mother_name || '—';
+            const guardianPhone = s.guardian_phone || s.parent_phone || '—';
+            const studentPhone = s.phone || '—';
 
             document.getElementById('personalInfo').innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">FULL NAME</label>
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">STUDENT FULL NAME</label>
                         <input class="form-input" value="${fullName}" readonly style="background:var(--bg-secondary); font-weight: 600;">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ROLL NUMBER</label>
-                        <input class="form-input" value="${rollNo}" readonly style="background:var(--bg-secondary); font-weight: 600; font-family: monospace;">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">COLLEGE ROLL NUMBER</label>
+                        <input class="form-input" value="${rollNo}" readonly style="background:var(--bg-secondary); font-weight: 600; font-family: monospace; color: var(--accent);">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">ENROLLMENT NUMBER</label>
-                        <input class="form-input" value="${enrollNo}" readonly style="background:var(--bg-secondary);">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">DEGREE & COURSE</label>
+                        <input class="form-input" value="${courseName}" readonly style="background:var(--bg-secondary); font-weight: 600;">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">COURSE</label>
-                        <input class="form-input" value="${courseName}" readonly style="background:var(--bg-secondary);">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">BRANCH</label>
-                        <input class="form-input" value="${branchName}" readonly style="background:var(--bg-secondary);">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">BRANCH / DEPARTMENT</label>
+                        <input class="form-input" value="${branchName}" readonly style="background:var(--bg-secondary); font-weight: 600;">
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">CURRENT SEMESTER</label>
                         <input class="form-input" value="${sem}" readonly style="background:var(--bg-secondary);">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">REGISTERED CATEGORY</label>
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">CLEARANCE CATEGORY</label>
                         <input class="form-input" value="${cat}" readonly style="background:var(--bg-secondary); font-weight: 700; color: var(--accent);">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">GUARDIAN PHONE</label>
-                        <input class="form-input" value="${phone}" readonly style="background:var(--bg-secondary);">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">FATHER / GUARDIAN NAME</label>
+                        <input class="form-input" value="${fatherName}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">PARENTS CONTACT PHONE</label>
+                        <input class="form-input" value="${guardianPhone}" readonly style="background:var(--bg-secondary);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">STUDENT MOBILE NUMBER</label>
+                        <input class="form-input" value="${studentPhone}" readonly style="background:var(--bg-secondary);">
                     </div>
                 </div>
             `;
         }
+
 
         function renderFacilityOptions() {
             const container = document.getElementById('deptCheckboxes');

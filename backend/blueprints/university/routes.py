@@ -396,11 +396,18 @@ def portal_student_register(slug):
     last_name = data.get("last_name", "").strip()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    phone = data.get("phone", "").strip()
     roll_number = data.get("roll_number", "").strip().upper()
     enrollment_number = data.get("enrollment_number", "").strip().upper() or roll_number
     branch = data.get("branch", "Computer Science & Engineering").strip()
     course_name = data.get("course_name", "B.Tech").strip()
     category = data.get("category", "day_scholar").strip().lower()
+    father_name = (data.get("father_name") or data.get("parent_name") or "").strip()
+    mother_name = data.get("mother_name", "").strip()
+    guardian_phone = (data.get("guardian_phone") or data.get("parent_phone") or "").strip()
+    hod_dept_name = data.get("hod_department", "").strip()
+    city = data.get("city", "").strip()
+    state = data.get("state", "").strip()
     
     try:
         current_semester = int(data.get("current_semester", 8))
@@ -411,6 +418,7 @@ def portal_student_register(slug):
         return jsonify({"success": False, "message": "First name, official email, roll number, and password are required."}), 400
 
     from models.student import Student
+    from models.department import Department
     from models.audit_log import AuditLog
 
     existing_user = User.query.filter_by(email=email).first()
@@ -422,8 +430,17 @@ def portal_student_register(slug):
         return jsonify({"success": False, "message": f"Roll number {roll_number} is already registered. Please log in directly."}), 409
 
     try:
+        # Find or link academic HOD department
+        acad_dept = None
+        dept_lookup = hod_dept_name or branch
+        if dept_lookup:
+            acad_dept = Department.query.filter(Department.name.ilike(f"%{dept_lookup}%")).first()
+            if not acad_dept:
+                acad_dept = Department.query.filter_by(role="hod").first()
+
         user = User(
             email=email,
+            phone=phone or None,
             role="student",
             first_name=first_name,
             last_name=last_name,
@@ -441,13 +458,20 @@ def portal_student_register(slug):
             enrollment_number=enrollment_number,
             course_name=course_name,
             branch=branch,
+            academic_department_id=acad_dept.id if acad_dept else None,
             current_semester=current_semester,
             batch_year=f"{datetime.now(timezone.utc).year - 4}-{datetime.now(timezone.utc).year}",
             admission_year=datetime.now(timezone.utc).year - 4,
             category=category if category in ("day_scholar", "hosteller", "transport_user", "scholarship", "hosteller_transport", "scholarship_hosteller", "scholarship_transport", "hosteller_scholarship_transport") else "day_scholar",
+            father_name=father_name or None,
+            mother_name=mother_name or None,
+            guardian_phone=guardian_phone or phone or None,
+            city=city or None,
+            state=state or None,
             university_id=univ.id,
         )
         db.session.add(student)
+
 
         audit = AuditLog(
             user_id=user.id,

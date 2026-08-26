@@ -2096,56 +2096,180 @@
             }, 700);
         }
 
-        async function showStudentProfileModal() {
+        let currentProfileData = null;
+        let isProfileEditMode = false;
+
+        async function showStudentProfileModal(editMode = false) {
             const m = document.getElementById('profileModal');
             const body = document.getElementById('profileModalBody');
             if (!m || !body) return;
             m.classList.add('open');
             m.style.display = 'flex';
-            body.innerHTML = '<div style="text-align:center; padding: 2rem;"><div class="spinner" style="margin: 0 auto 1rem;"></div>Loading student profile...</div>';
+            isProfileEditMode = editMode;
+
+            body.innerHTML = '<div style="text-align:center; padding: 2.5rem;"><div class="spinner" style="margin: 0 auto 1rem;"></div>Loading student profile details...</div>';
+            
             try {
                 const token = localStorage.getItem('access_token');
                 const res = await fetch('/student/api/profile', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const json = await res.json();
-                const data = json.data || {};
-                body.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Full Name</label>
-                            <input type="text" class="form-input" id="profFullName" value="${data.full_name || (data.first_name || '') + ' ' + (data.last_name || '')}" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Email Address</label>
-                            <input type="email" class="form-input" value="${data.email || ''}" disabled style="opacity: 0.75;" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Roll Number</label>
-                            <input type="text" class="form-input" value="${data.roll_number || 'N/A'}" disabled style="opacity: 0.75;" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Enrollment Number</label>
-                            <input type="text" class="form-input" value="${data.enrollment_number || 'N/A'}" disabled style="opacity: 0.75;" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Phone Number</label>
-                            <input type="text" class="form-input" id="profPhone" value="${data.phone || ''}" placeholder="Enter phone number" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 0.8rem; color: var(--text-muted);">Department</label>
-                            <input type="text" class="form-input" value="${data.department_name || 'Engineering & Technology'}" disabled style="opacity: 0.75;" />
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
-                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="saveStudentProfile()">💾 Save Changes</button>
-                    </div>
-                `;
+                currentProfileData = json.data || {};
+                renderProfileModalContent();
             } catch(e) {
-                body.innerHTML = '<div style="color:var(--crimson); text-align:center; padding:1.5rem;">Could not load profile details.</div>';
+                body.innerHTML = '<div style="color:var(--crimson); text-align:center; padding:1.5rem;">Could not load student profile. Please try again.</div>';
             }
         }
+
+        function renderProfileModalContent() {
+            const body = document.getElementById('profileModalBody');
+            if (!body || !currentProfileData) return;
+            const d = currentProfileData;
+
+            const fullName = d.full_name || (d.first_name ? (d.first_name + ' ' + (d.last_name || '')).trim() : (d.student_name || 'Student'));
+            const rollNo = d.roll_number || 'N/A';
+            const enrollNo = d.enrollment_number || 'N/A';
+            const email = d.email || 'N/A';
+            const phone = d.phone || '';
+            const courseName = d.course_name || 'B.Tech';
+            const branchName = d.branch || 'Computer Science & Engineering';
+            const sem = d.current_semester || 8;
+            const category = d.category || 'day_scholar';
+            const fatherName = d.father_name || '';
+            const motherName = d.mother_name || '';
+            const guardianPhone = d.guardian_phone || '';
+            const city = d.city || '';
+            const state = d.state || '';
+
+            if (!isProfileEditMode) {
+                // ── READ-ONLY VIEW MODE ──
+                body.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem; background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                        <div style="display:flex; align-items:center; gap: 1rem;">
+                            <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800;">
+                                ${fullName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h4 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-primary);">${fullName}</h4>
+                                <div style="font-size: 0.82rem; color: var(--accent); font-weight: 600; font-family: var(--font-mono); margin-top: 2px;">🆔 ${rollNo} • ${courseName}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="isProfileEditMode=true; renderProfileModalContent();">✏️ Edit Profile</button>
+                    </div>
+
+                    <!-- Academic & Institutional Grid -->
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">🎓 Academic & Clearance Info</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">DEGREE COURSE</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${courseName}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">BRANCH / DEPT</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${branchName}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">CURRENT SEMESTER</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">Semester ${sem}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">CATEGORY</div>
+                                <div style="font-weight: 700; font-size: 0.9rem; color: var(--accent); margin-top: 2px; text-transform: capitalize;">${category.replace(/_/g, ' ')}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Family Grid -->
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">👨‍👩‍👧 Parents & Contact Details</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">FATHER / GUARDIAN</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${fatherName || 'Not specified'}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">MOTHER'S NAME</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${motherName || 'Not specified'}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">PARENTS CONTACT</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${guardianPhone || 'Not specified'}</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 10px;">
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">STUDENT MOBILE</div>
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-top: 2px;">${phone || 'Not specified'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                        <button type="button" class="btn btn-primary" onclick="closeProfileModal()">Close</button>
+                    </div>
+                `;
+            } else {
+                // ── EDIT PROFILE MODE ──
+                body.innerHTML = `
+                    <form onsubmit="saveStudentProfile(event)">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Full Name *</label>
+                                <input type="text" class="form-input" id="editProfName" value="${fullName}" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Student Phone Number *</label>
+                                <input type="tel" class="form-input" id="editProfPhone" value="${phone}" placeholder="Mobile number" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Father / Guardian Name *</label>
+                                <input type="text" class="form-input" id="editProfFather" value="${fatherName}" placeholder="Father name" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Mother's Name</label>
+                                <input type="text" class="form-input" id="editProfMother" value="${motherName}" placeholder="Mother name" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Parents Contact Phone *</label>
+                                <input type="tel" class="form-input" id="editProfGPhone" value="${guardianPhone}" placeholder="Parents phone" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Current Semester *</label>
+                                <select class="form-input" id="editProfSem" required>
+                                    <option value="8" ${sem==8?'selected':''}>Semester 8</option>
+                                    <option value="7" ${sem==7?'selected':''}>Semester 7</option>
+                                    <option value="6" ${sem==6?'selected':''}>Semester 6</option>
+                                    <option value="5" ${sem==5?'selected':''}>Semester 5</option>
+                                    <option value="4" ${sem==4?'selected':''}>Semester 4</option>
+                                    <option value="3" ${sem==3?'selected':''}>Semester 3</option>
+                                    <option value="2" ${sem==2?'selected':''}>Semester 2</option>
+                                    <option value="1" ${sem==1?'selected':''}>Semester 1</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Clearance Category *</label>
+                                <select class="form-input" id="editProfCat" required>
+                                    <option value="day_scholar" ${category=='day_scholar'?'selected':''}>Day Scholar</option>
+                                    <option value="hosteller" ${category=='hosteller'?'selected':''}>Hosteller</option>
+                                    <option value="transport_user" ${category=='transport_user'?'selected':''}>Transport User</option>
+                                    <option value="scholarship" ${category=='scholarship'?'selected':''}>Scholarship</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">City</label>
+                                <input type="text" class="form-input" id="editProfCity" value="${city}" placeholder="City" />
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                            <button type="button" class="btn btn-secondary" onclick="isProfileEditMode=false; renderProfileModalContent();">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="btnSaveProfile">💾 Save Updated Profile</button>
+                        </div>
+                    </form>
+                `;
+            }
+        }
+
         function closeProfileModal() {
             const m = document.getElementById('profileModal');
             if (m) {
@@ -2153,28 +2277,47 @@
                 m.style.display = 'none';
             }
         }
-        async function saveStudentProfile() {
+
+        async function saveStudentProfile(e) {
+            if (e) e.preventDefault();
+            const btn = document.getElementById('btnSaveProfile');
+            if (btn) { btn.disabled = true; btn.innerText = 'Saving...'; }
+
             try {
                 const token = localStorage.getItem('access_token');
-                const fullName = document.getElementById('profFullName')?.value;
-                const phone = document.getElementById('profPhone')?.value;
+                const payload = {
+                    full_name: document.getElementById('editProfName')?.value.trim(),
+                    phone: document.getElementById('editProfPhone')?.value.trim(),
+                    father_name: document.getElementById('editProfFather')?.value.trim(),
+                    mother_name: document.getElementById('editProfMother')?.value.trim(),
+                    guardian_phone: document.getElementById('editProfGPhone')?.value.trim(),
+                    current_semester: document.getElementById('editProfSem')?.value,
+                    category: document.getElementById('editProfCat')?.value,
+                    city: document.getElementById('editProfCity')?.value.trim(),
+                };
+
                 const res = await fetch('/student/api/profile', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ full_name: fullName, phone: phone })
+                    body: JSON.stringify(payload)
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('✓ Profile updated successfully!');
-                    closeProfileModal();
+                    currentProfileData = data.data;
+                    isProfileEditMode = false;
+                    renderProfileModalContent();
                     loadDashboard();
+                    alert('✓ Profile details saved successfully!');
                 } else {
                     alert(data.message || 'Error updating profile');
+                    if (btn) { btn.disabled = false; btn.innerText = '💾 Save Updated Profile'; }
                 }
             } catch(e) {
-                alert('Network error saving profile.');
+                alert('Network error while saving profile.');
+                if (btn) { btn.disabled = false; btn.innerText = '💾 Save Updated Profile'; }
             }
         }
+
 
         // Initial Load
         loadDashboard();

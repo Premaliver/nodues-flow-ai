@@ -751,56 +751,126 @@
                     <form id="form-student-reg" onsubmit="handleStudentRegister(event)">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">First Name</label>
-                                <input type="text" id="stud-reg-fname" class="form-input" placeholder="First Name" required>
+                                <label class="form-label">First Name *</label>
+                                <input type="text" id="stud-reg-fname" class="form-input" placeholder="e.g. Rahul" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" id="stud-reg-lname" class="form-input" placeholder="Last Name" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Roll Number</label>
-                                <input type="text" id="stud-reg-roll" class="form-input" placeholder="e.g. 21BCS1049" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Branch / Dept</label>
-                                <input type="text" id="stud-reg-branch" class="form-input" placeholder="e.g. Computer Science" required>
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" id="stud-reg-lname" class="form-input" placeholder="e.g. Verma" required>
                             </div>
                         </div>
+
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Course</label>
-                                <select id="stud-reg-course" class="form-select">
-                                    <option value="B.Tech">B.Tech</option>
-                                    <option value="B.Sc">B.Sc</option>
-                                    <option value="BBA / MBA">BBA / MBA</option>
-                                    <option value="B.Com">B.Com</option>
-                                    <option value="B.A.">B.A.</option>
-                                    <option value="MCA / M.Tech">MCA / M.Tech</option>
+                                <label class="form-label">College Roll Number *</label>
+                                <input type="text" id="stud-reg-roll" class="form-input" placeholder="e.g. 21BCS1049" required style="text-transform: uppercase;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Student Mobile No *</label>
+                                <input type="tel" id="stud-reg-phone" class="form-input" placeholder="e.g. 9876543210" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Degree / Course *</label>
+                                <select id="stud-reg-course" class="form-select" required>
+                                    <option value="B.Tech">B.Tech (Bachelor of Technology)</option>
+                                    <option value="M.Tech">M.Tech (Master of Technology)</option>
+                                    <option value="BCA">BCA (Bachelor of Computer Applications)</option>
+                                    <option value="MCA">MCA (Master of Computer Applications)</option>
+                                    <option value="B.Sc">B.Sc (Bachelor of Science)</option>
+                                    <option value="M.Sc">M.Sc (Master of Science)</option>
+                                    <option value="BBA">BBA (Bachelor of Business Admin)</option>
+                                    <option value="MBA">MBA (Master of Business Admin)</option>
+                                    <option value="B.Com">B.Com (Bachelor of Commerce)</option>
+                                    <option value="M.Com">M.Com (Master of Commerce)</option>
+                                    <option value="B.A.">B.A. (Bachelor of Arts)</option>
+                                    <option value="M.A.">M.A. (Master of Arts)</option>
+                                    <option value="B.Pharm">B.Pharm (Bachelor of Pharmacy)</option>
+                                    <option value="M.Pharm">M.Pharm (Master of Pharmacy)</option>
+                                    <option value="D.Pharm">D.Pharm (Diploma in Pharmacy)</option>
+                                    <option value="LLB">LLB / B.A. LLB (Law)</option>
+                                    <option value="Polytechnic Diploma">Polytechnic / Diploma in Engg</option>
+                                    <option value="Ph.D">Ph.D (Doctor of Philosophy)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Category</label>
-                                <select id="stud-reg-category" class="form-select">
-                                    <option value="day_scholar">Day Scholar</option>
-                                    <option value="hosteller">Hosteller</option>
-                                    <option value="transport_user">Bus / Transport</option>
-                                    <option value="scholarship">Scholarship</option>
+                                <label class="form-label">Current Semester *</label>
+                                <select id="stud-reg-sem" class="form-select" required>
+                                    <option value="8" selected>Semester 8 (Final Year)</option>
+                                    <option value="7">Semester 7</option>
+                                    <option value="6">Semester 6</option>
+                                    <option value="5">Semester 5</option>
+                                    <option value="4">Semester 4</option>
+                                    <option value="3">Semester 3</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="1">Semester 1</option>
                                 </select>
                             </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">Student Email Address</label>
+                            <label class="form-label">Branch & Academic HOD Department *</label>
+                            <select id="stud-reg-branch" class="form-select" required>
+                                <option value="Computer Science & Engineering">Computer Science & Engineering (HOD - CSE)</option>
+                                <option value="Information Technology">Information Technology (HOD - IT)</option>
+                                <option value="Electronics & Communication">Electronics & Communication (HOD - ECE)</option>
+                                <option value="Electrical & Electronics">Electrical & Electronics (HOD - EEE)</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering (HOD - ME)</option>
+                                <option value="Civil Engineering">Civil Engineering (HOD - CE)</option>
+                                <option value="Management Studies">Management Studies (HOD - BBA/MBA)</option>
+                                <option value="Computer Applications">Computer Applications (HOD - BCA/MCA)</option>
+                                <option value="Pharmaceutical Sciences">Pharmaceutical Sciences (HOD - Pharmacy)</option>
+                                <option value="Legal Studies">Legal Studies (HOD - Law)</option>
+                                <option value="Commerce & Finance">Commerce & Finance (HOD - Commerce)</option>
+                                <option value="Basic Sciences & Humanities">Basic Sciences & Humanities (HOD - Applied Sci)</option>
+                            </select>
+                        </div>
+
+                        <!-- Parents Details -->
+                        <div style="background: var(--surface-2); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border-glass);">
+                            <div style="font-size: 0.8rem; font-weight: 700; color: var(--univ-primary); margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.35rem;">
+                                <span>👨‍👩‍👧</span> <span>Parents / Guardian Information</span>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                    <label class="form-label">Father / Guardian Name *</label>
+                                    <input type="text" id="stud-reg-father" class="form-input" placeholder="Father's Full Name" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0.5rem;">
+                                    <label class="form-label">Mother's Name</label>
+                                    <input type="text" id="stud-reg-mother" class="form-input" placeholder="Mother's Name">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">Parents Contact Phone *</label>
+                                <input type="tel" id="stud-reg-gphone" class="form-input" placeholder="e.g. 9876500000" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Student Category *</label>
+                            <select id="stud-reg-category" class="form-select" required>
+                                <option value="day_scholar">🚶 Day Scholar (Local Student)</option>
+                                <option value="hosteller">🏠 Hosteller (Campus Accommodation)</option>
+                                <option value="transport_user">🚌 Bus / Transport Facility User</option>
+                                <option value="scholarship">🎓 Scholarship Beneficiary</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Official College Email Address *</label>
                             <input type="email" id="stud-reg-email" class="form-input" placeholder="student@college.edu" required autocomplete="email">
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">Create Password</label>
+                            <label class="form-label">Create Login Password *</label>
                             <input type="password" id="stud-reg-pwd" class="form-input" placeholder="••••••••" required autocomplete="new-password">
                         </div>
+
                         <button type="submit" id="btn-stud-reg" class="btn-submit">
-                            <span>Complete Registration & Enter</span>
+                            <span>Complete Registration & Enter Clearance Hub</span>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </button>
                     </form>
@@ -809,6 +879,7 @@
                     </div>
                 </div>
             </div>
+
 
             <!-- TAB 2: 7 Department Staff Login -->
             <div id="tab-staff-login" class="tab-panel">
@@ -1003,17 +1074,23 @@
             const payload = {
                 first_name: document.getElementById('stud-reg-fname').value.trim(),
                 last_name: document.getElementById('stud-reg-lname').value.trim(),
-                roll_number: document.getElementById('stud-reg-roll').value.trim(),
-                branch: document.getElementById('stud-reg-branch').value.trim(),
+                roll_number: document.getElementById('stud-reg-roll').value.trim().toUpperCase(),
+                phone: document.getElementById('stud-reg-phone').value.trim(),
                 course_name: document.getElementById('stud-reg-course').value,
+                current_semester: document.getElementById('stud-reg-sem').value,
+                branch: document.getElementById('stud-reg-branch').value.trim(),
+                hod_department: document.getElementById('stud-reg-branch').value.trim(),
+                father_name: document.getElementById('stud-reg-father').value.trim(),
+                mother_name: document.getElementById('stud-reg-mother').value.trim(),
+                guardian_phone: document.getElementById('stud-reg-gphone').value.trim(),
                 category: document.getElementById('stud-reg-category').value,
-                email: document.getElementById('stud-reg-email').value.trim(),
+                email: document.getElementById('stud-reg-email').value.trim().toLowerCase(),
                 password: document.getElementById('stud-reg-pwd').value,
             };
 
             const btn = document.getElementById('btn-stud-reg');
             btn.disabled = true;
-            btn.innerHTML = 'Creating student profile...';
+            btn.innerHTML = 'Creating verified student profile...';
 
             try {
                 const res = await fetch('/university/portal/' + UNIV_SLUG + '/api/student-register', {
@@ -1022,6 +1099,7 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
+
 
                 if (data.success) {
                     showAlert('student-alert', 'success', data.message || 'Registration successful! Launching dashboard...');
