@@ -87,22 +87,49 @@ def apply_page():
 
 
 
+def _get_authenticated_student_user():
+    """Strictly resolve the active student user, preventing role leakage from stale tokens."""
+    # 1. Check Flask-Login session first if active and role is student
+    if current_user and current_user.is_authenticated and current_user.role == "student":
+        u = User.query.get(current_user.id)
+        if u and u.role == "student":
+            return u
+
+    # 2. Check JWT Identity
+    jwt_id = get_jwt_identity()
+    if jwt_id:
+        jwt_user = User.query.get(jwt_id)
+        if jwt_user and jwt_user.role == "student":
+            return jwt_user
+
+    # 3. Fallback to session user if role is student
+    if current_user and current_user.is_authenticated and current_user.role == "student":
+        return User.query.get(current_user.id)
+
+    return None
+
+
 @student_bp.route("/api/profile", methods=["GET", "PUT"])
 @jwt_required(optional=True)
 def get_profile():
     """Get or update student profile with full details."""
-    user = None
-    user_id = get_jwt_identity()
-    if user_id:
-        user = User.query.get(user_id)
-    elif current_user and current_user.is_authenticated:
-        user = User.query.get(current_user.id)
-
+    user = _get_authenticated_student_user()
     if not user:
-        return jsonify({"success": False, "message": "User not found"}), 404
+        return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 403
 
     student_prof = Student.query.filter_by(user_id=user.id).first()
-
+    if not student_prof:
+        # Auto-create linked student profile record if missing
+        full_name = f"{user.first_name} {user.last_name or ''}".strip()
+        student_prof = Student(
+            user_id=user.id,
+            student_name=full_name or "Student",
+            university_id=user.university_id,
+            category="day_scholar",
+            current_semester=1,
+        )
+        db.session.add(student_prof)
+        db.session.commit()
 
     # Handle Profile Update
     if request.method == "PUT":
@@ -150,7 +177,6 @@ def get_profile():
                 except (ValueError, TypeError):
                     pass
 
-
         # 3. Create Audit Log
         audit = AuditLog(
             user_id=user.id,
@@ -177,6 +203,17 @@ def get_profile():
     data = user.to_dict()
     if student_prof:
         data.update(student_prof.to_dict())
+
+    if user.university_id:
+        from models.university import UniversityTenant
+        u = UniversityTenant.query.get(user.university_id)
+        if u:
+            data["university"] = {
+                "id": str(u.id),
+                "name": u.name,
+                "slug": u.slug,
+                "logo_url": u.logo_url,
+            }
 
     return jsonify({"success": True, "data": data})
 
@@ -218,16 +255,14 @@ def get_courses_by_department(dept_id):
 @jwt_required(optional=True)
 def dashboard_data():
     """Get student dashboard data."""
-    user_id = get_jwt_identity()
-    if not user_id and current_user and current_user.is_authenticated:
-        user_id = str(current_user.id)
+    user = _get_authenticated_student_user()
+    if not user:
+        return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 403
 
-    if not user_id:
-        return jsonify({"success": False, "message": "Authentication required"}), 401
-
-    student = Student.query.filter_by(user_id=user_id).first()
+    student = Student.query.filter_by(user_id=user.id).first()
     if not student:
         return jsonify({"success": False, "message": "Student profile not found"}), 404
+
 
 
     # Get current semester

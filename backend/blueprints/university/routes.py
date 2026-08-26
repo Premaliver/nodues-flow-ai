@@ -491,12 +491,22 @@ def portal_student_register(slug):
         session["university_slug"] = univ.slug
         session["user_role"] = user.role
 
+        from flask_jwt_extended import create_access_token, create_refresh_token
+        access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "university_id": str(univ.id)})
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        user_dict = user.to_dict()
+        user_dict.update(student.to_dict())
+
+
         return jsonify({
             "success": True,
             "message": f"Registration successful! Welcome to {univ.name} Digital No-Dues Portal.",
             "data": {
                 "redirect_url": "/student/dashboard",
-                "user": user.to_dict(),
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": user_dict,
             }
         }), 201
     except Exception as e:
@@ -544,12 +554,23 @@ def portal_student_login(slug):
     session["university_slug"] = univ.slug
     session["user_role"] = user.role
 
+    from flask_jwt_extended import create_access_token, create_refresh_token
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "university_id": str(univ.id)})
+    refresh_token = create_refresh_token(identity=str(user.id))
+
+    user_dict = user.to_dict()
+    student_rec = Student.query.filter_by(user_id=user.id).first()
+    if student_rec:
+        user_dict.update(student_rec.to_dict())
+
     return jsonify({
         "success": True,
         "message": f"Welcome back, {user.first_name}!",
         "data": {
             "redirect_url": "/student/dashboard",
-            "user": user.to_dict(),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user_dict,
         }
     })
 
@@ -597,6 +618,10 @@ def portal_staff_login(slug):
     session["university_slug"] = univ.slug
     session["user_role"] = user.role
 
+    from flask_jwt_extended import create_access_token, create_refresh_token
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "university_id": str(univ.id)})
+    refresh_token = create_refresh_token(identity=str(user.id))
+
     target_dashboard = f"/{user.role}/dashboard"
 
 
@@ -605,9 +630,12 @@ def portal_staff_login(slug):
         "message": f"Authenticated as {user.first_name} ({user.role.upper()})",
         "data": {
             "redirect_url": target_dashboard,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
             "user": user.to_dict(),
         }
     })
+
 
 
 # ─────────────────────────────────────────────────────────────

@@ -1053,10 +1053,15 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    if (data.data) {
+                        if (data.data.access_token) localStorage.setItem('access_token', data.data.access_token);
+                        if (data.data.refresh_token) localStorage.setItem('refresh_token', data.data.refresh_token);
+                        if (data.data.user) localStorage.setItem('user', JSON.stringify(data.data.user));
+                    }
                     showAlert('student-alert', 'success', 'Login successful! Redirecting to dashboard...');
                     setTimeout(() => {
-                        window.location.href = data.data.redirect_url || '/student/dashboard';
-                    }, 600);
+                        window.location.href = (data.data && data.data.redirect_url) || '/student/dashboard';
+                    }, 400);
                 } else {
                     showAlert('student-alert', 'error', data.message || 'Invalid credentials');
                     btn.disabled = false;
@@ -1101,12 +1106,16 @@
                 });
                 const data = await res.json();
 
-
                 if (data.success) {
+                    if (data.data) {
+                        if (data.data.access_token) localStorage.setItem('access_token', data.data.access_token);
+                        if (data.data.refresh_token) localStorage.setItem('refresh_token', data.data.refresh_token);
+                        if (data.data.user) localStorage.setItem('user', JSON.stringify(data.data.user));
+                    }
                     showAlert('student-alert', 'success', data.message || 'Registration successful! Launching dashboard...');
                     setTimeout(() => {
-                        window.location.href = data.data.redirect_url || '/student/dashboard';
-                    }, 800);
+                        window.location.href = (data.data && data.data.redirect_url) || '/student/dashboard';
+                    }, 500);
                 } else {
                     showAlert('student-alert', 'error', data.message || 'Registration failed');
                     btn.disabled = false;
@@ -1118,6 +1127,48 @@
                 btn.innerHTML = '<span>Complete Registration & Enter</span>';
             }
         }
+
+        // 3. Staff Login Handler
+        async function handleStaffLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('staff-email').value.trim();
+            const password = document.getElementById('staff-pwd').value;
+            const role = document.getElementById('staff-selected-role').value;
+            const btn = document.getElementById('btn-staff-login');
+
+            btn.disabled = true;
+            btn.innerHTML = 'Authenticating staff member...';
+
+            try {
+                const res = await fetch('/university/portal/' + UNIV_SLUG + '/api/staff-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.data) {
+                        if (data.data.access_token) localStorage.setItem('access_token', data.data.access_token);
+                        if (data.data.refresh_token) localStorage.setItem('refresh_token', data.data.refresh_token);
+                        if (data.data.user) localStorage.setItem('user', JSON.stringify(data.data.user));
+                    }
+                    showAlert('staff-alert', 'success', 'Welcome, ' + (data.data && data.data.user ? data.data.user.first_name : '') + '! Entering ' + role.toUpperCase() + ' panel...');
+                    setTimeout(() => {
+                        window.location.href = data.data.redirect_url;
+                    }, 500);
+                } else {
+                    showAlert('staff-alert', 'error', data.message || 'Invalid departmental credentials');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Sign In as Department Officer</span>';
+                }
+            } catch (err) {
+                showAlert('staff-alert', 'error', 'Network error. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Sign In as Department Officer</span>';
+            }
+        }
+
 
         // 3. Staff Login Handler
         async function handleStaffLogin(e) {
