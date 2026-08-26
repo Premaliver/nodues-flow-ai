@@ -630,7 +630,9 @@ def update_branding():
     website = data.get("website", "").strip()
 
     if logo_url:
-        univ.logo_url = logo_url
+        from utils.helpers import normalize_logo_url
+        univ.logo_url = normalize_logo_url(logo_url)
+
     if primary_color and primary_color.startswith("#"):
         univ.primary_color = primary_color
     if accent_color and accent_color.startswith("#"):

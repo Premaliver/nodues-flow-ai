@@ -115,3 +115,60 @@ def sanitize_filename(filename: str) -> str:
     if not safe:
         return generate_unique_filename(filename)
     return safe
+
+
+def normalize_logo_url(url: Optional[str]) -> Optional[str]:
+    """Resolve webpage and image host links (e.g. kommodo.ai, imgur, drive, dropbox) to direct raw image URLs."""
+    if not url:
+        return None
+    url = url.strip()
+    if not url:
+        return None
+
+    # Google Drive share link
+    if "drive.google.com" in url and "/file/d/" in url:
+        try:
+            file_id = url.split("/file/d/")[1].split("/")[0]
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+        except Exception:
+            pass
+
+    # Dropbox share link
+    if "dropbox.com" in url:
+        return url.replace("?dl=0", "?raw=1")
+
+    # Kommodo.ai share link
+    if "kommodo.ai/i/" in url:
+        try:
+            import urllib.request
+            import re
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                html = resp.read().decode('utf-8', errors='ignore')
+                og = re.findall(r'property="og:image"\s+content="([^"]+)"', html)
+                if og:
+                    return og[0]
+                imgs = re.findall(r'https?://[^\s"\'<>]+\.(?:png|jpg|jpeg|webp)', html)
+                if imgs:
+                    return imgs[0]
+        except Exception:
+            pass
+
+    # If it is a generic HTML page that contains og:image
+    if not any(url.lower().endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif')):
+        try:
+            import urllib.request
+            import re
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                ctype = resp.headers.get('Content-Type', '')
+                if 'text/html' in ctype:
+                    html = resp.read().decode('utf-8', errors='ignore')
+                    og = re.findall(r'property="og:image"\s+content="([^"]+)"', html)
+                    if og:
+                        return og[0]
+        except Exception:
+            pass
+
+    return url
+

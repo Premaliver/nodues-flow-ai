@@ -1410,7 +1410,9 @@ def manage_branding():
 
     data = request.get_json(silent=True) or request.form
     if "logo_url" in data:
-        tenant.logo_url = data.get("logo_url")
+        from utils.helpers import normalize_logo_url
+        raw_logo = data.get("logo_url")
+        tenant.logo_url = normalize_logo_url(raw_logo) if raw_logo else None
     if "primary_color" in data:
         tenant.primary_color = data.get("primary_color")
     if "accent_color" in data:
