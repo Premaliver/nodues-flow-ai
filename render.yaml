@@ -17,6 +17,8 @@ services:
           property: connectionString
       - key: CORS_ORIGINS
         value: https://SmartNoDue.in
+      - key: PYTHONPATH
+        value: .
 
 databases:
   - name: nodues-db

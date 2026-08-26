@@ -1,2 +1,2 @@
-web: cd backend && gunicorn -k eventlet -w 1 'app:create_app("production")'
+web: gunicorn -k eventlet -w 1 --chdir backend 'app:create_app("production")'
 

@@ -36,7 +36,29 @@ def seed_data() -> None:
     """Seed the database with sample data if empty."""
     db.create_all()
 
-    # If users or departments already exist, do not overwrite
+    # Seed default university tenant if empty
+    from models.university import UniversityTenant
+    if not UniversityTenant.query.first():
+        print("[*] Seeding default university tenant...")
+        demo_univ = UniversityTenant(
+            name="Rayat Bahra University",
+            slug="rayat-bahra-university",
+            official_email="registrar@rayatbahra.edu",
+            contact_person="Prof. Arvind Kumar",
+            designation="Registrar",
+            phone="+91-9876543210",
+            website="https://rayatbahra.edu",
+            state="Punjab",
+            estimated_students=10000,
+            subscription_status="unsubscribed",
+            subscription_plan="none",
+        )
+        demo_univ.set_password("Prem@2004")
+        db.session.add(demo_univ)
+        db.session.commit()
+        print("[OK] Demo university tenant seeded (registrar@rayatbahra.edu)!")
+
+    # If users or departments already exist, do not re-seed them
     if User.query.first() or Department.query.first():
         return
 
@@ -145,6 +167,25 @@ def seed_data() -> None:
             is_active=True,
         )
         db.session.add(wf)
+
+    # 5. Create default university tenant if none exists
+    from models.university import UniversityTenant
+    if not UniversityTenant.query.first():
+        demo_univ = UniversityTenant(
+            name="Rayat Bahra University",
+            slug="rayat-bahra-university",
+            official_email="registrar@rayatbahra.edu",
+            contact_person="Prof. Arvind Kumar",
+            designation="Registrar",
+            phone="+91-9876543210",
+            website="https://rayatbahra.edu",
+            state="Punjab",
+            estimated_students=10000,
+            subscription_status="unsubscribed",
+            subscription_plan="none",
+        )
+        demo_univ.set_password("Prem@2004")
+        db.session.add(demo_univ)
 
     db.session.commit()
     print("[OK] Institutional database seeded successfully!")

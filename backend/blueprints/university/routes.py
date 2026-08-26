@@ -1,19 +1,26 @@
-"""
-University SaaS Onboarding, POV Walkthrough, and Subscription Routes.
-Allows universities to register, explore the interactive POV demo, purchase subscriptions,
-and launch their dedicated University SuperAdmin environment.
-"""
-
+import os
+import sys
 import uuid
 from datetime import datetime, timezone, timedelta
 from flask import request, jsonify, render_template, session, redirect, url_for, current_app
 from flask_login import login_user
 
+# Ensure project root is in sys.path so control_plane is always importable
+parent_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 from . import university_bp
 from models import db
 from models.university import UniversityTenant
 from models.user import User
-from control_plane.licensing.issuer import ControlPlaneLicenseIssuer
+
+try:
+    from control_plane.licensing.issuer import ControlPlaneLicenseIssuer
+except ImportError:
+    # Fallback to in-tree licensing manager
+    from licensing.license_manager import LicenseManager as ControlPlaneLicenseIssuer
+
 from licensing.crypto import LicenseCrypto
 
 
@@ -131,8 +138,11 @@ def login():
     try:
         db.create_all()
         tenant = UniversityTenant.query.filter_by(official_email=email).first()
-        if not tenant or not tenant.check_password(password):
-            return jsonify({"success": False, "message": "Invalid email or password."}), 401
+        if not tenant:
+            return jsonify({"success": False, "message": "No university registered with this email. Please register first."}), 401
+
+        if not tenant.check_password(password):
+            return jsonify({"success": False, "message": "Incorrect password. Please verify and try again."}), 401
 
         session["university_id"] = str(tenant.id)
         session["university_name"] = tenant.name
@@ -153,7 +163,7 @@ def login():
         return redirect(redirect_target)
     except Exception as e:
         current_app.logger.error(f"Login error: {e}")
-        return jsonify({"success": False, "message": "Login failed. Please try again."}), 500
+        return jsonify({"success": False, "message": "Login error occurred. Please try again."}), 500
 
 
 # ─────────────────────────────────────────────────────────────
