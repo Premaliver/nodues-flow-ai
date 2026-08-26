@@ -93,18 +93,28 @@
         <!-- Left Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-brand-wrap">
-                    <div class="sidebar-brand-emblem">⚡</div>
-                    <div class="sidebar-brand-info">
-                        <div class="sidebar-brand-title">Smart NoDues</div>
-                        <div class="sidebar-brand-badge">
-                            <span class="sidebar-beacon-dot"></span> STUDENT PORTAL
+                <div class="sidebar-brand-wrap" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="sidebar-brand-emblem" id="brandLogoContainer" style="width: 42px; height: 42px; min-width: 42px; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border: 1px solid var(--border-light);">
+                        {% if university and university.logo_url %}
+                            <img id="brandLogoImg" src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;">
+                        {% else %}
+                            <span id="brandLogoEmblem" style="font-size: 1.3rem;">⚡</span>
+                        {% endif %}
+                    </div>
+                    <div class="sidebar-brand-info" style="display: flex; flex-direction: column; overflow: hidden; min-width: 0;">
+                        <div class="sidebar-brand-univ" id="brandUnivName" style="font-size: 0.75rem; font-weight: 800; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 165px; letter-spacing: 0.02em; text-transform: uppercase;">
+                            {{ university.name if university else 'Institutional Campus' }}
+                        </div>
+                        <div class="sidebar-brand-title" style="font-size: 0.95rem; font-weight: 800; line-height: 1.15; color: var(--text-primary);">Smart NoDues</div>
+                        <div class="sidebar-brand-badge" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 1px;">
+                            <span class="sidebar-beacon-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #10B981; display: inline-block;"></span> STUDENT PORTAL
                         </div>
                     </div>
                 </div>
             </div>
 
             <nav class="sidebar-nav">
+
                 <div class="sidebar-section-label">WORKSPACE</div>
                 <a href="/student/dashboard" class="sidebar-nav-item" onclick="toggleSidebar(false)">
                     <span class="nav-icon-badge">📊</span>

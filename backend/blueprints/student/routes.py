@@ -54,7 +54,13 @@ except ImportError:
 @student_only
 def dashboard():
     """Render student dashboard page."""
-    return render_template("student/dashboard.html")
+    univ = None
+    if current_user and current_user.is_authenticated:
+        user = User.query.get(current_user.id)
+        if user and user.university_id:
+            from models.university import UniversityTenant
+            univ = UniversityTenant.query.get(user.university_id)
+    return render_template("student/dashboard.html", university=univ)
 
 
 @student_bp.route("/apply")
@@ -63,6 +69,7 @@ def dashboard():
 def apply_page():
     """Render student application form page with pre-fetched student data for instant loading."""
     student_data = {}
+    univ = None
     if current_user and current_user.is_authenticated:
         user = User.query.get(current_user.id)
         if user:
@@ -70,7 +77,13 @@ def apply_page():
             student_prof = Student.query.filter_by(user_id=user.id).first()
             if student_prof:
                 student_data.update(student_prof.to_dict())
-    return render_template("student/apply.html", student_data=student_data)
+            if user.university_id:
+                from models.university import UniversityTenant
+                univ = UniversityTenant.query.get(user.university_id)
+                if univ:
+                    student_data["university"] = univ.to_dict()
+    return render_template("student/apply.html", student_data=student_data, university=univ)
+
 
 
 
@@ -202,13 +215,20 @@ def get_courses_by_department(dept_id):
 
 
 @student_bp.route("/api/dashboard")
-@jwt_required()
+@jwt_required(optional=True)
 def dashboard_data():
     """Get student dashboard data."""
     user_id = get_jwt_identity()
+    if not user_id and current_user and current_user.is_authenticated:
+        user_id = str(current_user.id)
+
+    if not user_id:
+        return jsonify({"success": False, "message": "Authentication required"}), 401
+
     student = Student.query.filter_by(user_id=user_id).first()
     if not student:
         return jsonify({"success": False, "message": "Student profile not found"}), 404
+
 
     # Get current semester
     current_semester = Semester.query.filter_by(is_current=True).first()
@@ -248,7 +268,25 @@ def dashboard_data():
             ad.to_dict() for ad in active_app.department_approvals
         ]
 
+    # Add University Branding if available
+    university_info = None
+    if student and student.university_id:
+        from models.university import UniversityTenant
+        u = UniversityTenant.query.get(student.university_id)
+        if u:
+            university_info = {
+                "id": str(u.id),
+                "name": u.name,
+                "slug": u.slug,
+                "logo_url": u.logo_url,
+                "primary_color": u.primary_color,
+                "accent_color": u.accent_color,
+                "banner_text": u.banner_text
+            }
+    data["university"] = university_info
+
     return jsonify({"success": True, "data": data})
+
 
 
 @student_bp.route("/api/documents/<app_id>")
