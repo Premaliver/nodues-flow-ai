@@ -94,7 +94,7 @@
         }
         .pricing-header {
             text-align: center;
-            padding: 4rem 1.5rem 2rem;
+            padding: clamp(2rem, 6vw, 4rem) 1rem 1.5rem;
             max-width: 800px;
             margin: 0 auto;
         }
@@ -113,12 +113,12 @@
         }
         .pricing-title {
             font-family: 'DM Serif Display', serif;
-            font-size: 3.25rem;
+            font-size: clamp(1.85rem, 6vw, 3.25rem);
             line-height: 1.15;
             margin: 0 0 1rem;
         }
         .pricing-subtitle {
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
             color: #94A3B8;
             line-height: 1.6;
             margin-bottom: 2rem;
@@ -132,19 +132,21 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 30px;
             padding: 0.35rem;
-            gap: 0.5rem;
-            margin-bottom: 3.5rem;
+            gap: 0.35rem;
+            margin-bottom: 2.5rem;
+            max-width: 90vw;
         }
         .toggle-btn {
             background: transparent;
             border: none;
             color: #94A3B8;
-            padding: 0.6rem 1.25rem;
+            padding: 0.55rem 1rem;
             border-radius: 24px;
-            font-size: 0.875rem;
+            font-size: clamp(0.75rem, 2.5vw, 0.875rem);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
         .toggle-btn.active {
             background: var(--brand-primary);
@@ -153,160 +155,183 @@
         }
         .discount-badge {
             background: #10B981;
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.15rem 0.5rem;
-            border-radius: 12px;
-            margin-left: 0.25rem;
+            color: #022C22;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 20px;
+            margin-left: 0.35rem;
+            text-transform: uppercase;
         }
 
-        /* Pricing Cards Grid */
+        /* Plans Grid */
         .plans-grid {
             max-width: 1200px;
             margin: 0 auto 5rem;
-            padding: 0 1.5rem;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 0 clamp(0.75rem, 3vw, 1.5rem);
             align-items: stretch;
         }
+
         .plan-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 24px;
-            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            padding: clamp(1.25rem, 4vw, 2.25rem);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(16px);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            backdrop-filter: blur(10px);
         }
+
         .plan-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 20px 40px -15px rgba(79, 70, 229, 0.3);
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.4);
         }
+
         .plan-card.popular {
-            background: linear-gradient(180deg, rgba(49, 46, 129, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%);
-            border: 2px solid #6366F1;
-            box-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.4);
+            border-color: var(--brand-primary);
+            box-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.3);
         }
+
         .popular-badge {
             position: absolute;
-            top: -14px;
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--brand-gradient);
             color: white;
-            padding: 0.3rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             font-weight: 800;
-            text-transform: uppercase;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
             letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+            white-space: nowrap;
         }
+
         .plan-name {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 800;
             margin: 0 0 0.5rem;
-            color: white;
         }
+
         .plan-desc {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: #94A3B8;
-            margin-bottom: 1.5rem;
-            min-height: 40px;
+            margin: 0 0 1.25rem;
+            line-height: 1.5;
+            min-height: 42px;
         }
+
         .plan-price-wrap {
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.35rem;
         }
+
         .plan-price {
-            font-size: 2.75rem;
-            font-weight: 800;
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 900;
             color: white;
             font-family: 'DM Serif Display', serif;
         }
+
         .plan-period {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #94A3B8;
         }
+
         .plan-features {
             list-style: none;
+            margin: 0 0 2rem;
             padding: 0;
-            margin: 0 0 2.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.85rem;
         }
+
         .plan-features li {
+            font-size: 0.85rem;
+            color: #CBD5E1;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9rem;
-            color: #CBD5E1;
+            gap: 0.5rem;
+            line-height: 1.4;
         }
+
         .feat-icon {
             color: #10B981;
             font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
         }
+
         .btn-select-plan {
             width: 100%;
-            padding: 0.9rem;
+            padding: 0.75rem;
             border-radius: 12px;
-            font-size: 1rem;
             font-weight: 700;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(255, 255, 255, 0.05);
             color: white;
+            transition: all 0.2s ease;
+            min-height: 46px;
         }
+
         .btn-select-plan:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: white;
         }
+
         .btn-select-plan.primary {
             background: var(--brand-gradient);
             border: none;
             box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
         }
+
         .btn-select-plan.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.6);
+            box-shadow: 0 14px 24px -5px rgba(79, 70, 229, 0.7);
         }
 
-        /* Modal Checkout Simulation */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
             padding: 1rem;
         }
+
         .modal-card {
             background: #1E293B;
             border: 1px solid #334155;
-            border-radius: 24px;
-            padding: 2.5rem;
+            border-radius: 20px;
+            padding: clamp(1.25rem, 4vw, 2.25rem);
             max-width: 500px;
             width: 100%;
             color: white;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        @media (max-width: 960px) {
+        @media (max-width: 768px) {
+            .pricing-nav {
+                padding: 0.75rem 1rem;
+            }
             .plans-grid {
                 grid-template-columns: 1fr;
             }
@@ -316,16 +341,16 @@
 <body data-has-university="{{ 'true' if university else 'false' }}">
 
 <nav class="pricing-nav">
-    <a href="/university/pov" class="nav-brand">
+    <a href="/" class="nav-brand">
         <div class="nav-logo-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         </div>
         <span>Smart NoDues AI</span>
     </a>
-    <div style="display: flex; align-items: center; gap: 1rem;">
-        <button class="theme-toggle" onclick="togglePricingTheme()" id="pricingThemeBtn" style="padding: 0.4rem 0.65rem; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); font-size: 1.1rem;" title="Toggle Light/Dark Theme">🌙</button>
-        <a href="/university/pov" style="color: #94A3B8; text-decoration: none; font-size: 0.9rem;">&larr; Back to POV</a>
-        <a href="/university/login" style="color: #A5B4FC; text-decoration: none; font-weight: 600; font-size: 0.9rem;">University Login</a>
+    <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+        <button class="theme-toggle" onclick="togglePricingTheme()" id="pricingThemeBtn" style="padding: 0.35rem 0.55rem; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); font-size: 1rem;" title="Toggle Light/Dark Theme">🌙</button>
+        <a href="/university/pov" style="color: #94A3B8; text-decoration: none; font-size: 0.85rem;">POV Demo</a>
+        <a href="/university/login" style="color: #A5B4FC; text-decoration: none; font-weight: 600; font-size: 0.85rem;">Univ Login</a>
     </div>
 </nav>
 
