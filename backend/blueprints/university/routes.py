@@ -272,22 +272,67 @@ def activate_subscription():
         except Exception as e:
             current_app.logger.warning(f"License token minting notice: {e}")
 
-        # Ensure a University SuperAdmin User account exists for this university
-        sa_user = User.query.filter_by(role="super_admin").first()
-        if sa_user:
-            # Link / update name if needed
-            sa_user.first_name = univ.contact_person.split()[0] if univ.contact_person else "University"
-            sa_user.last_name = "Admin"
-            login_user(sa_user)
+        # Ensure a dedicated University SuperAdmin User account exists for this university tenant
+        tenant_sa_email = f"admin@{univ.slug}.edu" if univ.slug else univ.official_email
+        sa_user = User.query.filter_by(university_id=univ.id, role="super_admin").first()
+        if not sa_user:
+            # Check by email
+            sa_user = User.query.filter_by(email=tenant_sa_email).first()
         
+        if not sa_user:
+            sa_user = User(
+                email=tenant_sa_email,
+                role="super_admin",
+                first_name=univ.contact_person.split()[0] if univ.contact_person else "University",
+                last_name="SuperAdmin",
+                status="active",
+                is_email_verified=True,
+                university_id=univ.id,
+            )
+            sa_user.set_password("Admin@2026")
+            db.session.add(sa_user)
+            db.session.flush()
+        else:
+            sa_user.university_id = univ.id
+            sa_user.first_name = univ.contact_person.split()[0] if univ.contact_person else "University"
+
+        # Initialize Baseline Institutional Departments for this University Tenant Dataset
+        from models.department import Department
+        baseline_depts = [
+            {"code": "ACC", "name": "Accounts & Fee Clearance", "role": "accounts", "display_order": 1},
+            {"code": "HOD", "name": "Academic Head of Department", "role": "hod", "display_order": 2},
+            {"code": "HST", "name": "Hostel Management", "role": "hostel", "display_order": 3},
+            {"code": "MSS", "name": "Mess & Dining Facilities", "role": "mess", "display_order": 4},
+            {"code": "TRN", "name": "Transport & Bus Logistics", "role": "transport", "display_order": 5},
+            {"code": "SCH", "name": "Scholarship & Financial Aid", "role": "scholarship", "display_order": 6},
+            {"code": "EXM", "name": "Examination & Final Clearance", "role": "examination", "display_order": 7},
+        ]
+        for b_dept in baseline_depts:
+            dept_exists = Department.query.filter_by(
+                university_id=univ.id,
+                role=b_dept["role"],
+            ).first()
+            if not dept_exists:
+                new_dept = Department(
+                    code=b_dept["code"],
+                    name=b_dept["name"],
+                    role=b_dept["role"],
+                    display_order=b_dept["display_order"],
+                    university_id=univ.id,
+                    is_active=True,
+                )
+                db.session.add(new_dept)
+
+        login_user(sa_user)
         db.session.commit()
 
         return jsonify({
             "success": True,
-            "message": f"Congratulations! {univ.name} is now successfully subscribed to the {plan.capitalize()} Plan.",
+            "message": f"Congratulations! {univ.name} is now successfully subscribed to the {plan.capitalize()} Plan ({billing_cycle.capitalize()}). Dedicated institutional dataset initialized.",
             "data": {
                 "university": univ.to_dict(),
                 "payment_id": payment_id,
+                "admin_email": sa_user.email,
                 "redirect_url": "/superadmin/dashboard",
             }
         })

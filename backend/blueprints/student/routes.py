@@ -469,6 +469,7 @@ def create_application():
         signature_hash=sig_hash,
         total_steps=len(active_workflow),
         status="draft",
+        university_id=student.university_id,
     )
     db.session.add(application)
     db.session.flush()
@@ -494,8 +495,15 @@ def create_application():
         )
         db.session.add(dept_approval)
 
-    # Create notification for accounts department
-    accounts_staff = User.query.filter_by(role="accounts").all()
+    # Create notification for accounts department in this university tenant
+    if student.university_id:
+        accounts_staff = User.query.filter_by(role="accounts", university_id=student.university_id).all()
+    else:
+        accounts_staff = User.query.filter_by(role="accounts").all()
+    
+    if not accounts_staff:
+        accounts_staff = User.query.filter_by(role="accounts").all()
+
     for staff in accounts_staff:
         notif = Notification(
             user_id=staff.id,

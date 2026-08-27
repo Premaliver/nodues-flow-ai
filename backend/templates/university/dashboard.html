@@ -454,12 +454,73 @@
         }
 
         @media (max-width: 860px) {
+            .hub-nav {
+                padding: 0.85rem 1rem;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            .main-container {
+                margin: 1.5rem auto;
+                padding: 0 1rem;
+            }
             .cards-grid {
                 grid-template-columns: 1fr;
+                gap: 1.25rem;
+                margin-bottom: 1.5rem;
             }
             .univ-header-card {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 1.5rem 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+            .univ-title {
+                font-size: 1.6rem;
+            }
+            .rollout-hero-card {
+                padding: 1.5rem 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+            .hub-card {
+                padding: 1.5rem 1.25rem;
+            }
+            .modal-box {
+                padding: 1.25rem 1rem;
+                width: 95vw;
+                max-width: 95vw;
+            }
+            .link-share-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.75rem 1rem;
+            }
+            .share-actions {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            .btn-copy, .btn-poster {
+                flex: 1;
+                justify-content: center;
+                text-align: center;
+            }
+        }
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 0 0.65rem;
+            }
+            .univ-header-card,
+            .rollout-hero-card,
+            .hub-card {
+                padding: 1.15rem 0.85rem;
+                border-radius: 16px;
+            }
+            .univ-title {
+                font-size: 1.35rem;
+            }
+            .cred-table th, .cred-table td {
+                padding: 0.45rem 0.5rem;
+                font-size: 0.75rem;
             }
         }
     </style>

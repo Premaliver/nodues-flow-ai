@@ -36,6 +36,20 @@ def _generate_temp_password(length: int = 10) -> str:
     return "".join(random.choice(chars) for _ in range(length))
 
 
+def _get_active_tenant_id():
+    import uuid
+    if session.get("university_id"):
+        try:
+            return uuid.UUID(str(session["university_id"]))
+        except Exception:
+            pass
+    if current_user and current_user.is_authenticated and current_user.university_id:
+        return current_user.university_id
+    if hasattr(request, "current_user") and request.current_user and request.current_user.university_id:
+        return request.current_user.university_id
+    return None
+
+
 def _get_admin_audit_user_id(user_obj=None):
     if hasattr(request, "current_user") and request.current_user:
         return request.current_user.id
@@ -119,36 +133,74 @@ def dashboard_data():
     """Get comprehensive system analytics for the dashboard overview."""
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    tenant_id = _get_active_tenant_id()
 
-    total_users = User.query.filter(User.deleted_at.is_(None)).count()
-    active_users = User.query.filter_by(status="active").filter(User.deleted_at.is_(None)).count()
-    total_students = Student.query.count()
-    total_staff = User.query.filter(
-        User.role != "student", User.role != "super_admin",
-        User.deleted_at.is_(None),
-    ).count()
+    if tenant_id:
+        total_users = User.query.filter(User.university_id == tenant_id, User.deleted_at.is_(None)).count()
+        active_users = User.query.filter_by(university_id=tenant_id, status="active").filter(User.deleted_at.is_(None)).count()
+        total_students = Student.query.filter_by(university_id=tenant_id).count()
+        total_staff = User.query.filter(
+            User.university_id == tenant_id,
+            User.role != "student", User.role != "super_admin",
+            User.deleted_at.is_(None),
+        ).count()
 
-    total_applications = NoDuesApplication.query.filter(NoDuesApplication.deleted_at.is_(None)).count()
-    pending_apps = NoDuesApplication.query.filter(
-        NoDuesApplication.status.in_(["draft", "submitted", "in_review"]),
-        NoDuesApplication.deleted_at.is_(None),
-    ).count()
-    approved_apps = NoDuesApplication.query.filter_by(status="approved").filter(
-        NoDuesApplication.deleted_at.is_(None),
-    ).count()
-    rejected_apps = NoDuesApplication.query.filter_by(status="rejected").filter(
-        NoDuesApplication.deleted_at.is_(None),
-    ).count()
+        total_applications = NoDuesApplication.query.filter(NoDuesApplication.university_id == tenant_id, NoDuesApplication.deleted_at.is_(None)).count()
+        pending_apps = NoDuesApplication.query.filter(
+            NoDuesApplication.university_id == tenant_id,
+            NoDuesApplication.status.in_(["draft", "submitted", "in_review"]),
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        approved_apps = NoDuesApplication.query.filter_by(university_id=tenant_id, status="approved").filter(
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        rejected_apps = NoDuesApplication.query.filter_by(university_id=tenant_id, status="rejected").filter(
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
 
-    today_apps = NoDuesApplication.query.filter(
-        NoDuesApplication.created_at >= today_start,
-        NoDuesApplication.deleted_at.is_(None),
-    ).count()
-    today_admit_cards = AdmitCard.query.filter(
-        AdmitCard.created_at >= today_start,
-    ).count()
+        today_apps = NoDuesApplication.query.filter(
+            NoDuesApplication.university_id == tenant_id,
+            NoDuesApplication.created_at >= today_start,
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        today_admit_cards = AdmitCard.query.join(NoDuesApplication).filter(
+            NoDuesApplication.university_id == tenant_id,
+            AdmitCard.created_at >= today_start,
+        ).count()
 
-    departments = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+        departments = Department.query.filter_by(university_id=tenant_id, is_active=True).order_by(Department.display_order).all()
+        if not departments:
+            departments = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+    else:
+        total_users = User.query.filter(User.deleted_at.is_(None)).count()
+        active_users = User.query.filter_by(status="active").filter(User.deleted_at.is_(None)).count()
+        total_students = Student.query.count()
+        total_staff = User.query.filter(
+            User.role != "student", User.role != "super_admin",
+            User.deleted_at.is_(None),
+        ).count()
+
+        total_applications = NoDuesApplication.query.filter(NoDuesApplication.deleted_at.is_(None)).count()
+        pending_apps = NoDuesApplication.query.filter(
+            NoDuesApplication.status.in_(["draft", "submitted", "in_review"]),
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        approved_apps = NoDuesApplication.query.filter_by(status="approved").filter(
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        rejected_apps = NoDuesApplication.query.filter_by(status="rejected").filter(
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+
+        today_apps = NoDuesApplication.query.filter(
+            NoDuesApplication.created_at >= today_start,
+            NoDuesApplication.deleted_at.is_(None),
+        ).count()
+        today_admit_cards = AdmitCard.query.filter(
+            AdmitCard.created_at >= today_start,
+        ).count()
+
+        departments = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
     dept_stats = []
     for dept in departments:
         pending = ApplicationDepartment.query.filter_by(
@@ -1428,3 +1480,104 @@ def manage_branding():
         "message": "University branding updated successfully.",
         "data": tenant.to_dict()
     })
+
+
+# ──────────────────────────────────────
+# API: Full Institutional Tenant Dataset Export & Migration Package
+# ──────────────────────────────────────
+@superadmin_bp.route("/api/export/tenant-archive", methods=["GET"])
+@superadmin_bp.route("/api/export/full", methods=["GET"])
+@admin_only
+def export_tenant_archive():
+    """Generates and downloads a complete standalone JSON archive of this university's dataset for migration/backup."""
+    from models.university import UniversityTenant
+    from flask import Response
+    import json
+
+    tenant_id = _get_active_tenant_id()
+    tenant = None
+    if tenant_id:
+        tenant = db.session.get(UniversityTenant, tenant_id)
+    if not tenant:
+        tenant = UniversityTenant.query.first()
+
+    if not tenant:
+        return jsonify({"success": False, "message": "No university tenant found."}), 404
+
+    # 1. University Metadata
+    univ_data = tenant.to_dict()
+
+    # 2. Departments
+    depts = Department.query.filter_by(university_id=tenant.id).all()
+    if not depts:
+        depts = Department.query.all()
+    departments_data = [d.to_dict() for d in depts]
+
+    # 3. Staff Users
+    staff_users = User.query.filter(
+        User.university_id == tenant.id,
+        User.role != "student",
+        User.deleted_at.is_(None)
+    ).all()
+    staff_data = [u.to_dict() for u in staff_users]
+
+    # 4. Students
+    students = Student.query.filter_by(university_id=tenant.id).all()
+    students_data = [s.to_dict() for s in students]
+
+    # 5. Applications
+    applications = NoDuesApplication.query.filter_by(university_id=tenant.id).all()
+    applications_data = []
+    for app in applications:
+        app_dict = app.to_dict()
+        app_dict["department_approvals"] = [da.to_dict() for da in app.department_approvals]
+        app_dict["documents"] = [doc.to_dict() for doc in app.documents]
+        applications_data.append(app_dict)
+
+    # 6. Admit Cards
+    admit_cards = AdmitCard.query.join(NoDuesApplication).filter(NoDuesApplication.university_id == tenant.id).all()
+    admit_cards_data = [ac.to_dict() for ac in admit_cards]
+
+    # 7. Audit Logs
+    audit_logs = AuditLog.query.filter(AuditLog.user_id.in_([u.id for u in staff_users] + [s.user_id for s in students])).limit(500).all()
+    audits_data = [
+        {
+            "id": str(a.id),
+            "action": a.action,
+            "resource_type": a.resource_type,
+            "details": a.details,
+            "created_at": a.created_at.isoformat() if a.created_at else None,
+        }
+        for a in audit_logs
+    ]
+
+    export_package = {
+        "export_metadata": {
+            "format": "SmartNoDues-Tenant-Migration-Archive",
+            "version": "4.0",
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "institution_name": tenant.name,
+            "institution_slug": tenant.slug,
+            "subscription_plan": tenant.subscription_plan,
+            "total_students": len(students_data),
+            "total_staff": len(staff_data),
+            "total_applications": len(applications_data),
+            "total_admit_cards": len(admit_cards_data),
+        },
+        "university": univ_data,
+        "departments": departments_data,
+        "staff": staff_data,
+        "students": students_data,
+        "applications": applications_data,
+        "admit_cards": admit_cards_data,
+        "audit_stream": audits_data,
+    }
+
+    json_output = json.dumps(export_package, indent=2)
+    filename = f"{tenant.slug}_nodues_dataset_export.json"
+
+    return Response(
+        json_output,
+        mimetype="application/json",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )

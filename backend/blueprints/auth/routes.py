@@ -200,6 +200,22 @@ def register():
     if Student.query.filter_by(roll_number=roll_number).first():
         return jsonify({"success": False, "message": "Roll number already registered"}), 409
 
+    # Resolve University Tenant Context
+    from models.university import UniversityTenant
+    univ_id_raw = session.get("university_id") or data.get("university_id")
+    univ = None
+    if univ_id_raw:
+        try:
+            univ = UniversityTenant.query.get(uuid.UUID(str(univ_id_raw)))
+        except Exception:
+            univ = None
+    if not univ and session.get("university_slug"):
+        univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
+    if not univ:
+        univ = UniversityTenant.query.filter_by(subscription_status="active").first() or UniversityTenant.query.first()
+
+    univ_id = univ.id if univ else None
+
     # Create user
     user = User(
         email=email,
@@ -208,6 +224,7 @@ def register():
         last_name=last_name,
         is_email_verified=False,
         status="active",
+        university_id=univ_id,
     )
     user.set_password(password)
     db.session.add(user)
@@ -226,6 +243,7 @@ def register():
         category=data.get("category", "day_scholar"),
         father_name=data.get("father_name", ""),
         guardian_phone=data.get("father_phone", ""),
+        university_id=univ_id,
     )
     db.session.add(student)
 

@@ -386,12 +386,90 @@
             border-color: var(--accent-cyan);
             box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
         }
+
+        .platform-menu-toggle {
+            display: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #fff;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .platform-sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 99;
+        }
+
+        .platform-sidebar-backdrop.active {
+            display: block;
+        }
+
+        @media (max-width: 900px) {
+            .platform-menu-toggle {
+                display: inline-flex;
+            }
+            .platform-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.35s ease;
+                z-index: 1000;
+            }
+            .platform-sidebar.open {
+                transform: translateX(0);
+            }
+            .platform-main {
+                margin-left: 0;
+                max-width: 100vw;
+                padding: 1.25rem 1rem;
+            }
+            .top-status-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            .glass-box {
+                padding: 1.25rem 1rem;
+                overflow-x: auto;
+            }
+            .custom-table {
+                min-width: 540px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .platform-main {
+                padding: 0.85rem 0.65rem;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-box {
+                padding: 1.25rem 1rem;
+                width: 95vw;
+            }
+        }
     </style>
 </head>
 <body>
 
+<div class="platform-sidebar-backdrop" id="platformBackdrop" onclick="togglePlatformSidebar(false)"></div>
+
 <!-- SIDEBAR -->
-<aside class="platform-sidebar">
+<aside class="platform-sidebar" id="platformSidebar">
     <div>
         <a href="/platform/dashboard" class="platform-brand">
             <div class="platform-logo-badge">⚡</div>
@@ -402,24 +480,24 @@
         </a>
 
         <div class="nav-section-title">Global Control Plane</div>
-        <div class="platform-nav-btn active" onclick="switchTab('tab-universities')">
+        <div class="platform-nav-btn active" onclick="switchTab('tab-universities'); togglePlatformSidebar(false);">
             <span>🏛️</span> Universities & Tenants
         </div>
-        <div class="platform-nav-btn" onclick="switchTab('tab-ai-engine')">
+        <div class="platform-nav-btn" onclick="switchTab('tab-ai-engine'); togglePlatformSidebar(false);">
             <span>🤖</span> Neural AI Telemetry
         </div>
-        <div class="platform-nav-btn" onclick="switchTab('tab-revenue')">
+        <div class="platform-nav-btn" onclick="switchTab('tab-revenue'); togglePlatformSidebar(false);">
             <span>💳</span> Subscriptions & ARR
         </div>
-        <div class="platform-nav-btn" onclick="switchTab('tab-licenses')">
+        <div class="platform-nav-btn" onclick="switchTab('tab-licenses'); togglePlatformSidebar(false);">
             <span>🔑</span> License Key Minting
         </div>
 
         <div class="nav-section-title">Infrastructure</div>
-        <div class="platform-nav-btn" onclick="switchTab('tab-system-health')">
+        <div class="platform-nav-btn" onclick="switchTab('tab-system-health'); togglePlatformSidebar(false);">
             <span>⚡</span> Node & Pool Health
         </div>
-        <div class="platform-nav-btn" onclick="switchTab('tab-audit-logs')">
+        <div class="platform-nav-btn" onclick="switchTab('tab-audit-logs'); togglePlatformSidebar(false);">
             <span>📜</span> Master Audit Stream
         </div>
     </div>
@@ -439,13 +517,16 @@
 <main class="platform-main">
     <!-- TOP STATUS -->
     <div class="top-status-bar">
-        <div>
-            <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.85rem; margin: 0; font-weight: 700;">
-                Platform Master SuperAdmin Command Center
-            </h1>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.35rem 0 0;">
-                Central SaaS multi-tenant orchestration, licensing, and global AI telemetry engine.
-            </p>
+        <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <button class="platform-menu-toggle" onclick="togglePlatformSidebar()" aria-label="Toggle Sidebar Navigation">☰</button>
+            <div>
+                <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.85rem; margin: 0; font-weight: 700;">
+                    Platform Master SuperAdmin Command Center
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.35rem 0 0;">
+                    Central SaaS multi-tenant orchestration, licensing, and global AI telemetry engine.
+                </p>
+            </div>
         </div>
         <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
             <div class="master-badge">
@@ -497,16 +578,17 @@
             <table class="custom-table">
                 <thead>
                     <tr>
-                        <th>University</th>
-                        <th>Slug & Domain</th>
-                        <th>Subscription Plan</th>
+                        <th>University & Contact</th>
+                        <th>Subdomain & URL</th>
+                        <th>Subscription Pack</th>
+                        <th>Billing Cycle & Expiry</th>
+                        <th>Dataset Volume</th>
                         <th>Status</th>
-                        <th>Capacity</th>
-                        <th>Actions</th>
+                        <th>Tenant Actions</th>
                     </tr>
                 </thead>
                 <tbody id="universitiesTableBody">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading live tenants...</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading live tenants...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -567,26 +649,43 @@
             <div class="box-header">
                 <div class="box-title"><span>💳</span> Platform SaaS Revenue & Subscription Breakdown</div>
             </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="background: rgba(13, 17, 39, 0.6); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Annual Recurring Revenue (ARR)</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-emerald); margin: 0.25rem 0;" id="revenueArr">₹0</div>
+                    <div style="font-size: 0.75rem; color: var(--accent-emerald);">⚡ Active annual contracts</div>
+                </div>
+                <div style="background: rgba(13, 17, 39, 0.6); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Monthly Active Subscriptions</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent-cyan); margin: 0.25rem 0;" id="revenueMonthlyCount">0</div>
+                    <div style="font-size: 0.75rem; color: var(--accent-cyan);">Flexible monthly billing cycles</div>
+                </div>
+                <div style="background: rgba(13, 17, 39, 0.6); padding: 1.25rem; border-radius: 16px; border: 1px solid var(--card-border);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Annual Active Subscriptions</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: #818cf8; margin: 0.25rem 0;" id="revenueAnnualCount">0</div>
+                    <div style="font-size: 0.75rem; color: #818cf8;">365-day enterprise subscriptions</div>
+                </div>
+            </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                 <div style="background: rgba(13, 17, 39, 0.6); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--card-border);">
                     <h4 style="margin: 0 0 1rem;">Subscription Tiers Pricing</h4>
                     <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
                         <span>Starter Plan</span>
-                        <strong style="color: var(--accent-cyan);">₹49,999 / yr</strong>
+                        <strong style="color: var(--accent-cyan);">₹49,999 / yr (₹4,999 / mo)</strong>
                     </div>
                     <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
                         <span>Professional Tier (Most Popular)</span>
-                        <strong style="color: var(--accent-emerald);">₹1,49,999 / yr</strong>
+                        <strong style="color: var(--accent-emerald);">₹1,49,999 / yr (₹14,999 / mo)</strong>
                     </div>
                     <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
                         <span>Enterprise High-Volume</span>
-                        <strong style="color: var(--accent-purple);">₹3,99,999 / yr</strong>
+                        <strong style="color: var(--accent-purple);">₹3,99,999 / yr (₹39,999 / mo)</strong>
                     </div>
                 </div>
                 <div style="background: rgba(13, 17, 39, 0.6); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--card-border);">
                     <h4 style="margin: 0 0 1rem;">Direct Payout Details</h4>
                     <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
-                        All institution subscription payments flow into the Platform Owner's registered payment gateway / bank account. You can update payout credentials anytime.
+                        All institution subscription payments flow into Platform Owner (PREMK)'s designated payment gateway and master account. Full institutional dataset isolation guarantees that each university owns and manages their records safely.
                     </p>
                 </div>
             </div>
@@ -607,7 +706,7 @@
                 <textarea id="licenseTokenOutput" style="width: 100%; height: 120px; background: transparent; color: #a7f3d0; border: none; font-family: monospace; font-size: 0.8rem; resize: none;" readonly></textarea>
             </div>
             <div style="color: var(--text-muted); font-size: 0.85rem;">
-                💡 To issue a license token, click the <strong>"Issue License"</strong> button next to any university in the <em>Universities & Tenants</em> tab.
+                💡 To issue a license token, click the <strong>"🔑 License"</strong> button next to any university in the <em>Universities & Tenants</em> tab.
             </div>
         </div>
     </div>
@@ -678,12 +777,26 @@
                 <input type="text" class="form-control" id="univContact" placeholder="Dr. Arthur Pendelton">
             </div>
             <div class="form-group">
-                <label>Subscription Tier</label>
-                <select class="form-control" id="univPlan">
-                    <option value="starter">Starter Plan (₹49,999/yr)</option>
-                    <option value="professional" selected>Professional Tier (₹1,49,999/yr)</option>
-                    <option value="enterprise">Enterprise Tier (₹3,99,999/yr)</option>
-                </select>
+                <label>Contact Phone Number</label>
+                <input type="text" class="form-control" id="univPhone" placeholder="+91 98765 43210">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label>Subscription Tier</label>
+                    <select class="form-control" id="univPlan">
+                        <option value="starter">Starter Plan</option>
+                        <option value="professional" selected>Professional Tier</option>
+                        <option value="enterprise">Enterprise Tier</option>
+                        <option value="custom">Custom Tier</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Billing Cycle</label>
+                    <select class="form-control" id="univCycle">
+                        <option value="annual" selected>Annual (Yearly)</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
             </div>
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
                 <button type="button" class="btn-action btn-toggle" onclick="closeOnboardModal()">Cancel</button>
@@ -713,8 +826,18 @@ async function loadOverview() {
             const stats = data.data.stats;
             document.getElementById('metricUnivs').textContent = stats.total_universities;
             document.getElementById('metricActiveSubs').textContent = stats.active_subscriptions;
-            document.getElementById('metricStudents').textContent = stats.total_students;
+            document.getElementById('metricStudents').textContent = Number(stats.total_students).toLocaleString();
             document.getElementById('metricRevenue').textContent = '₹' + Number(stats.platform_revenue_inr).toLocaleString('en-IN');
+            
+            if (document.getElementById('revenueArr')) {
+                document.getElementById('revenueArr').textContent = '₹' + Number(stats.platform_revenue_inr).toLocaleString('en-IN');
+            }
+            if (document.getElementById('revenueMonthlyCount')) {
+                document.getElementById('revenueMonthlyCount').textContent = stats.monthly_subscriptions || 0;
+            }
+            if (document.getElementById('revenueAnnualCount')) {
+                document.getElementById('revenueAnnualCount').textContent = stats.annual_subscriptions || 0;
+            }
         }
     } catch (e) {
         console.error("Failed to load overview:", e);
@@ -737,7 +860,7 @@ async function loadUniversities() {
 function renderUniversities(list) {
     const tbody = document.getElementById('universitiesTableBody');
     if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No universities found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No universities found.</td></tr>';
         return;
     }
 
@@ -746,26 +869,41 @@ function renderUniversities(list) {
             ? '<span class="badge-status badge-active">Active</span>'
             : (u.subscription_status === 'trial' ? '<span class="badge-status badge-trial">Trial</span>' : '<span class="badge-status badge-suspended">Suspended</span>');
 
+        const expiryStr = u.expires_at ? new Date(u.expires_at).toLocaleDateString() : 'N/A';
+        const planTier = (u.subscription_plan || 'Professional').toUpperCase();
+        const cycleStr = (u.billing_cycle || 'annual').toUpperCase();
+
         return `
             <tr>
                 <td>
-                    <div style="font-weight:700; color:#fff;">${u.name}</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${u.official_email}</div>
+                    <div style="font-weight:700; color:#fff; font-size:0.92rem;">${u.name}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${u.contact_person || 'Registrar'} • ${u.official_email}</div>
+                    ${u.phone ? `<div style="font-size:0.72rem; color:var(--text-secondary);">${u.phone}</div>` : ''}
                 </td>
                 <td>
-                    <div style="font-family:monospace; color:var(--accent-cyan);">${u.slug}.smartnodues.com</div>
+                    <div style="font-family:monospace; color:var(--accent-cyan); font-size:0.85rem;">${u.slug}.smartnodues.com</div>
                     ${u.custom_domain ? `<div style="font-size:0.75rem; color:var(--text-secondary); font-family:monospace;">${u.custom_domain}</div>` : ''}
                 </td>
                 <td>
-                    <div style="font-weight:600; text-transform:capitalize;">${u.subscription_plan || 'Professional'}</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${u.billing_cycle || 'Annual'}</div>
+                    <div style="font-weight:700; color:#fff;">${planTier}</div>
+                    <div style="font-size:0.75rem; color:var(--accent-emerald);">₹${Number(u.last_payment_amount || 149999).toLocaleString('en-IN')}</div>
+                </td>
+                <td>
+                    <div style="font-weight:600; color:#cbd5e1; font-size:0.8rem;">${cycleStr}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">Expires: ${expiryStr}</div>
+                </td>
+                <td>
+                    <div style="font-size:0.82rem; font-weight:600; color:#fff;">${Number(u.student_count || 0).toLocaleString()} Students</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">${u.staff_count || 0} Staff • ${u.application_count || 0} Clearances</div>
                 </td>
                 <td>${statusBadge}</td>
-                <td>${Number(u.estimated_students || 5000).toLocaleString()} students</td>
                 <td>
-                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
                         <button class="btn-action btn-impersonate" onclick="impersonateTenant('${u.id}', '${u.name}')" title="Enter university portal directly">
                             🚀 Enter
+                        </button>
+                        <button class="btn-action btn-export" onclick="exportTenantDataset('${u.id}', '${u.name}')" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#10b981;" title="Export and download complete standalone dataset archive">
+                            📦 Export
                         </button>
                         <button class="btn-action btn-license" onclick="issueLicense('${u.id}')" title="Generate offline Ed25519 license">
                             🔑 License
@@ -778,6 +916,10 @@ function renderUniversities(list) {
             </tr>
         `;
     }).join('');
+}
+
+function exportTenantDataset(univId, name) {
+    window.location.href = `/platform/api/universities/${univId}/export-dataset`;
 }
 
 function filterUniversities() {
@@ -854,7 +996,9 @@ async function submitOnboardUniversity(e) {
         slug: document.getElementById('univSlug').value.trim(),
         official_email: document.getElementById('univEmail').value.trim(),
         contact_person: document.getElementById('univContact').value.trim(),
+        phone: document.getElementById('univPhone').value.trim(),
         subscription_plan: document.getElementById('univPlan').value,
+        billing_cycle: document.getElementById('univCycle').value,
     };
 
     try {
@@ -877,6 +1021,27 @@ async function submitOnboardUniversity(e) {
     } finally {
         btn.disabled = false;
         btn.textContent = 'Provision Tenant';
+    }
+}
+
+function togglePlatformSidebar(open) {
+    const sb = document.getElementById('platformSidebar');
+    const bd = document.getElementById('platformBackdrop');
+    if (sb) {
+        if (open === undefined) {
+            sb.classList.toggle('open');
+        } else if (open) {
+            sb.classList.add('open');
+        } else {
+            sb.classList.remove('open');
+        }
+    }
+    if (bd && sb) {
+        if (sb.classList.contains('open')) {
+            bd.classList.add('active');
+        } else {
+            bd.classList.remove('active');
+        }
     }
 }
 

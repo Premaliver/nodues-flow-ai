@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .form-section { margin-bottom: 2rem; }
+        .form-section { margin-bottom: 1.75rem; }
         .form-section-title { font-size: 1.05rem; font-family: var(--font-display); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
         .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
         .checkbox-card { 
@@ -30,8 +30,8 @@
         .file-upload-zone.has-file { border-color: var(--emerald); background: rgba(16,185,129,0.05); }
         .file-upload-zone.error-border { border-color: var(--crimson); background: rgba(239,68,68,0.02); }
         .uploaded-file { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-top: 0.5rem; }
-        .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
-        .step-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border: 2px solid var(--border-light); color: var(--text-muted); background: var(--bg-card); }
+        .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; align-items: center; }
+        .step-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; border: 2px solid var(--border-light); color: var(--text-muted); background: var(--bg-card); flex-shrink: 0; }
         .step-dot.active { border-color: var(--accent); background: var(--accent); color: white; box-shadow: 0 0 12px rgba(99,102,241,0.4); }
         .step-dot.completed { border-color: var(--emerald); background: var(--emerald); color: white; }
         .step-line { flex: 1; height: 3px; background: var(--border-light); align-self: center; border-radius: 2px; }
@@ -78,6 +78,20 @@
         }
         .fb-suggestion-chip:hover { background: var(--accent); color: #ffffff; }
         @keyframes modalSlideUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        @media (max-width: 768px) {
+            .card[id^="step"] { padding: 1.25rem 1rem !important; }
+            .checkbox-grid { grid-template-columns: 1fr; }
+            .step-indicator { margin-bottom: 1.25rem; }
+            .step-dot { width: 30px; height: 30px; font-size: 0.75rem; }
+            .file-upload-zone { padding: 1.25rem 0.75rem; }
+            .fb-modal-card { padding: 1.25rem 1rem; }
+        }
+        @media (max-width: 480px) {
+            .card[id^="step"] { padding: 1rem 0.75rem !important; border-radius: var(--radius-lg); }
+            .step-dot { width: 26px; height: 26px; font-size: 0.7rem; }
+            .btn-lg { padding: 0.65rem 1.15rem; font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
