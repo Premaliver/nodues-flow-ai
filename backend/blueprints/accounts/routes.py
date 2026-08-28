@@ -194,6 +194,21 @@ def process_application(app_dept_id):
     if action not in ("approved", "rejected"):
         return jsonify({"success": False, "message": "Invalid action"}), 400
 
+    if action == "approved":
+        # Ensure all preceding facility steps are approved first
+        prior_unapproved = ApplicationDepartment.query.filter(
+            ApplicationDepartment.application_id == app_dept.application_id,
+            ApplicationDepartment.display_order < app_dept.display_order,
+            ApplicationDepartment.is_required == True,
+            ApplicationDepartment.status != "approved"
+        ).all()
+        if prior_unapproved:
+            pending_names = [p.department.name if p.department else f"Step #{p.display_order}" for p in prior_unapproved]
+            return jsonify({
+                "success": False,
+                "message": f"Cannot approve yet. Preceding facilities verification pending: {', '.join(pending_names)}"
+            }), 400
+
     # Update status
     app_dept.status = action
     app_dept.remarks = remarks

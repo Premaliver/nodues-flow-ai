@@ -1780,7 +1780,133 @@
                             </div>
                         `;
 
-                        // Build Modern Department Clearance Grid Tiles
+                        // Find current active pending department where application is sitting right now
+                        let currentPendingDept = null;
+                        for (let ad of deptApprovals) {
+                            if (ad.status === 'pending' || ad.status === 'submitted' || ad.status === 'in_review') {
+                                currentPendingDept = ad;
+                                break;
+                            }
+                        }
+
+                        // Determine status location banner
+                        let locationBannerHtml = '';
+                        const isFullyApproved = app.status === 'approved' || pct === 100;
+                        const hasRejection = deptApprovals.some(ad => ad.status === 'rejected');
+
+                        if (isFullyApproved) {
+                            locationBannerHtml = `
+                                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)); border: 2px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                        <div>
+                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--emerald); display: flex; align-items: center; gap: 0.45rem;">
+                                                <span class="cyber-status-dot" style="background:#10b981;"></span>
+                                                FINAL CLEARANCE STATUS: 100% CLEARED & APPROVED
+                                            </div>
+                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0;">
+                                                🎉 All Institutional Departments Cleared!
+                                            </h3>
+                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 620px;">
+                                                Your clearance request is complete across Facilities, Accounts, Academic HOD, and Examination. Your official Admit Card is issued and ready.
+                                            </p>
+                                        </div>
+                                        <div style="display: flex; gap: 0.75rem;">
+                                            <button class="btn btn-success btn-lg" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);">
+                                                🎓 Download Admit Card PDF
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (hasRejection) {
+                            const rejectedDepts = deptApprovals.filter(ad => ad.status === 'rejected');
+                            const rejNames = rejectedDepts.map(r => r.department_name || 'Department').join(', ');
+                            locationBannerHtml = `
+                                <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08)); border: 2px solid var(--crimson); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                        <div>
+                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--crimson); display: flex; align-items: center; gap: 0.45rem;">
+                                                <span class="cyber-status-dot" style="background:#ef4444;"></span>
+                                                ACTION REQUIRED: CLEARANCE REVISION REQUESTED
+                                            </div>
+                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--crimson); margin: 0.35rem 0;">
+                                                ⚠️ Clearance Hold at: ${rejNames}
+                                            </h3>
+                                            <p style="font-size: 0.88rem; color: var(--text-primary); margin: 0; max-width: 640px;">
+                                                The department has requested clarification or revised receipts. Check their remarks below and click "Upload Revised Receipt" to resume.
+                                            </p>
+                                        </div>
+                                        <button class="btn btn-danger btn-lg" onclick="showUploadModal()" style="box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
+                                            📤 Upload Revised Receipt
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (app.status === 'draft') {
+                            locationBannerHtml = `
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(79, 70, 229, 0.08)); border: 2px solid var(--accent); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                        <div>
+                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); display: flex; align-items: center; gap: 0.45rem;">
+                                                <span class="cyber-status-dot" style="background:#6366f1;"></span>
+                                                APPLICATION STATUS: DRAFT MODE
+                                            </div>
+                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0;">
+                                                📝 Application Saved as Draft
+                                            </h3>
+                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 620px;">
+                                                Ensure both Examination Fee & Next Semester Fee receipts are attached, then click "Submit Application" to start department verification.
+                                            </p>
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button class="btn btn-outline btn-sm" onclick="showUploadModal()">📤 Upload Receipts</button>
+                                            <button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">🚀 Submit Application</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (currentPendingDept) {
+                            const deptRole = (currentPendingDept.department_role || '').toLowerCase();
+                            const deptName = currentPendingDept.department_name || 'Department';
+                            let roleExpl = 'Staff is currently verifying your records in sequence.';
+                            if (deptRole.includes('hostel')) roleExpl = 'Hostel Warden is verifying room clearance, furniture inventory, and key handover.';
+                            else if (deptRole.includes('mess')) roleExpl = 'Mess Incharge is auditing dining hall dues and cafeteria billing.';
+                            else if (deptRole.includes('transport')) roleExpl = 'Transport Incharge is verifying college bus route fees and travel pass.';
+                            else if (deptRole.includes('scholarship')) roleExpl = 'Scholarship cell is verifying fee concession & government grant status.';
+                            else if (deptRole.includes('account')) roleExpl = 'Accounts & Finance Department is auditing tuition fees, exam fee receipt & next semester receipt.';
+                            else if (deptRole.includes('hod')) roleExpl = 'Academic Head of Department (HOD) is verifying lab dues, attendance, and coursework.';
+                            else if (deptRole.includes('exam')) roleExpl = 'Examination Department is conducting the final audit to generate your official Admit Card.';
+
+                            locationBannerHtml = `
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.08)); border: 2px solid var(--accent); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                        <div>
+                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); display: flex; align-items: center; gap: 0.45rem;">
+                                                <span class="cyber-status-dot" style="background:#6366f1;"></span>
+                                                CURRENT APPLICATION LOCATION: STEP #${currentPendingDept.display_order || 1} OF ${deptApprovals.length}
+                                            </div>
+                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                                                📍 Currently Under Review at: <span style="color: var(--accent);">${deptName}</span>
+                                            </h3>
+                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 680px;">
+                                                ${roleExpl} Once verified, your application will automatically proceed to the next department.
+                                            </p>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                            <span class="badge badge-primary" style="font-size: 0.85rem; padding: 0.45rem 0.9rem;">
+                                                ⚡ Active Queue
+                                            </span>
+                                            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()" title="Check for real-time updates">
+                                                🔄 Refresh Status
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // Build Modern Department Clearance Grid Tiles with Sequential State
+                        let activeStepFound = false;
                         const deptTilesHtml = `
                             <div class="dept-cyber-grid">
                                 ${deptApprovals.map((ad, idx) => {
@@ -1789,6 +1915,7 @@
                                     let badgeColor = 'secondary';
                                     let iconEmoji = '⏳';
                                     let deptEmoji = '🏛️';
+                                    let statusLabel = 'Queued';
 
                                     const deptName = ad.department_name || 'Department';
                                     const deptRole = (ad.department_role || '').toLowerCase();
@@ -1806,14 +1933,25 @@
                                         borderStatus = 'approved';
                                         badgeColor = 'success';
                                         iconEmoji = '✅';
+                                        statusLabel = 'Approved & Cleared';
                                     } else if (st === 'rejected') {
                                         borderStatus = 'rejected';
                                         badgeColor = 'danger';
                                         iconEmoji = '❌';
-                                    } else if (st === 'submitted' || st === 'pending') {
+                                        statusLabel = 'Action Required';
+                                    } else if (!activeStepFound) {
+                                        // This is the active department currently reviewing
+                                        activeStepFound = true;
                                         borderStatus = 'in-review';
-                                        badgeColor = 'warning';
-                                        iconEmoji = '⏳';
+                                        badgeColor = 'primary';
+                                        iconEmoji = '⚡';
+                                        statusLabel = 'Under Active Review';
+                                    } else {
+                                        // Subsequent departments waiting for preceding approvals
+                                        borderStatus = 'pending';
+                                        badgeColor = 'secondary';
+                                        iconEmoji = '🔒';
+                                        statusLabel = 'Awaiting Prior Steps';
                                     }
 
                                     return `
@@ -1834,7 +1972,7 @@
                                                         </div>
                                                     </div>
                                                     <span class="badge badge-${badgeColor}" style="font-size: 0.72rem; text-transform: uppercase;">
-                                                        ${iconEmoji} ${st}
+                                                        ${iconEmoji} ${statusLabel}
                                                     </span>
                                                 </div>
 
@@ -1846,7 +1984,7 @@
                                             </div>
 
                                             <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 0.6rem; margin-top: 0.75rem;">
-                                                <span>${ad.processed_at ? `Verified: ${new Date(ad.processed_at).toLocaleDateString()}` : 'Awaiting Review'}</span>
+                                                <span>${ad.processed_at ? `Verified: ${new Date(ad.processed_at).toLocaleDateString()}` : (borderStatus === 'in-review' ? '⚡ Currently in Queue' : '🔒 Awaiting Prior Step')}</span>
                                                 ${st === 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="showUploadModal()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">📤 Upload Fix</button>` : ''}
                                             </div>
                                         </div>
@@ -1855,66 +1993,13 @@
                             </div>
                         `;
 
-                        const isFullyApproved = app.status === 'approved' || pct === 100;
-                        const approvalBanner = isFullyApproved ? `
-                            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1)); border: 1.5px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.35rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: var(--shadow-md);">
-                                <div>
-                                    <div style="font-weight: 800; font-size: 1.1rem; color: var(--emerald); display: flex; align-items: center; gap: 0.5rem;">
-                                        🎉 All Departments Cleared & Approved!
-                                    </div>
-                                    <p style="font-size: 0.88rem; color: var(--text-primary); margin-top: 0.25rem;">
-                                        Your No-Dues clearance is 100% complete across all departments. Official Examination Admit Card is ready!
-                                    </p>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
-                                        🎓 Download Admit Card
-                                    </button>
-                                </div>
-                            </div>
-                        ` : '';
-
-                        const hasRejection = deptApprovals.some(ad => ad.status === 'rejected');
-                        const rejectionBanner = hasRejection ? `
-                            <div style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid var(--crimson); border-radius: var(--radius-xl); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
-                                <div>
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--crimson); display: flex; align-items: center; gap: 0.5rem;">
-                                        ❌ Action Required: Clearance Revision Requested
-                                    </div>
-                                    <p style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.25rem;">
-                                        One or more departments requested revised receipts or fee clearance. Check the department cards below for remarks and upload a fix.
-                                    </p>
-                                </div>
-                                <button class="btn btn-danger" onclick="showUploadModal()" style="box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);">
-                                    📤 Upload Revised Receipt
-                                </button>
-                            </div>
-                        ` : '';
-
-                        const draftBanner = (app.status === 'draft') ? `
-                            <div style="background: rgba(99, 102, 241, 0.08); border: 1.5px solid var(--accent); border-radius: var(--radius-xl); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
-                                <div>
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 0.5rem;">
-                                        📝 Application Saved as Draft
-                                    </div>
-                                    <p style="font-size: 0.85rem; color: var(--text-primary); margin-top: 0.25rem;">
-                                        Ensure both Examination Fee & Next Semester Fee receipts are uploaded, then click "Submit Application" to start department verification.
-                                    </p>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <button class="btn btn-outline btn-sm" onclick="showUploadModal()">📤 Upload Receipts</button>
-                                    <button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">🚀 Submit Application</button>
-                                </div>
-                            </div>
-                        ` : '';
-
                         const docsList = d.documents || [];
                         const docsSectionHtml = `
                             <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.35rem; margin-top: 1.75rem; box-shadow: var(--shadow-sm);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
                                         <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.45rem;">
-                                            <span>📎</span> <span>Verified Clearance Documents & Receipts (${docsList.length})</span>
+                                            <span>📎</span> <span>Verified Clearance Documents & Fee Receipts (${docsList.length})</span>
                                         </div>
                                         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Compulsory receipts audited across Accounts & Department heads</div>
                                     </div>
@@ -1951,9 +2036,7 @@
                         `;
 
                         document.getElementById('activeClearanceBody').innerHTML = `
-                            ${approvalBanner}
-                            ${rejectionBanner}
-                            ${draftBanner}
+                            ${locationBannerHtml}
                             <div style="margin-bottom: 1.75rem;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
