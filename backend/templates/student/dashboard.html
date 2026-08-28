@@ -598,8 +598,209 @@
         }
 
         /* ============================================================
-           FUTURISTIC 4-STAGE CLEARANCE PIPELINE & STATUS SYSTEM
+           CLEAN PROFESSIONAL CLEARANCE STATUS SYSTEM
            ============================================================ */
+
+        /* Application Status Card */
+        .app-status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 1.75rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        /* Horizontal Stepper */
+        .clr-stepper {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1.5rem 1rem;
+            overflow-x: auto;
+        }
+        .clr-stepper-track {
+            position: absolute;
+            top: calc(1.5rem + 22px);
+            left: calc(1rem + 22px);
+            right: calc(1rem + 22px);
+            height: 2px;
+            background: var(--border-light);
+            z-index: 1;
+        }
+        .clr-stepper-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+            transition: width 0.6s ease;
+            border-radius: 2px;
+        }
+        .clr-step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            flex: 1;
+            text-align: center;
+            min-width: 70px;
+        }
+        .clr-step-node {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-medium);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+        .clr-step-node.done {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+        }
+        .clr-step-node.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+        .clr-step-node.rejected {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+        }
+        .clr-step-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            line-height: 1.3;
+            max-width: 80px;
+        }
+        .clr-step-label.done { color: #10b981; }
+        .clr-step-label.active { color: #6366f1; font-weight: 700; }
+        .clr-step-label.rejected { color: #ef4444; }
+
+        /* Department Verification List */
+        .clr-dept-list {
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            background: var(--bg-card);
+        }
+        .clr-dept-list-header {
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .clr-dept-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-light);
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            transition: background 0.2s;
+        }
+        .clr-dept-row:last-child { border-bottom: none; }
+        .clr-dept-row:hover { background: var(--bg-secondary); }
+        .clr-dept-info { flex: 1; min-width: 0; }
+        .clr-dept-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .clr-dept-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+        .clr-dept-remark {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            padding: 0.4rem 0.75rem;
+            border-radius: 0 6px 6px 0;
+            margin-top: 0.5rem;
+        }
+        .clr-status-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .clr-status-badge.approved {
+            background: rgba(16,185,129,0.12);
+            color: #059669;
+            border: 1px solid rgba(16,185,129,0.25);
+        }
+        .clr-status-badge.pending {
+            background: rgba(245,158,11,0.12);
+            color: #d97706;
+            border: 1px solid rgba(245,158,11,0.25);
+        }
+        .clr-status-badge.reviewing {
+            background: rgba(99,102,241,0.12);
+            color: #4f46e5;
+            border: 1px solid rgba(99,102,241,0.25);
+        }
+        .clr-status-badge.rejected {
+            background: rgba(239,68,68,0.12);
+            color: #dc2626;
+            border: 1px solid rgba(239,68,68,0.25);
+        }
+
+        /* Documents section */
+        .clr-docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
+        .clr-doc-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .clr-stepper { padding: 1rem 0.5rem; }
+            .clr-step { min-width: 55px; }
+            .clr-step-node { width: 36px; height: 36px; font-size: 0.82rem; }
+        }
+
         .pipeline-stage-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -974,30 +1175,28 @@
                         </div>
                     </div>
 
-                    <!-- Active Clearance Workflow & Department Cards Section -->
+                    <!-- Active Clearance Status Section -->
                     <div class="card reveal" style="margin-bottom: 2rem;" id="activeClearanceSection">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
                             <div>
-                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; display: flex; align-items: center; gap: 0.5rem;">
-                                    ⚡ Active Application Clearance Status
+                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                    📋 Application Clearance Status
                                 </h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="activeAppHeaderSub">
-                                    Real-time clearance pipeline tracking across all institutional departments.
-                                </p>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Track your application through each department step by step.</p>
                             </div>
                             <span id="activeAppBadgeSlot"><span class="badge badge-secondary">No Active App</span></span>
                         </div>
-
                         <div class="card-body" id="activeClearanceBody">
                             <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                 <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
-                                <p style="font-weight: 600;">No active clearance process found.</p>
-                                <p style="font-size: 0.85rem; max-width: 400px; margin: 0.5rem auto 1.25rem auto;">Start a new clearance application to trigger department verification for this semester.</p>
-                                <a href="/student/apply" class="btn btn-primary">+ Create Clearance Application</a>
+                                <p style="font-weight: 600;">No active clearance application.</p>
+                                <p style="font-size: 0.85rem; max-width: 380px; margin: 0.5rem auto 1.25rem auto;">Start a new clearance application to begin the department verification process.</p>
+                                <a href="/student/apply" class="btn btn-primary">+ Create Application</a>
                             </div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- PANEL 2: DEDICATED APPLICATION HISTORY PANEL -->
                 <div id="panelApplications" class="dashboard-panel" style="display: none;">
@@ -1560,289 +1759,210 @@
                         `;
                     }
 
-                    // Render Active Application Clearance Roadmap Visualizer
+                    // ─── Render Active Application Clearance Status ───────────────
                     if (d.active_application) {
                         const app = d.active_application;
                         currentActiveAppId = app.id;
                         const pct = app.progress_percentage || 0;
 
-                        // Update Circular Gauge
+                        // Gauge
                         updateGauge(pct);
 
-                        // Render Active Application Header Badge & Actions
+                        // Badge + Delete button
+                        const appStatusClass = app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning';
                         document.getElementById('activeAppBadgeSlot').innerHTML = `
-                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                <span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}">
-                                    ${app.application_number} — ${app.status.toUpperCase()}
-                                </span>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.3rem 0.65rem; font-size: 0.78rem; font-weight: 600;" title="Cancel & delete this application to submit a fresh one">
-                                    🗑️ Stop / Delete Application
+                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                <span class="badge badge-${appStatusClass}">${app.application_number} — ${app.status.toUpperCase()}</span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}','${app.application_number||''}')"
+                                    style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:0.3rem 0.65rem;font-size:0.78rem;font-weight:600;">
+                                    🗑️ Stop / Delete
                                 </button>
-                            </div>
-                        `;
+                            </div>`;
 
-                        // Canonical Department Rank Function to guarantee strict sequential ordering:
-                        // Facilities -> Accounts -> HOD -> Examination
-                        function getDeptCanonicalRank(ad) {
+                        // ── Canonical rank for strict ordering ─────────────────
+                        function getDeptRank(ad) {
                             const role = (ad.department_role || '').toLowerCase();
                             const name = (ad.department_name || '').toLowerCase();
                             if (role.includes('hostel') || name.includes('hostel')) return 10;
-                            if (role.includes('mess') || name.includes('mess')) return 20;
-                            if (role.includes('transport') || name.includes('transport') || name.includes('bus')) return 30;
-                            if (role.includes('scholarship') || name.includes('scholarship')) return 40;
-                            if (role.includes('account') || name.includes('account') || name.includes('finance')) return 50; // ALWAYS BEFORE HOD!
-                            if (role.includes('hod') || name.includes('hod') || name.includes('head of department')) return 60; // ALWAYS AFTER ACCOUNTS!
-                            if (role.includes('exam') || name.includes('exam')) return 70; // ALWAYS LAST!
+                            if (role.includes('mess')   || name.includes('mess'))   return 20;
+                            if (role.includes('transport')||name.includes('transport')||name.includes('bus')) return 30;
+                            if (role.includes('scholarship')||name.includes('scholarship')) return 40;
+                            if (role.includes('account')||name.includes('account')||name.includes('finance')) return 50;
+                            if (role.includes('hod')   ||name.includes('hod')||name.includes('head'))  return 60;
+                            if (role.includes('exam')  ||name.includes('exam'))  return 70;
                             return 80;
                         }
+                        const depts = (d.department_approvals || []).slice()
+                            .sort((a, b) => getDeptRank(a) - getDeptRank(b));
 
-                        // Sort department approvals strictly by canonical rank
-                        let deptApprovals = (d.department_approvals || []).slice().sort((a, b) => {
-                            const rankA = getDeptCanonicalRank(a);
-                            const rankB = getDeptCanonicalRank(b);
-                            if (rankA !== rankB) return rankA - rankB;
-                            return (a.display_order || 0) - (b.display_order || 0);
-                        });
+                        // ── Which dept is currently active (first non-approved) ─
+                        const firstPendingIdx = depts.findIndex(ad => ad.status !== 'approved');
+                        const hasRejection = depts.some(ad => ad.status === 'rejected');
 
-                        // Re-assign sequential 1-based step order
-                        deptApprovals.forEach((ad, i) => { ad._displayStep = i + 1; });
+                        // ── Progress bar fill % for stepper track ──────────────
+                        const approvedCount = depts.filter(ad => ad.status === 'approved').length;
+                        const trackFillPct  = depts.length > 1 ? (approvedCount / (depts.length - 1)) * 100 : (approvedCount >= depts.length ? 100 : 0);
 
-                        // Find current active pending department where application is sitting right now
-                        let currentPendingDept = null;
-                        for (let ad of deptApprovals) {
-                            if (ad.status === 'pending' || ad.status === 'submitted' || ad.status === 'in_review') {
-                                currentPendingDept = ad;
-                                break;
-                            }
+                        // dept icon map
+                        function getDeptIcon(ad) {
+                            const role = (ad.department_role||'').toLowerCase();
+                            const name = (ad.department_name||'').toLowerCase();
+                            if (role.includes('hostel')||name.includes('hostel')) return '🏠';
+                            if (role.includes('mess')||name.includes('mess'))     return '🍽️';
+                            if (role.includes('transport')||name.includes('bus')) return '🚌';
+                            if (role.includes('scholarship'))                      return '🎓';
+                            if (role.includes('account')||name.includes('finance'))return '💰';
+                            if (role.includes('hod')||name.includes('head'))       return '👨‍💼';
+                            if (role.includes('exam'))                             return '📄';
+                            return '🏛️';
                         }
 
-                        const isFullyApproved = app.status === 'approved' || pct === 100;
-                        const hasRejection = deptApprovals.some(ad => ad.status === 'rejected');
-
-                        // 1. Success Banner (when 100% complete)
-                        let statusBannerHtml = '';
-                        if (isFullyApproved) {
-                            statusBannerHtml = `
-                                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)); border: 1.5px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                    <div>
-                                        <div style="font-weight: 800; font-size: 1.1rem; color: var(--emerald); display: flex; align-items: center; gap: 0.45rem;">
-                                            🎉 All Departments Cleared & Approved!
-                                        </div>
-                                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0.25rem 0 0 0;">
-                                            Your clearance is 100% complete. Official Examination Admit Card is ready for download!
-                                        </p>
-                                    </div>
-                                    <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); font-weight: 700;">
-                                        🎓 Download Admit Card
-                                    </button>
-                                </div>
-                            `;
-                        } else if (hasRejection) {
-                            statusBannerHtml = `
-                                <div style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid var(--crimson); border-radius: var(--radius-xl); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                    <div>
-                                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--crimson); display: flex; align-items: center; gap: 0.45rem;">
-                                            ❌ Action Required: Clearance Revision Requested
-                                        </div>
-                                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0.25rem 0 0 0;">
-                                            One or more departments requested revised receipts. Please check remarks below and upload the fix.
-                                        </p>
-                                    </div>
-                                    <button class="btn btn-danger" onclick="showUploadModal()" style="box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3); font-weight: 700;">
-                                        📤 Upload Revised Receipt
-                                    </button>
-                                </div>
-                            `;
-                        }
-
-                        // 2. Horizontal Stepper with Connected Line & Nodes (Matching user screenshot)
-                        const totalNodes = deptApprovals.length;
-                        const approvedNodes = deptApprovals.filter(ad => ad.status === 'approved').length;
-                        let lineProgressPct = 0;
-                        if (totalNodes > 1) {
-                            lineProgressPct = (approvedNodes / (totalNodes - 1)) * 100;
-                            lineProgressPct = Math.min(lineProgressPct, 100);
-                        }
-
+                        // ── STEPPER HTML ───────────────────────────────────────
                         const stepperHtml = `
-                            <div class="clearance-stepper" style="position: relative; display: flex; justify-content: space-between; align-items: flex-start; padding: 1.25rem 0.5rem; margin: 1.5rem 0; overflow-x: auto;">
-                                <div style="position: absolute; top: 32px; left: 30px; right: 30px; height: 3px; background: var(--border-light); z-index: 1;"></div>
-                                <div style="position: absolute; top: 32px; left: 30px; width: calc(${lineProgressPct}% * 0.85); max-width: calc(100% - 60px); height: 3px; background: var(--gradient-primary); z-index: 2; transition: width 0.6s ease-in-out;"></div>
-                                ${deptApprovals.map((ad, idx) => {
-                                    const st = ad.status;
-                                    let nodeClass = '';
-                                    let nodeContent = (idx + 1);
-                                    let nodeStyle = '';
-                                    
-                                    if (st === 'approved') {
-                                        nodeClass = 'completed';
-                                        nodeContent = '✓';
-                                        nodeStyle = 'background: #10b981; border-color: #10b981; color: white; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);';
-                                    } else if (ad === currentPendingDept) {
-                                        nodeClass = 'active';
-                                        nodeStyle = 'background: var(--gradient-primary); border-color: transparent; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);';
-                                    } else {
-                                        nodeStyle = 'background: var(--bg-card); border: 2px solid var(--border-medium); color: var(--text-muted);';
-                                    }
-
-                                    return `
-                                        <div class="stepper-item ${nodeClass}" style="position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; min-width: 85px; flex-shrink: 0; text-align: center;">
-                                            <div class="stepper-node" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; transition: all 0.3s ease; ${nodeStyle}">
-                                                ${nodeContent}
-                                            </div>
-                                            <div class="stepper-label" style="font-size: 0.75rem; font-weight: 700; color: ${st === 'approved' ? 'var(--emerald)' : (ad === currentPendingDept ? 'var(--accent)' : 'var(--text-secondary)')}; max-width: 105px; line-height: 1.25;">
-                                                ${ad.department_name}
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        `;
-
-                        // 3. Department Verification Status List (Matching user screenshot)
-                        const deptListHtml = `
-                            <div style="margin-top: 2rem;">
-                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-primary);">
-                                    Department Verification Status
-                                </h3>
-                                <div style="display: flex; flex-direction: column;">
-                                    ${deptApprovals.map((ad, idx) => {
+                            <div style="margin-bottom:1.5rem;">
+                                <div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1rem;">
+                                    Clearance Journey — Step ${Math.min(approvedCount + 1, depts.length)} of ${depts.length}
+                                </div>
+                                <div class="clr-stepper">
+                                    <div class="clr-stepper-track">
+                                        <div class="clr-stepper-fill" style="width:${trackFillPct}%"></div>
+                                    </div>
+                                    ${depts.map((ad, idx) => {
                                         const st = ad.status;
-                                        let badgeStyle = 'background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25);';
-                                        let badgeIcon = '⏳';
-                                        let badgeText = 'PENDING';
-                                        let statusSubtext = 'Awaiting Review';
-
-                                        if (st === 'approved') {
-                                            badgeStyle = 'background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25);';
-                                            badgeIcon = '✅';
-                                            badgeText = 'APPROVED';
-                                            statusSubtext = ad.processed_at ? `Verified on ${new Date(ad.processed_at).toLocaleDateString()}` : 'Cleared';
-                                        } else if (st === 'rejected') {
-                                            badgeStyle = 'background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25);';
-                                            badgeIcon = '❌';
-                                            badgeText = 'REJECTED';
-                                            statusSubtext = 'Revision Requested';
-                                        } else if (ad === currentPendingDept) {
-                                            badgeStyle = 'background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.25);';
-                                            badgeIcon = '⏳';
-                                            badgeText = 'UNDER REVIEW';
-                                            statusSubtext = 'Currently Under Review';
-                                        }
-
+                                        const isActive  = (idx === firstPendingIdx) && !hasRejection;
+                                        const isRejected = st === 'rejected';
+                                        const isDone    = st === 'approved';
+                                        const nodeClass = isDone ? 'done' : isRejected ? 'rejected' : isActive ? 'active' : '';
+                                        const labelClass = isDone ? 'done' : isRejected ? 'rejected' : isActive ? 'active' : '';
+                                        const icon = isDone ? '✓' : isRejected ? '✕' : (idx + 1);
                                         return `
-                                            <div style="padding: 1.15rem 0; border-bottom: 1px solid var(--border-light);">
-                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; flex-wrap: wrap; gap: 0.5rem;">
-                                                    <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">
-                                                        ${ad.department_name}
-                                                    </div>
-                                                    <span style="font-size: 0.76rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px; ${badgeStyle}">
-                                                        <span>${badgeIcon}</span> <span>${badgeText}</span>
-                                                    </span>
-                                                </div>
-                                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 500;">
-                                                    Step Order: #${ad._displayStep || (idx + 1)}
-                                                </div>
-                                                <div style="font-size: 0.82rem; color: var(--text-muted);">
-                                                    ${statusSubtext}
-                                                </div>
-                                                ${ad.remarks ? `
-                                                    <div style="font-size: 0.82rem; background: var(--bg-secondary); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent); margin-top: 0.6rem; color: var(--text-secondary); line-height: 1.4;">
-                                                        💬 "${ad.remarks}"
-                                                    </div>
-                                                ` : ''}
-                                                ${st === 'rejected' ? `
-                                                    <div style="margin-top: 0.6rem;">
-                                                        <button class="btn btn-danger btn-sm" onclick="showUploadModal()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">📤 Upload Fix</button>
-                                                    </div>
-                                                ` : ''}
-                                            </div>
-                                        `;
+                                            <div class="clr-step">
+                                                <div class="clr-step-node ${nodeClass}">${icon}</div>
+                                                <div class="clr-step-label ${labelClass}">${ad.department_name || 'Dept ' + (idx+1)}</div>
+                                            </div>`;
                                     }).join('')}
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
 
-                        // 4. Documents & Receipts Locker
-                        const docsList = d.documents || [];
-                        const docsSectionHtml = `
-                            <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.35rem; margin-top: 2rem; box-shadow: var(--shadow-sm);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                                    <div>
-                                        <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.45rem;">
-                                            <span>📎</span> <span>Verified Clearance Documents & Fee Receipts (${docsList.length})</span>
-                                        </div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Compulsory receipts audited across Accounts & Department heads</div>
-                                    </div>
-                                    <button type="button" class="btn btn-outline btn-sm" onclick="showUploadModal()">+ Upload More Receipts</button>
-                                </div>
-                                ${docsList.length > 0 ? `
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem;">
-                                        ${docsList.map(doc => {
-                                            const token = localStorage.getItem('access_token');
-                                            const viewUrl = `/api/documents/file/${doc.id}?token=${token}`;
-                                            return `
-                                                <div style="background: var(--bg-secondary); border: 1.5px solid var(--border-light); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                                                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                        <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.03em;">
-                                                            ${(doc.document_type || 'Receipt').replace(/_/g, ' ')}
-                                                        </div>
-                                                        <div style="font-size: 0.74rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-top: 2px;">
-                                                            ${doc.file_name || 'receipt.pdf'}
-                                                        </div>
-                                                    </div>
-                                                    <a href="${viewUrl}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.65rem; flex-shrink: 0;" title="Preview uploaded document">
-                                                        👁️ View
-                                                    </a>
+                        // ── DEPARTMENT LIST HTML ───────────────────────────────
+                        const deptListHtml = `
+                            <div class="clr-dept-list">
+                                <div class="clr-dept-list-header">🏛️ Department Verification Status</div>
+                                ${depts.map((ad, idx) => {
+                                    const st = ad.status;
+                                    const isActive  = (idx === firstPendingIdx) && !hasRejection;
+                                    const isDone    = st === 'approved';
+                                    const isRej     = st === 'rejected';
+                                    const badgeCls  = isDone ? 'approved' : isRej ? 'rejected' : isActive ? 'reviewing' : 'pending';
+                                    const badgeText = isDone ? '✓ Approved' : isRej ? '✕ Rejected' : isActive ? '● In Review' : '○ Waiting';
+                                    const rowBg     = isDone ? 'rgba(16,185,129,0.04)' : isRej ? 'rgba(239,68,68,0.04)' : isActive ? 'rgba(99,102,241,0.04)' : '';
+                                    const processedDate = ad.processed_at ? new Date(ad.processed_at).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : null;
+                                    return `
+                                        <div class="clr-dept-row" style="background:${rowBg}">
+                                            <div class="clr-dept-info">
+                                                <div class="clr-dept-name">
+                                                    <span>${getDeptIcon(ad)}</span>
+                                                    <span>Step ${idx+1} — ${ad.department_name || 'Department'}</span>
                                                 </div>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                ` : `
-                                    <div style="text-align: center; padding: 1.5rem; color: var(--text-muted); background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px dashed var(--border-medium);">
-                                        No receipts uploaded yet. Click "+ Upload More Receipts" to attach mandatory fee documents.
-                                    </div>
-                                `}
-                            </div>
-                        `;
+                                                <div class="clr-dept-meta">
+                                                    ${processedDate ? `Processed on ${processedDate}` : (isActive ? 'Currently under review' : 'Awaiting previous approvals')}
+                                                </div>
+                                                ${ad.remarks ? `<div class="clr-dept-remark">💬 ${ad.remarks}</div>` : ''}
+                                            </div>
+                                            <span class="clr-status-badge ${badgeCls}">${badgeText}</span>
+                                        </div>`;
+                                }).join('')}
+                            </div>`;
 
-                        document.getElementById('activeClearanceBody').innerHTML = `
-                            ${statusBannerHtml}
-                            <div style="margin-bottom: 1.75rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                                    <div>
-                                        <div style="font-weight: 700; font-size: 1.15rem; color: var(--text-primary);">Overall Clearance Progress (${pct}%)</div>
-                                    </div>
-                                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                        ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')" style="box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); font-weight: 700;">🚀 Submit Application</button>` : ''}
-                                        <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 700;" title="Cancel & delete this application to submit a fresh one">
-                                            🗑️ Stop / Delete Application
+                        // ── DOCUMENTS HTML ─────────────────────────────────────
+                        const docs = d.documents || [];
+                        const docsHtml = `
+                            <div style="margin-top:1.5rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                                    <div style="font-weight:700;font-size:0.9rem;color:var(--text-primary);">📎 Uploaded Documents (${docs.length})</div>
+                                    <a href="/student/apply" class="btn btn-secondary btn-sm">+ Upload More</a>
+                                </div>
+                                ${docs.length > 0 ? `
+                                <div class="clr-docs-grid">
+                                    ${docs.map(doc => `
+                                        <div class="clr-doc-item">
+                                            <div style="min-width:0;">
+                                                <div style="font-weight:700;font-size:0.82rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                                    📄 ${(doc.document_type||'Document').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+                                                </div>
+                                                <div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${doc.file_name||'—'}</div>
+                                            </div>
+                                            <a href="${doc.file_url||'/api/documents/file/'+doc.id}?token=${encodeURIComponent(localStorage.getItem('access_token')||'')}"
+                                               target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:0.25rem 0.55rem;flex-shrink:0;">View</a>
+                                        </div>`).join('')}
+                                </div>` : `
+                                <div style="font-size:0.85rem;color:var(--text-muted);padding:0.75rem 0;">No documents uploaded yet. Upload fee receipts from the Apply page.</div>`}
+                            </div>`;
+
+                        // ── OVERALL PROGRESS BAR ───────────────────────────────
+                        const progressHtml = `
+                            <div style="margin-bottom:1.5rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+                                    <div style="font-weight:700;font-size:1rem;color:var(--text-primary);">Overall Progress</div>
+                                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                                        ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')" style="font-weight:700;">🚀 Submit Application</button>` : ''}
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}','${app.application_number||''}')"
+                                            style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);font-weight:600;">
+                                            🗑️ Stop / Delete
                                         </button>
                                     </div>
                                 </div>
-                                <div class="progress-bar" style="height: 10px; border-radius: 5px; background: rgba(99, 102, 241, 0.12);">
-                                    <div class="progress-bar-fill" style="width: ${pct}%; background: var(--gradient-primary); border-radius: 5px;"></div>
+                                <div style="background:rgba(99,102,241,0.1);border-radius:6px;height:8px;overflow:hidden;">
+                                    <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:6px;transition:width 0.6s ease;"></div>
                                 </div>
-                            </div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;text-align:right;">${pct}% complete</div>
+                            </div>`;
 
+                        // ── STATUS ALERT BANNER ────────────────────────────────
+                        let bannerHtml = '';
+                        if (app.status === 'approved') {
+                            bannerHtml = `<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+                                <span style="font-size:1.5rem;">🎉</span>
+                                <div><div style="font-weight:700;color:#059669;">Fully Cleared!</div>
+                                <div style="font-size:0.82rem;color:var(--text-secondary);">All departments have verified your application. Your admit card is ready.</div></div></div>`;
+                        } else if (hasRejection) {
+                            bannerHtml = `<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+                                <span style="font-size:1.5rem;">⚠️</span>
+                                <div><div style="font-weight:700;color:#dc2626;">Action Required</div>
+                                <div style="font-size:0.82rem;color:var(--text-secondary);">One or more departments have rejected your application. Please check the remarks below.</div></div></div>`;
+                        } else if (app.status === 'submitted') {
+                            bannerHtml = `<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+                                <span style="font-size:1.5rem;">⏳</span>
+                                <div><div style="font-weight:700;color:#4f46e5;">Under Review</div>
+                                <div style="font-size:0.82rem;color:var(--text-secondary);">Your application is progressing through departments. No action required right now.</div></div></div>`;
+                        } else if (app.status === 'draft') {
+                            bannerHtml = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+                                <span style="font-size:1.5rem;">📝</span>
+                                <div><div style="font-weight:700;color:#d97706;">Draft — Not Submitted</div>
+                                <div style="font-size:0.82rem;color:var(--text-secondary);">Your application is in draft. Click "Submit Application" to start the clearance process.</div></div></div>`;
+                        }
+
+                        // ── INJECT ALL INTO DOM ────────────────────────────────
+                        document.getElementById('activeClearanceBody').innerHTML = `
+                            ${bannerHtml}
+                            ${progressHtml}
                             ${stepperHtml}
                             ${deptListHtml}
-                            ${docsSectionHtml}
+                            ${docsHtml}
                         `;
+
                     } else {
                         currentActiveAppId = null;
                         updateGauge(0);
                         document.getElementById('activeAppBadgeSlot').innerHTML = `<span class="badge badge-secondary">No Active App</span>`;
                         document.getElementById('activeClearanceBody').innerHTML = `
-                            <div style="text-align: center; padding: 2.5rem 1.5rem; color: var(--text-muted);">
-                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
-                                <p style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">No active clearance application</p>
-                                <p style="font-size: 0.85rem; max-width: 420px; margin: 0.5rem auto 1.5rem auto; line-height: 1.5;">
-                                    You have no application in progress. You can start a fresh institutional clearance application anytime!
+                            <div style="text-align:center;padding:2.5rem 1.5rem;color:var(--text-muted);">
+                                <div style="font-size:2.5rem;margin-bottom:0.5rem;">📝</div>
+                                <p style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">No active clearance application</p>
+                                <p style="font-size:0.85rem;max-width:400px;margin:0.5rem auto 1.5rem auto;line-height:1.5;">
+                                    Start a new application to begin the department verification process.
                                 </p>
-                                <a href="/student/apply" class="btn btn-primary" style="box-shadow: var(--shadow-md);">+ Start New Clearance Application</a>
-                            </div>
-                        `;
+                                <a href="/student/apply" class="btn btn-primary">+ Start New Application</a>
                     }
 
                     // Render Issued Admit Cards Showcase
