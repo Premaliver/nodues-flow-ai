@@ -382,6 +382,37 @@ def dashboard_data():
 
 
 
+@student_bp.route("/api/application/<app_id>", methods=["GET"])
+@jwt_required(optional=True)
+def get_application_detail(app_id):
+    """Get comprehensive application details including sorted department approvals and documents."""
+    user = _get_authenticated_student_user()
+    if not user:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    student = _ensure_student_profile(user)
+
+    app = NoDuesApplication.query.filter_by(id=app_id, student_id=student.id).first()
+    if not app:
+        app = NoDuesApplication.query.get(app_id)
+        if not app or (student and str(app.student_id) != str(student.id)):
+            return jsonify({"success": False, "message": "Application not found"}), 404
+
+    # Sort department approvals strictly by display_order
+    sorted_approvals = sorted(app.department_approvals, key=lambda x: (x.display_order or 0))
+    docs = Document.query.filter_by(application_id=app.id).all()
+    admit_card = AdmitCard.query.filter_by(application_id=app.id).first()
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "application": app.to_dict(),
+            "department_approvals": [ad.to_dict() for ad in sorted_approvals],
+            "documents": [d.to_dict() for d in docs],
+            "admit_card": admit_card.to_dict() if admit_card else None,
+        }
+    }), 200
+
+
 @student_bp.route("/api/documents/<app_id>")
 def get_application_documents(app_id):
     """Get documents for an application."""
