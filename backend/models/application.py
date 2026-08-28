@@ -167,6 +167,8 @@ class ApplicationDepartment(db.Model):
             "application_id": str(self.application_id),
             "department_id": str(self.department_id),
             "department_name": self.department.name if self.department else None,
+            "department_code": self.department.code if self.department else None,
+            "department_role": self.department.role if self.department else None,
             "status": self.status,
             "assigned_to": str(self.assigned_to) if self.assigned_to else None,
             "remarks": self.remarks,

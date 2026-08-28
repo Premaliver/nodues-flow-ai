@@ -347,11 +347,19 @@ def dashboard_data():
 
     # Add current application progress if exists
     active_app = next((a for a in applications if a.status in ("draft", "submitted", "in_review")), None)
+    if not active_app and applications:
+        # Fallback to latest application so student can always see clearance status and admit card
+        active_app = applications[0]
+
     if active_app:
         data["active_application"] = active_app.to_dict()
         data["department_approvals"] = [
             ad.to_dict() for ad in active_app.department_approvals
         ]
+        docs = Document.query.filter_by(application_id=active_app.id).all()
+        data["documents"] = [d.to_dict() for d in docs]
+        admit_card = AdmitCard.query.filter_by(application_id=active_app.id).first()
+        data["admit_card"] = admit_card.to_dict() if admit_card else None
 
     # Add University Branding strictly from student's registered university
     university_info = None
