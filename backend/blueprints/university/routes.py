@@ -30,7 +30,6 @@ def get_current_university():
     if not univ_id:
         return None
     try:
-        db.create_all()
         return UniversityTenant.query.get(uuid.UUID(str(univ_id)))
     except Exception:
         return None
@@ -65,7 +64,6 @@ def register():
         return jsonify({"success": False, "message": "University name, official email, contact person, and password are required."}), 400
 
     try:
-        db.create_all()
         # Check for existing
         existing = UniversityTenant.query.filter_by(official_email=official_email).first()
         if existing:
@@ -136,7 +134,6 @@ def login():
         return jsonify({"success": False, "message": "Official email and password are required."}), 400
 
     try:
-        db.create_all()
         tenant = UniversityTenant.query.filter_by(official_email=email).first()
         if not tenant:
             return jsonify({"success": False, "message": "No university registered with this email. Please register first."}), 401
@@ -385,7 +382,6 @@ def university_logout():
 
 def render_university_portal(slug: str):
     """Render the official branded clearance portal for a specific university."""
-    db.create_all()
     univ = UniversityTenant.query.filter_by(slug=slug.lower().strip()).first()
     if not univ:
         univ = UniversityTenant.query.filter(UniversityTenant.slug.ilike(f"%{slug}%")).first()
