@@ -160,6 +160,14 @@ def upload_branding_logo_superadmin():
     return upload_branding_logo()
 
 
+@superadmin_bp.route("/api/branding", methods=["POST"])
+@admin_only
+def update_branding_superadmin():
+    """SuperAdmin endpoint for updating institutional branding."""
+    from blueprints.university.routes import update_branding
+    return update_branding()
+
+
 # ──────────────────────────────────────
 # API: Dashboard Data (overview stats)
 # ──────────────────────────────────────

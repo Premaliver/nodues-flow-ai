@@ -117,12 +117,29 @@ def register():
         )
         tenant.set_password(password)
         db.session.add(tenant)
+        # Create dedicated SuperAdmin User account for this university tenant
+        sa_user = User(
+            email=official_email,
+            role="super_admin",
+            first_name=contact_person.split()[0] if contact_person else name.split()[0],
+            last_name="SuperAdmin",
+            status="active",
+            is_email_verified=True,
+            university_id=tenant.id,
+        )
+        sa_user.set_password(password)
+        db.session.add(sa_user)
         db.session.commit()
 
         # Log into session
+        login_user(sa_user)
         session["university_id"] = str(tenant.id)
         session["university_name"] = tenant.name
         session["university_slug"] = tenant.slug
+        session["portal_slug"] = tenant.slug
+        session["user_role"] = "super_admin"
+        if tenant.logo_url:
+            session["university_logo"] = tenant.logo_url
 
         if request.is_json:
             return jsonify({
@@ -165,14 +182,38 @@ def login():
         if not tenant.check_password(password):
             return jsonify({"success": False, "message": "Incorrect password. Please verify and try again."}), 401
 
+        # Look up or create the dedicated SuperAdmin User for THIS tenant
+        sa_user = User.query.filter_by(university_id=tenant.id, role="super_admin").first()
+        if not sa_user:
+            sa_user = User.query.filter_by(email=tenant.official_email).first()
+
+        if not sa_user:
+            sa_user = User(
+                email=tenant.official_email,
+                role="super_admin",
+                first_name=tenant.contact_person.split()[0] if tenant.contact_person else tenant.name.split()[0],
+                last_name="SuperAdmin",
+                status="active",
+                is_email_verified=True,
+                university_id=tenant.id,
+            )
+            sa_user.set_password(password)
+            db.session.add(sa_user)
+            db.session.commit()
+        else:
+            sa_user.university_id = tenant.id
+            sa_user.set_password(password)
+            db.session.commit()
+
+        login_user(sa_user)
+
         session["university_id"] = str(tenant.id)
         session["university_name"] = tenant.name
         session["university_slug"] = tenant.slug
-
-        # Auto-login as SuperAdmin user for the platform
-        sa_user = User.query.filter_by(role="super_admin").first()
-        if sa_user:
-            login_user(sa_user)
+        session["portal_slug"] = tenant.slug
+        session["user_role"] = "super_admin"
+        if tenant.logo_url:
+            session["university_logo"] = tenant.logo_url
 
         redirect_target = "/superadmin/dashboard" if tenant.has_active_subscription else "/university/pov"
 
@@ -377,17 +418,39 @@ def launch_superadmin():
     if not univ.has_active_subscription:
         return redirect("/university/pricing")
 
-    # Set institutional context
+    # Look up or create dedicated SuperAdmin user strictly for this university
+    sa_user = User.query.filter_by(university_id=univ.id, role="super_admin").first()
+    if not sa_user:
+        sa_user = User.query.filter_by(email=univ.official_email).first()
+
+    if not sa_user:
+        sa_user = User(
+            email=univ.official_email,
+            role="super_admin",
+            first_name=univ.contact_person.split()[0] if univ.contact_person else univ.name.split()[0],
+            last_name="SuperAdmin",
+            status="active",
+            is_email_verified=True,
+            university_id=univ.id,
+        )
+        sa_user.set_password("Admin@2026")
+        db.session.add(sa_user)
+        db.session.commit()
+    else:
+        if not sa_user.university_id:
+            sa_user.university_id = univ.id
+            db.session.commit()
+
+    login_user(sa_user)
+    session["university_id"] = str(univ.id)
     session["university_name"] = univ.name
     session["university_slug"] = univ.slug
+    session["portal_slug"] = univ.slug
+    session["user_role"] = "super_admin"
+    if univ.logo_url:
+        session["university_logo"] = univ.logo_url
 
-    # Auto-login as Super Admin for direct access to their dashboard
-    sa_user = User.query.filter_by(role="super_admin").first()
-    if sa_user:
-        login_user(sa_user)
-        return redirect("/superadmin/dashboard")
-
-    return redirect("/university/login")
+    return redirect("/superadmin/dashboard")
 
 
 @university_bp.route("/logout")

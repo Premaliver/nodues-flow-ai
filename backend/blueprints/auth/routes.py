@@ -137,6 +137,9 @@ def login():
             session["university_slug"] = user_univ.slug
             session["university_name"] = user_univ.name
             session["portal_slug"] = user_univ.slug
+            session["user_role"] = user.role
+            if user_univ.logo_url:
+                session["university_logo"] = user_univ.logo_url
 
     # Generate JWT tokens
     access_token = create_access_token(
