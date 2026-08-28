@@ -129,18 +129,29 @@ def view_document_file(doc_id):
     if not allowed:
         return jsonify({"success": False, "message": f"Access denied: {reason}"}), 403
 
-    if not doc.file_path or not os.path.exists(doc.file_path):
-        return jsonify({"success": False, "message": "Physical document file not found"}), 404
+    # Resolve physical path (handles absolute, relative, and Render deployment paths)
+    target_path = doc.file_path
+    if not target_path or not os.path.exists(target_path):
+        # Try finding in current directory uploads
+        alt_path1 = os.path.join(os.getcwd(), doc.file_path.lstrip("/\\")) if doc.file_path else ""
+        alt_path2 = os.path.join(current_app.root_path, "..", doc.file_path.lstrip("/\\")) if doc.file_path else ""
+        if alt_path1 and os.path.exists(alt_path1):
+            target_path = alt_path1
+        elif alt_path2 and os.path.exists(alt_path2):
+            target_path = alt_path2
+        else:
+            return jsonify({"success": False, "message": "Physical document file not found"}), 404
 
     # Audit document access event
     audit_document_access(user, doc, action="view")
 
-    mime = doc.mime_type or ("application/pdf" if doc.file_name.lower().endswith(".pdf") else "image/jpeg")
+    file_name = doc.file_name or "document.pdf"
+    mime = doc.mime_type or ("application/pdf" if file_name.lower().endswith(".pdf") else "image/jpeg")
     return send_file(
-        doc.file_path,
+        target_path,
         mimetype=mime,
         as_attachment=False,
-        download_name=doc.file_name,
+        download_name=file_name,
     )
 
 

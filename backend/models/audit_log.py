@@ -15,7 +15,7 @@ class AuditLog(db.Model):
     action = db.Column(
         db.Enum(
             "create", "update", "delete", "approve", "reject",
-            "upload", "download", "login", "logout", "verify", "generate",
+            "upload", "download", "view", "login", "logout", "verify", "generate",
             name="audit_action",
         ),
         nullable=False,

@@ -19,17 +19,44 @@ from utils.helpers import get_client_ip, get_user_agent
 
 def get_current_authenticated_user() -> Optional[User]:
     """Resolves authenticated user from JWT Bearer token or active Flask-Login session."""
+    import uuid as _uuid
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         try:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
-            return User.query.get(user_id)
+            if user_id:
+                try:
+                    uid = _uuid.UUID(str(user_id))
+                except Exception:
+                    uid = user_id
+                return db.session.get(User, uid)
         except Exception:
             return None
 
-    if current_user and current_user.is_authenticated:
-        return current_user
+    try:
+        if current_user and current_user.is_authenticated:
+            user_id = getattr(current_user, "id", None)
+            if user_id:
+                try:
+                    uid = _uuid.UUID(str(user_id))
+                except Exception:
+                    uid = user_id
+                return db.session.get(User, uid)
+    except Exception:
+        pass
+
+    try:
+        from flask import session as _sess
+        sess_uid = _sess.get("_user_id")
+        if sess_uid:
+            try:
+                uid = _uuid.UUID(str(sess_uid))
+            except Exception:
+                uid = sess_uid
+            return db.session.get(User, uid)
+    except Exception:
+        pass
 
     return None
 
@@ -78,14 +105,16 @@ def can_access_document(user: User, document: Document) -> Tuple[bool, str]:
     return False, "Unauthorized role"
 
 
-def audit_document_access(user: User, document: Document, action: str = "download"):
+def audit_document_access(user: User, document: Document, action: str = "view"):
     """Logs document access to the tamper-evident audit trail."""
     try:
+        valid_action = action if action in ("view", "download", "verify", "upload") else "download"
         audit = AuditLog(
             user_id=user.id,
-            action=action,
+            action=valid_action,
             resource_type="document",
             resource_id=document.id,
+            university_id=document.university_id or user.university_id,
             details={
                 "file_name": document.file_name,
                 "application_id": str(document.application_id),
@@ -97,4 +126,5 @@ def audit_document_access(user: User, document: Document, action: str = "downloa
         db.session.add(audit)
         db.session.commit()
     except Exception as e:
-        current_app.logger.error(f"Failed to record document audit log: {e}")
+        db.session.rollback()
+        current_app.logger.warning(f"Non-critical notice: Could not log document audit: {e}")
