@@ -334,6 +334,27 @@ def register_blueprints(app: Flask) -> None:
         from blueprints.university.routes import university_slug_poster
         return university_slug_poster(slug)
 
+    @app.route("/u/<slug>/api/student-register", methods=["POST"])
+    @app.route("/portal/<slug>/api/student-register", methods=["POST"])
+    @csrf.exempt
+    def root_portal_student_register(slug):
+        from blueprints.university.routes import portal_student_register
+        return portal_student_register(slug)
+
+    @app.route("/u/<slug>/api/student-login", methods=["POST"])
+    @app.route("/portal/<slug>/api/student-login", methods=["POST"])
+    @csrf.exempt
+    def root_portal_student_login(slug):
+        from blueprints.university.routes import portal_student_login
+        return portal_student_login(slug)
+
+    @app.route("/u/<slug>/api/staff-login", methods=["POST"])
+    @app.route("/portal/<slug>/api/staff-login", methods=["POST"])
+    @csrf.exempt
+    def root_portal_staff_login(slug):
+        from blueprints.university.routes import portal_staff_login
+        return portal_staff_login(slug)
+
 
 
 

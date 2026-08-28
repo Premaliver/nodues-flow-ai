@@ -33,8 +33,25 @@ def dashboard():
 @jwt_required()
 def dashboard_data():
     """Get accounts dashboard analytics data."""
-    accounts_dept = Department.query.filter_by(role="accounts").first()
     user_id = get_jwt_identity()
+    user = User.query.get(user_id) if user_id else None
+    u_id = user.university_id if user else None
+    
+    accounts_dept = None
+    if u_id:
+        accounts_dept = Department.query.filter_by(role="accounts", university_id=u_id).first()
+    if not accounts_dept:
+        accounts_dept = Department.query.filter_by(role="accounts").first()
+
+    if not accounts_dept:
+        return jsonify({
+            "success": True,
+            "data": {
+                "pending_count": 0, "in_review_count": 0,
+                "approved_today": 0, "rejected_count": 0,
+                "total_processed": 0, "pending_applications": []
+            }
+        })
 
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)

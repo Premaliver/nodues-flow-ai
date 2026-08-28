@@ -554,8 +554,8 @@
 <!-- Top Navigation Bar -->
 <nav class="saas-nav">
     <a href="/" class="nav-brand">
-        <div class="brand-icon-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        <div class="brand-icon-box" style="padding: 2px; overflow: hidden; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.4);">
+            <img src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <span>Smart NoDues <span style="color: #A5B4FC; font-weight: 500;">AI</span></span>
     </a>
@@ -563,7 +563,7 @@
     <ul class="nav-links">
         <li><a href="/university/pov">Interactive POV Demo</a></li>
         <li><a href="/university/pricing">Pricing & Subscriptions</a></li>
-        <li><a href="/auth/login">Student / Staff Portal</a></li>
+        <li><a href="/platform/dashboard">Platform Hub</a></li>
     </ul>
 
     <div class="nav-actions">
@@ -580,9 +580,6 @@
 
 <!-- Mobile Drawer Navigation -->
 <div class="mobile-drawer" id="mobileDrawer">
-    <a href="/auth/login" onclick="toggleMobileDrawer()">
-        <span>🎓</span> Student / Staff Login Portal
-    </a>
     <a href="/university/login" onclick="toggleMobileDrawer()">
         <span>🏛️</span> University SuperAdmin Login
     </a>
@@ -749,11 +746,11 @@
 
 <!-- Mobile Floating Quick Actions (Thumb Navigation on Phones) -->
 <div class="mobile-floating-bar">
-    <a href="/auth/login" class="mobile-floating-btn mobile-btn-login">
-        <span>🎓 Student Login</span>
-    </a>
     <a href="/university/login" class="mobile-floating-btn mobile-btn-login">
-        <span>🏛️ Univ Login</span>
+        <span>🏛️ Univ SuperAdmin</span>
+    </a>
+    <a href="/platform/dashboard" class="mobile-floating-btn mobile-btn-login">
+        <span>⚡ Platform Hub</span>
     </a>
     <a href="/university/register" class="mobile-floating-btn mobile-btn-action">
         <span>🚀 Register Univ</span>

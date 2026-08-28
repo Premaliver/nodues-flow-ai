@@ -219,10 +219,17 @@ def get_profile():
 
 
 @student_bp.route("/api/departments")
-@jwt_required()
+@jwt_required(optional=True)
 def get_departments():
-    """Get all active departments for selection."""
-    depts = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+    """Get all active departments for selection (scoped to student's university)."""
+    user = _get_authenticated_student_user()
+    univ_id = user.university_id if user else None
+    if univ_id:
+        depts = Department.query.filter_by(university_id=univ_id, is_active=True).order_by(Department.display_order).all()
+        if not depts:
+            depts = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
+    else:
+        depts = Department.query.filter_by(is_active=True).order_by(Department.display_order).all()
     return jsonify({
         "success": True,
         "data": [d.to_dict() for d in depts]
@@ -230,7 +237,7 @@ def get_departments():
 
 
 @student_bp.route("/api/courses")
-@jwt_required()
+@jwt_required(optional=True)
 def get_courses():
     """Get all active courses."""
     courses = Course.query.filter_by(is_active=True).all()
@@ -241,7 +248,7 @@ def get_courses():
 
 
 @student_bp.route("/api/courses/by-department/<dept_id>")
-@jwt_required()
+@jwt_required(optional=True)
 def get_courses_by_department(dept_id):
     """Get courses filtered by department."""
     courses = Course.query.filter_by(department_id=dept_id, is_active=True).all()
@@ -263,8 +270,6 @@ def dashboard_data():
     if not student:
         return jsonify({"success": False, "message": "Student profile not found"}), 404
 
-
-
     # Get current semester
     current_semester = Semester.query.filter_by(is_current=True).first()
 
@@ -275,7 +280,7 @@ def dashboard_data():
 
     # Get recent notifications
     recent_notifications = Notification.query.filter_by(
-        user_id=user_id, is_read=False
+        user_id=user.id, is_read=False
     ).order_by(Notification.created_at.desc()).limit(5).all()
 
     # Get admit cards
@@ -303,11 +308,11 @@ def dashboard_data():
             ad.to_dict() for ad in active_app.department_approvals
         ]
 
-    # Add University Branding if available
+    # Add University Branding strictly from student's registered university
     university_info = None
     if student and student.university_id:
         from models.university import UniversityTenant
-        u = UniversityTenant.query.get(student.university_id)
+        u = db.session.get(UniversityTenant, student.university_id)
         if u:
             university_info = {
                 "id": str(u.id),
@@ -339,8 +344,11 @@ def get_application_documents(app_id):
 @jwt_required()
 def create_application():
     """Create a new no-dues application with selected departments, documents, and signature."""
-    user_id = get_jwt_identity()
-    student = Student.query.filter_by(user_id=user_id).first()
+    user = _get_authenticated_student_user()
+    if not user:
+        return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 403
+
+    student = Student.query.filter_by(user_id=user.id).first()
     if not student:
         return jsonify({"success": False, "message": "Student profile not found"}), 404
 
@@ -375,19 +383,22 @@ def create_application():
     if student.category == "hosteller" and not selected_depts:
         selected_depts = ["hostel", "mess"]
 
-    # Find HOD department (auto-assigned matching student's branch/course)
+    u_id = student.university_id
+
+    # Find HOD department (auto-assigned matching student's branch/course within this university)
     hod_dept = None
     student_branch = student.branch or student.course_name
-    if student_branch:
+    if student_branch and u_id:
         hod_dept = Department.query.filter(
             Department.role == "hod",
+            Department.university_id == u_id,
             Department.is_active == True,
             Department.name.ilike(f"%{student_branch}%")
         ).first()
+    if not hod_dept and u_id:
+        hod_dept = Department.query.filter_by(role="hod", university_id=u_id, is_active=True).first()
     if not hod_dept:
-        hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
-    if not hod_dept:
-        hod_dept = Department.query.filter_by(role="hod").first()
+        hod_dept = Department.query.filter_by(role="hod", is_active=True).first() or Department.query.filter_by(role="hod").first()
     if not hod_dept:
         return jsonify({"success": False, "message": "HOD department not configured"}), 400
 
@@ -400,7 +411,11 @@ def create_application():
     facility_order = ["hostel", "mess", "transport", "scholarship"]
     for dept_role in facility_order:
         if dept_role in selected_depts:
-            dept = Department.query.filter_by(role=dept_role, is_active=True).first() or Department.query.filter_by(role=dept_role).first()
+            dept = None
+            if u_id:
+                dept = Department.query.filter_by(role=dept_role, university_id=u_id, is_active=True).first()
+            if not dept:
+                dept = Department.query.filter_by(role=dept_role, is_active=True).first() or Department.query.filter_by(role=dept_role).first()
             if dept:
                 active_workflow.append({
                     "department": dept,
@@ -419,7 +434,11 @@ def create_application():
         step_order += 1
 
     # 3. Add Accounts Department (Fee clearance & Financial Audit)
-    accounts_dept = Department.query.filter_by(role="accounts", is_active=True).first() or Department.query.filter_by(role="accounts").first()
+    accounts_dept = None
+    if u_id:
+        accounts_dept = Department.query.filter_by(role="accounts", university_id=u_id, is_active=True).first()
+    if not accounts_dept:
+        accounts_dept = Department.query.filter_by(role="accounts", is_active=True).first() or Department.query.filter_by(role="accounts").first()
     if accounts_dept:
         active_workflow.append({
             "department": accounts_dept,
@@ -429,7 +448,11 @@ def create_application():
         step_order += 1
 
     # 4. Add Examination Department (Final Clearance & Admit Card Generation)
-    exam_dept = Department.query.filter_by(role="examination", is_active=True).first() or Department.query.filter_by(role="examination").first()
+    exam_dept = None
+    if u_id:
+        exam_dept = Department.query.filter_by(role="examination", university_id=u_id, is_active=True).first()
+    if not exam_dept:
+        exam_dept = Department.query.filter_by(role="examination", is_active=True).first() or Department.query.filter_by(role="examination").first()
     if exam_dept:
         active_workflow.append({
             "department": exam_dept,

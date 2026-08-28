@@ -580,12 +580,30 @@ def portal_student_login(slug):
     if "@" in identifier:
         user = User.query.filter_by(email=identifier, role="student").first()
     else:
-        student_rec = Student.query.filter(Student.roll_number.ilike(identifier)).first()
+        student_rec = Student.query.filter(
+            Student.roll_number.ilike(identifier),
+            Student.university_id == univ.id
+        ).first()
+        if not student_rec:
+            # Check if student exists in another university to provide a clear informative message
+            other_student = Student.query.filter(Student.roll_number.ilike(identifier)).first()
+            if other_student:
+                return jsonify({
+                    "success": False,
+                    "message": "This Student Roll Number is registered with a different university portal. Please log in using your university's official URL."
+                }), 403
         if student_rec and student_rec.user:
             user = student_rec.user
 
     if not user or not user.check_password(password):
         return jsonify({"success": False, "message": "Invalid roll number/email or password."}), 401
+
+    # Check student tenant match
+    if user.university_id and user.university_id != univ.id:
+        return jsonify({
+            "success": False,
+            "message": "This student account is registered under a different institution. Please use your own university portal URL."
+        }), 403
 
     if not user.university_id:
         user.university_id = univ.id
@@ -643,10 +661,21 @@ def portal_staff_login(slug):
     if department_role not in valid_roles:
         department_role = "accounts"
 
-    user = User.query.filter_by(email=email, role=department_role).first()
+    user = User.query.filter_by(email=email, role=department_role, university_id=univ.id).first()
     
     if not user:
-        user = User.query.filter_by(email=email).first()
+        # Check if email is associated with a different university
+        other_user = User.query.filter_by(email=email).first()
+        if other_user and other_user.university_id and other_user.university_id != univ.id:
+            return jsonify({
+                "success": False,
+                "message": "This departmental account belongs to a different university portal. Please use your campus login URL."
+            }), 403
+        if other_user and other_user.role != department_role:
+            return jsonify({
+                "success": False,
+                "message": f"Role mismatch: This account is '{other_user.role}', not '{department_role}'."
+            }), 400
 
     if not user or not user.check_password(password):
         return jsonify({"success": False, "message": "Invalid staff credentials. Please contact your University SuperAdmin."}), 401
@@ -668,7 +697,6 @@ def portal_staff_login(slug):
     refresh_token = create_refresh_token(identity=str(user.id))
 
     target_dashboard = f"/{user.role}/dashboard"
-
 
     return jsonify({
         "success": True,
@@ -750,8 +778,6 @@ def get_department_staff():
     for dept in STANDARD_DEPARTMENTS:
         role = dept["role"]
         user = User.query.filter_by(university_id=univ.id, role=role).first()
-        if not user:
-            user = User.query.filter_by(role=role).first()
 
         default_email = f"{role}@{univ.slug}.nodues.edu"
         staff_list.append({

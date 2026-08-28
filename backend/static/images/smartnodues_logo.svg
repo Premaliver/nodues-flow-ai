@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background / Glow Gradients -->
+    <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0B0F19" stop-opacity="0"/>
+    </radialGradient>
+    
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+
+    <linearGradient id="shieldInnerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#1E1B4B" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <linearGradient id="accentCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+
+    <!-- Drop Shadows & Filters -->
+    <filter id="shadowGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#4F46E5" flood-opacity="0.6"/>
+    </filter>
+    
+    <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Ambient Light Backing -->
+  <circle cx="250" cy="250" r="220" fill="url(#ambientGlow)"/>
+
+  <!-- Outer Rounded Polygon Shield -->
+  <path d="M 250, 45 
+           C 370, 45 420, 110 420, 230
+           C 420, 360 290, 435 250, 455
+           C 210, 435 80, 360 80, 230
+           C 80, 110 130, 45 250, 45 Z" 
+        fill="url(#shieldGrad)" 
+        filter="url(#shadowGlow)"/>
+
+  <!-- Inner Dark Glass Shield -->
+  <path d="M 250, 60 
+           C 355, 60 400, 120 400, 225
+           C 400, 345 285, 418 250, 438
+           C 215, 418 100, 345 100, 225
+           C 100, 120 145, 60 250, 60 Z" 
+        fill="url(#shieldInnerGrad)" 
+        stroke="rgba(255, 255, 255, 0.15)" 
+        stroke-width="2"/>
+
+  <!-- Geometric Tech Grid Circuit Elements -->
+  <g opacity="0.2" stroke="#818CF8" stroke-width="1.5" fill="none">
+    <circle cx="250" cy="240" r="130" stroke-dasharray="6,6"/>
+    <circle cx="250" cy="240" r="90"/>
+    <line x1="120" y1="240" x2="380" y2="240"/>
+    <line x1="250" y1="110" x2="250" y2="370"/>
+  </g>
+
+  <!-- Central Emblem: Graduation Cap + Cryptographic Check & AI Lightning Node -->
+  
+  <!-- Mortarboard Top Diamond (Academic Achievement) -->
+  <polygon points="250,115 375,175 250,235 125,175" 
+           fill="url(#accentCyan)" 
+           filter="url(#laserGlow)"/>
+  
+  <!-- Cap Underside / Depth -->
+  <polygon points="250,235 375,175 375,188 250,248" fill="#1D4ED8" opacity="0.8"/>
+  <polygon points="250,235 125,175 125,188 250,248" fill="#0E7490" opacity="0.8"/>
+
+  <!-- Cap Skull Base Arch -->
+  <path d="M 180, 205 Q 250, 255 320, 205 L 320, 245 Q 250, 295 180, 245 Z" 
+        fill="url(#shieldGrad)" 
+        opacity="0.95"/>
+
+  <!-- Tassel & Golden Seal -->
+  <path d="M 250, 175 C 285, 175 365, 195 370, 260" 
+        fill="none" 
+        stroke="url(#goldGrad)" 
+        stroke-width="4" 
+        stroke-linecap="round"/>
+  <circle cx="370" cy="265" r="7" fill="url(#goldGrad)" filter="url(#laserGlow)"/>
+
+  <!-- Autonomous AI Digital Clearance Verification Checkmark -->
+  <g filter="url(#laserGlow)">
+    <path d="M 195, 305 L 235, 345 L 315, 260" 
+          fill="none" 
+          stroke="url(#emeraldGrad)" 
+          stroke-width="18" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Glowing AI Data Pulse Points -->
+  <circle cx="195" cy="305" r="5" fill="#FFFFFF"/>
+  <circle cx="235" cy="345" r="5" fill="#FFFFFF"/>
+  <circle cx="315" cy="260" r="5" fill="#FFFFFF"/>
+
+  <!-- Central AI Spark Energy Core -->
+  <polygon points="250,380 257,395 272,400 257,405 250,420 243,405 228,400 243,395" 
+           fill="url(#goldGrad)" 
+           filter="url(#laserGlow)"/>
+</svg>

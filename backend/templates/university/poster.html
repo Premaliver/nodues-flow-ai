@@ -324,11 +324,14 @@
         <div>
             <!-- Letterhead -->
             <div class="letterhead">
+                <div style="display: flex; justify-content: center; margin-bottom: 0.85rem;">
+                    <img src="{{ university.logo_url if university.logo_url else '/static/images/radha_vallabh_logo.png' }}" alt="{{ university.name }} Logo" style="height: 72px; width: auto; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/radha_vallabh_logo.png';">
+                </div>
                 <h1 class="univ-title">{{ university.name }}</h1>
                 <div class="univ-subtitle">Office of the Registrar & Academic Affairs</div>
                 <div class="circular-meta">
-                    <span>Ref No: {{ university.slug|upper }}/ACAD/NO-DUES/2025</span>
-                    <span>Date of Circular: <script>document.write(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));</script></span>
+                    <span>Ref No: {{ university.slug|upper }}/ACAD/NO-DUES/2026</span>
+                    <span>Date: <span id="circularDate"></span></span>
                 </div>
             </div>
 
@@ -407,7 +410,11 @@
 
     <script>
         const portalUrl = window.location.origin + "/u/{{ university.slug }}";
-        document.getElementById("portal-url-text").innerText = portalUrl;
+        const urlEl = document.getElementById("portal-url-text");
+        if (urlEl) urlEl.innerText = portalUrl;
+
+        const dateEl = document.getElementById("circularDate");
+        if (dateEl) dateEl.innerText = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
         // Generate dynamic high-res QR code
         new QRCode(document.getElementById("qrcode"), {

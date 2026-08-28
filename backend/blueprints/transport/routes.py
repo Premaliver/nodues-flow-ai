@@ -30,7 +30,24 @@ def dashboard():
 @transport_bp.route("/api/dashboard")
 @jwt_required()
 def dashboard_data():
-    transport_dept = Department.query.filter_by(role="transport").first()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id) if user_id else None
+    u_id = user.university_id if user else None
+
+    transport_dept = None
+    if u_id:
+        transport_dept = Department.query.filter_by(role="transport", university_id=u_id).first()
+    if not transport_dept:
+        transport_dept = Department.query.filter_by(role="transport").first()
+
+    if not transport_dept:
+        return jsonify({
+            "success": True,
+            "data": {
+                "stats": {"pending": 0, "approved": 0, "rejected": 0, "total": 0},
+                "pending_applications": []
+            }
+        })
 
     pending = ApplicationDepartment.query.filter_by(
         department_id=transport_dept.id, status="pending"

@@ -30,8 +30,16 @@ from utils.helpers import paginate_query, get_client_ip, get_user_agent, generat
 
 
 
-def _get_exam_dept():
-    """Helper to fetch the examination department."""
+def _get_exam_dept(university_id=None):
+    """Helper to fetch the examination department scoped to university."""
+    from flask_login import current_user
+    u_id = university_id
+    if not u_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id"):
+        u_id = current_user.university_id
+    if u_id:
+        dept = Department.query.filter_by(role="examination", university_id=u_id).first()
+        if dept:
+            return dept
     return Department.query.filter_by(role="examination").first()
 
 

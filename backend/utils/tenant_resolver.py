@@ -118,16 +118,14 @@ def _resolve_tenant_from_request() -> Optional[UniversityTenant]:
         from flask_login import current_user
         if current_user and current_user.is_authenticated and hasattr(current_user, "university_id") and current_user.university_id:
             try:
-                return db.session.get(UniversityTenant, current_user.university_id)
+                user_tenant = db.session.get(UniversityTenant, current_user.university_id)
+                if user_tenant:
+                    return user_tenant
             except Exception:
                 db.session.rollback()
 
-        # 6. Default Fallback to first available institutional tenant
-        try:
-            return UniversityTenant.query.first()
-        except Exception:
-            db.session.rollback()
-            return None
+        # No default fallback — unassigned/unscoped requests remain tenant-neutral
+        return None
     except Exception:
         try:
             db.session.rollback()
@@ -165,7 +163,7 @@ def init_tenant_resolver(app: Flask) -> None:
         return {
             "current_tenant": tenant,
             "tenant_name": tenant.name if tenant else "Smart NoDues AI",
-            "tenant_slug": tenant.slug if tenant else "default",
+            "tenant_slug": tenant.slug if tenant else "",
             "tenant_logo": tenant.logo_url if (tenant and tenant.logo_url) else "/static/images/logo.png",
             "tenant_primary_color": tenant.primary_color if (tenant and tenant.primary_color) else "#4f46e5",
             "tenant_accent_color": tenant.accent_color if (tenant and tenant.accent_color) else "#6366f1",

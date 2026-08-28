@@ -123,11 +123,27 @@ def login():
     )
     db.session.add(audit)
 
-# Log in via Flask-Login
+    # Log in via Flask-Login
     login_user(user, remember=data.get("remember", False))
 
+    # Bind university context into session if user belongs to a university
+    from models.university import UniversityTenant
+    if user.university_id:
+        user_univ = db.session.get(UniversityTenant, user.university_id)
+        if user_univ:
+            session["university_id"] = str(user_univ.id)
+            session["university_slug"] = user_univ.slug
+            session["university_name"] = user_univ.name
+            session["portal_slug"] = user_univ.slug
+
     # Generate JWT tokens
-    access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role})
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={
+            "role": user.role,
+            "university_id": str(user.university_id) if user.university_id else None,
+        }
+    )
     refresh_token = create_refresh_token(identity=str(user.id))
 
     db.session.commit()
@@ -200,21 +216,27 @@ def register():
     if Student.query.filter_by(roll_number=roll_number).first():
         return jsonify({"success": False, "message": "Roll number already registered"}), 409
 
-    # Resolve University Tenant Context
+    # Resolve University Tenant Context — strictly from session or explicit parameter
     from models.university import UniversityTenant
     univ_id_raw = session.get("university_id") or data.get("university_id")
     univ = None
     if univ_id_raw:
         try:
-            univ = UniversityTenant.query.get(uuid.UUID(str(univ_id_raw)))
+            univ = db.session.get(UniversityTenant, uuid.UUID(str(univ_id_raw)))
         except Exception:
             univ = None
     if not univ and session.get("university_slug"):
         univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
-    if not univ:
-        univ = UniversityTenant.query.filter_by(subscription_status="active").first() or UniversityTenant.query.first()
+    if not univ and data.get("university_slug"):
+        univ = UniversityTenant.query.filter_by(slug=data["university_slug"].strip().lower()).first()
 
-    univ_id = univ.id if univ else None
+    if not univ:
+        return jsonify({
+            "success": False,
+            "message": "Registration must be performed through your university's official portal link (e.g. smartnodues.in/u/{your-college-slug}) or official campus QR code."
+        }), 400
+
+    univ_id = univ.id
 
     # Create user
     user = User(
@@ -259,17 +281,28 @@ def register():
     db.session.add(audit)
     db.session.commit()
 
+    # Log user in and set university session
+    login_user(user)
+    session["university_id"] = str(univ.id)
+    session["university_slug"] = univ.slug
+    session["university_name"] = univ.name
+    session["portal_slug"] = univ.slug
+
     # Generate tokens
-    access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role})
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={"role": user.role, "university_id": str(univ.id)}
+    )
     refresh_token = create_refresh_token(identity=str(user.id))
 
     return jsonify({
         "success": True,
-        "message": "Registration successful",
+        "message": f"Registration successful! Welcome to {univ.name}.",
         "data": {
             "user": user.to_dict(),
             "access_token": access_token,
             "refresh_token": refresh_token,
+            "dashboard_url": "/student/dashboard",
         },
     }), 201
 

@@ -30,7 +30,24 @@ def dashboard():
 @scholarship_bp.route("/api/dashboard")
 @jwt_required()
 def dashboard_data():
-    sch_dept = Department.query.filter_by(role="scholarship").first()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id) if user_id else None
+    u_id = user.university_id if user else None
+
+    sch_dept = None
+    if u_id:
+        sch_dept = Department.query.filter_by(role="scholarship", university_id=u_id).first()
+    if not sch_dept:
+        sch_dept = Department.query.filter_by(role="scholarship").first()
+
+    if not sch_dept:
+        return jsonify({
+            "success": True,
+            "data": {
+                "stats": {"pending": 0, "approved": 0, "rejected": 0, "total": 0},
+                "pending_applications": []
+            }
+        })
 
     pending = ApplicationDepartment.query.filter_by(
         department_id=sch_dept.id, status="pending"

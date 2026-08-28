@@ -120,26 +120,28 @@
         }
 
         .univ-logo-badge {
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--univ-primary), var(--univ-accent));
+            background: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Outfit', sans-serif;
             font-size: 1.35rem;
             font-weight: 800;
-            color: white;
+            color: var(--univ-primary);
             box-shadow: 0 4px 15px var(--univ-glow);
             flex-shrink: 0;
             overflow: hidden;
+            padding: 3px;
         }
 
         .univ-logo-badge img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .brand-text {
@@ -623,9 +625,9 @@
             <a href="/u/{{ university.slug }}" class="brand-group">
                 <div class="univ-logo-badge">
                     {% if university.logo_url %}
-                    <img src="{{ university.logo_url }}" alt="{{ university.name }} Logo">
+                    <img src="{{ university.logo_url }}" alt="{{ university.name }} Logo" onerror="this.onerror=null; this.src='/static/images/radha_vallabh_logo.png';">
                     {% else %}
-                    <span>{{ university.name[:1] }}</span>
+                    <img src="/static/images/radha_vallabh_logo.png" alt="{{ university.name }} Logo">
                     {% endif %}
                 </div>
                 <div class="brand-text">

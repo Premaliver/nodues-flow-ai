@@ -32,7 +32,16 @@ def dashboard():
 @jwt_required()
 def dashboard_data():
     """Get hostel dashboard data with all assigned applications."""
-    hostel_dept = Department.query.filter_by(role="hostel").first()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id) if user_id else None
+    u_id = user.university_id if user else None
+
+    hostel_dept = None
+    if u_id:
+        hostel_dept = Department.query.filter_by(role="hostel", university_id=u_id).first()
+    if not hostel_dept:
+        hostel_dept = Department.query.filter_by(role="hostel").first()
+
     if not hostel_dept:
         return jsonify({"success": False, "message": "Hostel department not found"}), 404
 
