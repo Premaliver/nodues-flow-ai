@@ -462,16 +462,23 @@ def create_application():
         if not hod_dept and u_id:
             hod_dept = Department.query.filter_by(role="hod", university_id=u_id).first()
         if not hod_dept and u_id:
+            hod_count = Department.query.filter_by(role="hod", university_id=u_id).count()
+            code_suffix = f"_{hod_count + 1}" if hod_count > 0 else ""
             hod_dept = Department(
                 university_id=u_id,
-                code="HOD",
+                code=f"HOD{code_suffix}"[:20],
                 name=f"Head of Department ({student_branch or 'Academic'})",
                 role="hod",
                 display_order=6,
                 is_active=True
             )
             db.session.add(hod_dept)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                hod_dept = Department.query.filter_by(role="hod", university_id=u_id).first()
+
         if not hod_dept:
             hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
 
@@ -504,7 +511,14 @@ def create_application():
                             is_active=True
                         )
                         db.session.add(dept)
-                        db.session.commit()
+                        try:
+                            db.session.commit()
+                        except Exception:
+                            db.session.rollback()
+                            dept = Department.query.filter(
+                                Department.role == dept_role,
+                                Department.university_id == u_id
+                            ).first()
                 if dept:
                     active_workflow.append({
                         "department": dept,
@@ -540,7 +554,15 @@ def create_application():
                 is_active=True
             )
             db.session.add(accounts_dept)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                accounts_dept = Department.query.filter(
+                    Department.role == "accounts",
+                    Department.university_id == u_id
+                ).first()
+
         if accounts_dept:
             active_workflow.append({
                 "department": accounts_dept,
@@ -567,7 +589,14 @@ def create_application():
                 is_active=True
             )
             db.session.add(exam_dept)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                exam_dept = Department.query.filter(
+                    Department.role == "examination",
+                    Department.university_id == u_id
+                ).first()
         if exam_dept:
             active_workflow.append({
                 "department": exam_dept,
