@@ -171,16 +171,21 @@ def list_applications():
 def process_application(app_dept_id):
     """Approve or reject an application."""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    accounts_dept = Department.query.filter_by(role="accounts").first()
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
 
-    app_dept = ApplicationDepartment.query.filter_by(
-        id=app_dept_id,
-        department_id=accounts_dept.id,
-    ).first()
-
+    app_dept = ApplicationDepartment.query.get(app_dept_id)
     if not app_dept:
-        return jsonify({"success": False, "message": "Application not found"}), 404
+        return jsonify({"success": False, "message": "Application clearance record not found"}), 404
+
+    dept = Department.query.get(app_dept.department_id)
+    if not dept or dept.role != "accounts":
+        return jsonify({"success": False, "message": "Unauthorized: Step is not an Accounts clearance"}), 403
 
     data = request.validated_data
     action = data.get("action")

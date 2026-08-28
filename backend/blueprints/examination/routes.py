@@ -692,7 +692,7 @@ def public_verify_clearance(card_number):
     if application:
         department_approvals = [
             {
-                "department_name": ad.department_name or "Department",
+                "department_name": (ad.department.name if ad.department else "Department"),
                 "status": ad.status,
             }
             for ad in application.department_approvals

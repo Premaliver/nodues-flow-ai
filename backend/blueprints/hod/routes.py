@@ -42,13 +42,17 @@ def dashboard_data():
             user = User.query.get(user_id)
     u_id = user.university_id if user else None
 
-    hod_dept = None
+    hod_depts = []
     if u_id:
         from utils.tenant_helpers import ensure_university_departments
         ensure_university_departments(u_id)
-        hod_dept = Department.query.filter_by(role="hod", university_id=u_id).first()
+        hod_depts = Department.query.filter_by(role="hod", university_id=u_id).all()
+    if not hod_depts:
+        hod_depts = Department.query.filter_by(role="hod").all()
 
-    if not hod_dept:
+    hod_dept_ids = [d.id for d in hod_depts]
+
+    if not hod_dept_ids:
         return jsonify({
             "success": True,
             "data": {
@@ -57,14 +61,17 @@ def dashboard_data():
             }
         })
 
-    pending = ApplicationDepartment.query.filter_by(
-        department_id=hod_dept.id, status="pending"
+    pending = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(hod_dept_ids),
+        ApplicationDepartment.status == "pending"
     ).count()
-    approved = ApplicationDepartment.query.filter_by(
-        department_id=hod_dept.id, status="approved"
+    approved = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(hod_dept_ids),
+        ApplicationDepartment.status == "approved"
     ).count()
-    rejected = ApplicationDepartment.query.filter_by(
-        department_id=hod_dept.id, status="rejected"
+    rejected = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(hod_dept_ids),
+        ApplicationDepartment.status == "rejected"
     ).count()
 
     query = (
@@ -73,7 +80,7 @@ def dashboard_data():
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
         .filter(
-            ApplicationDepartment.department_id == hod_dept.id,
+            ApplicationDepartment.department_id.in_(hod_dept_ids),
             ApplicationDepartment.status == "pending",
         )
     )
@@ -83,14 +90,14 @@ def dashboard_data():
     pending_apps = (
         query
         .order_by(NoDuesApplication.created_at.desc())
-        .limit(10)
+        .limit(20)
         .all()
     )
 
     return jsonify({
         "success": True,
         "data": {
-            "stats": {"pending": pending, "approved": approved, "rejected": rejected},
+            "stats": {"pending": pending, "approved": approved, "rejected": rejected, "total": pending + approved + rejected},
             "pending_applications": [
                 {
                     "application_id": str(app.id),
@@ -114,14 +121,21 @@ def dashboard_data():
 @validate_json("action")
 def process_application(app_dept_id):
     user_id = get_jwt_identity()
-    hod_dept = Department.query.filter_by(role="hod").first()
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
 
-    app_dept = ApplicationDepartment.query.filter_by(
-        id=app_dept_id, department_id=hod_dept.id
-    ).first()
-
+    app_dept = ApplicationDepartment.query.get(app_dept_id)
     if not app_dept:
-        return jsonify({"success": False, "message": "Application not found"}), 404
+        return jsonify({"success": False, "message": "Application clearance record not found"}), 404
+
+    dept = Department.query.get(app_dept.department_id)
+    if not dept or dept.role != "hod":
+        return jsonify({"success": False, "message": "Unauthorized: Step is not an Academic HOD clearance"}), 403
 
     data = request.validated_data
     action = data.get("action")

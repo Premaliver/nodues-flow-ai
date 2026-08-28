@@ -15,6 +15,7 @@ from models.semester import Semester
 from models.system_setting import SystemSetting
 from models.workflow import WorkflowConfig
 from models.document import Document
+from models.application import NoDuesApplication
 
 
 @api_bp.route("/settings")
@@ -321,6 +322,13 @@ def get_documents_by_app(app_id):
         student_profile = user.student_profile
         if not student_profile or app_record.student_id != student_profile.id:
             return jsonify({"success": False, "message": "Access denied"}), 403
+
+    # For staff / admins, ensure tenant alignment if both have university_id set
+    if user.role not in ("super_admin", "student"):
+        u_user = str(user.university_id or "")
+        u_app = str(app_record.university_id or "")
+        if u_user and u_app and u_user != u_app:
+            return jsonify({"success": False, "message": "Access denied: Cross-tenant data isolation violation"}), 403
 
     documents = Document.query.filter_by(application_id=app_id).all()
     return jsonify({

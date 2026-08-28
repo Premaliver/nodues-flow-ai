@@ -433,7 +433,7 @@
 
             try {
                 const token = localStorage.getItem('access_token');
-                const r = await fetch(`/student/api/documents/${appId}`, {
+                const r = await fetch(`/api/documents/${appId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const d = await r.json();

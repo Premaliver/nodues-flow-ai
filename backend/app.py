@@ -435,6 +435,12 @@ def register_blueprints(app: Flask) -> None:
         from blueprints.university.routes import portal_staff_login
         return portal_staff_login(slug)
 
+    @app.route("/verify-admit-card/<card_number>", methods=["GET"])
+    @app.route("/verify-clearance/<card_number>", methods=["GET"])
+    def root_verify_admit_card(card_number):
+        from blueprints.examination.routes import public_verify_clearance
+        return public_verify_clearance(card_number)
+
 
 
 

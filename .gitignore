@@ -55,3 +55,5 @@ env/
 # Uploads
 backend/static/uploads/*
 !backend/static/uploads/.gitkeep
+uploads/
+backend/uploads/

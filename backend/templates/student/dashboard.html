@@ -1080,54 +1080,54 @@
     </div>
 
     <!-- Student Full Profile Modal -->
-    <div class="modal-overlay" id="profileModal">
-        <div class="modal-box" style="max-width: 580px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
+    <div class="fb-modal-backdrop" id="profileModal" style="display: none;" onclick="if(event.target===this)closeProfileModal()">
+        <div class="fb-modal-card" style="max-width: 620px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
                     👤 Student Official Profile
                 </h3>
-                <button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">✕</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeProfileModal()">✕</button>
             </div>
             
             <div id="profileModalBody">
                 <div class="spinner" style="margin: 2rem auto;"></div>
             </div>
 
-            <div style="margin-top: 1.5rem; text-align: right; border-top: 1px solid var(--border-light); padding-top: 1rem;">
-                <button class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
+            <div style="margin-top: 1.25rem; text-align: right; border-top: 1px solid var(--border-light); padding-top: 0.85rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Close</button>
             </div>
         </div>
     </div>
 
     <!-- Upload Receipt Modal -->
-    <div class="modal-overlay" id="uploadModal">
-        <div class="modal-box" style="max-width: 500px;">
+    <div class="fb-modal-backdrop" id="uploadModal" style="display: none;" onclick="if(event.target===this)closeUploadModal()">
+        <div class="fb-modal-card" style="max-width: 520px; width: 95%;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem;">📤 Upload Payment / No-Dues Receipt</h3>
-                <button class="btn btn-ghost btn-sm" onclick="closeUploadModal()">✕</button>
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; margin: 0;">📤 Upload Clearance / Fee Receipt</h3>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUploadModal()">✕</button>
             </div>
 
             <form id="receiptUploadForm" onsubmit="handleReceiptUpload(event)">
-                <div class="form-group">
-                    <label class="form-label">Document Type</label>
-                    <select class="form-select" id="uploadDocType" required>
-                        <option value="fee_receipt">Accounts / Tuition Fee Receipt</option>
-                        <option value="hostel_dues">Hostel Dues Clearance Receipt</option>
-                        <option value="mess_bill">Mess Bill Clearance Receipt</option>
-                        <option value="transport_pass">Transport Fee Receipt</option>
-                        <option value="scholarship_doc">Scholarship Document</option>
-                        <option value="other">Other Supporting Document</option>
+                <div class="form-group" style="margin-bottom: 1.15rem;">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Receipt / Document Type</label>
+                    <select class="form-select form-input" id="uploadDocType" required style="width: 100%;">
+                        <option value="exam_fee_receipt">Examination Fee Receipt</option>
+                        <option value="next_sem_fee_receipt">Next Semester Fee Receipt</option>
+                        <option value="semester_fee_receipt">Accounts / Tuition Fee Receipt</option>
+                        <option value="scholarship_document">Scholarship Document</option>
+                        <option value="library_clearance">Library Clearance Receipt</option>
+                        <option value="other">Hostel / Mess / Transport / Other Receipt</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Select File (PDF, PNG, JPG)</label>
-                    <input type="file" class="form-input" id="uploadFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.85rem;">Select Document File (PDF, PNG, JPG)</label>
+                    <input type="file" class="form-input" id="uploadFileInput" accept=".pdf,.png,.jpg,.jpeg,.webp" required style="padding: 0.5rem;">
                 </div>
 
                 <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">Upload Document</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">📤 Upload Document</button>
                 </div>
             </form>
         </div>
@@ -2136,21 +2136,6 @@
                 m.style.display = 'none';
             }
         }
-        async function handleReceiptUpload(e) {
-            e.preventDefault();
-            const btn = document.getElementById('uploadSubmitBtn');
-            const fileInput = document.getElementById('uploadFileInput');
-            if (!fileInput.files || !fileInput.files[0]) {
-                alert('Please select a receipt document file.');
-                return;
-            }
-            if (btn) { btn.disabled = true; btn.innerText = '⏳ Uploading...'; }
-            setTimeout(() => {
-                alert('✓ Document receipt uploaded successfully to academic clearance records!');
-                if (btn) { btn.disabled = false; btn.innerText = '📤 Upload File'; }
-                closeUploadModal();
-            }, 700);
-        }
 
         let currentProfileData = null;
         let isProfileEditMode = false;
@@ -2414,52 +2399,6 @@
                 <button type="button" class="btn btn-ghost btn-sm" onclick="clearAllStudentNotifs()" style="font-size: 0.78rem;">Mark all as read</button>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeStudentNotifModal()">Done</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Student Profile Modal Overlay (View / Edit) -->
-    <div class="fb-modal-backdrop" id="profileModal" style="display:none;">
-        <div class="fb-modal-card" style="max-width: 680px; width: 95%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; display:flex; align-items:center; gap: 0.5rem;">
-                    👤 Student Profile
-                </h3>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="closeProfileModal()">✕</button>
-            </div>
-            <div id="profileModalBody" style="margin-top: 0.5rem;">
-                <!-- Dynamically populated by JS (View/Edit modes) -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Student Upload Receipts Modal Overlay -->
-    <div class="fb-modal-backdrop" id="uploadModal" style="display:none;">
-        <div class="fb-modal-card" style="max-width: 520px; width: 95%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0;">📤 Upload Clearance Receipts</h3>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUploadModal()">✕</button>
-            </div>
-            <form onsubmit="handleReceiptUpload(event)">
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Receipt / Document Type</label>
-                    <select class="form-input" id="uploadDocType" required>
-                        <option value="fee_receipt">Academic / Tuition Fee Receipt</option>
-                        <option value="hostel_receipt">Hostel / Rent Clearance Receipt</option>
-                        <option value="mess_receipt">Mess Dues Receipt</option>
-                        <option value="transport_receipt">Bus / Transport Receipt</option>
-                        <option value="library_receipt">Library Clearance Receipt</option>
-                        <option value="other_document">Other Supporting Document</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                    <label class="form-label" style="font-size: 0.82rem; font-weight: 600;">Select Document File (PDF / PNG / JPG)</label>
-                    <input type="file" class="form-input" id="uploadFileInput" accept=".pdf,.png,.jpg,.jpeg" required style="padding: 0.5rem;">
-                </div>
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">📤 Upload File</button>
-                </div>
-            </form>
         </div>
     </div>
 

@@ -29,9 +29,17 @@ def role_required(*roles: str):
                 token_val = auth_header[7:].strip()
                 if token_val and token_val not in ("null", "undefined", ""):
                     try:
+                        from models import db
                         verify_jwt_in_request()
                         user_id = get_jwt_identity()
-                        user = User.query.get(user_id)
+                        user = None
+                        if user_id:
+                            try:
+                                import uuid as _uuid
+                                uid_obj = _uuid.UUID(str(user_id)) if not isinstance(user_id, _uuid.UUID) else user_id
+                                user = db.session.get(User, uid_obj) or User.query.filter_by(id=uid_obj).first()
+                            except Exception:
+                                user = User.query.get(user_id)
                         if user and user.role in roles:
                             request.current_user = user
                             return f(*args, **kwargs)
@@ -40,8 +48,8 @@ def role_required(*roles: str):
                                 "success": False,
                                 "message": f"Access denied. Required roles: {', '.join(roles)}",
                             }), 403
-                    except Exception:
-                        pass  # Fall through to session auth
+                    except Exception as e:
+                        current_app.logger.warning(f"JWT verify error in role_required: {e}")
 
             # Try session auth (Flask-Login)
             from flask_login import current_user
@@ -51,12 +59,11 @@ def role_required(*roles: str):
                 try:
                     role_val = active_user.role
                 except Exception:
-                    from models import db
-                    from models.user import User
                     uid = session.get("_user_id") or active_user.__dict__.get("id")
                     if uid:
                         import uuid
                         uid_obj = uuid.UUID(str(uid)) if not isinstance(uid, uuid.UUID) else uid
+                        from models import db
                         active_user = db.session.get(User, uid_obj)
                     role_val = active_user.role if active_user else None
 
@@ -140,7 +147,13 @@ def department_access(department_role: str):
                     try:
                         verify_jwt_in_request()
                         user_id = get_jwt_identity()
-                        user = User.query.get(user_id)
+                        user = None
+                        if user_id:
+                            try:
+                                import uuid as _uuid
+                                user = User.query.get(_uuid.UUID(str(user_id)))
+                            except Exception:
+                                user = User.query.get(user_id)
                         if user and user.role in (department_role, "super_admin"):
                             request.current_user = user
                             return f(*args, **kwargs)
@@ -149,8 +162,8 @@ def department_access(department_role: str):
                                 "success": False,
                                 "message": f"Access denied. {department_role} access required",
                             }), 403
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        current_app.logger.debug(f"JWT verify in department_access: {e}")
 
             if current_user and current_user.is_authenticated:
                 if current_user.role in (department_role, "super_admin"):

@@ -375,14 +375,136 @@ def dashboard_data():
 
 
 @student_bp.route("/api/documents/<app_id>")
-@jwt_required()
 def get_application_documents(app_id):
-    """Get documents for an application (accessible by any authenticated department user)."""
+    """Get documents for an application."""
     documents = Document.query.filter_by(application_id=app_id).all()
     return jsonify({
         "success": True,
         "data": [doc.to_dict() for doc in documents]
     })
+
+
+@student_bp.route("/api/upload-document/<app_id>", methods=["POST"])
+@jwt_required(optional=True)
+def upload_document(app_id):
+    """Upload a document/receipt for an application."""
+    try:
+        user = _get_authenticated_student_user()
+        if not user:
+            return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 401
+
+        student = _ensure_student_profile(user)
+
+        application = NoDuesApplication.query.filter_by(
+            id=app_id, student_id=student.id
+        ).first()
+
+        if not application:
+            return jsonify({"success": False, "message": "Application not found"}), 404
+
+        if "file" not in request.files:
+            return jsonify({"success": False, "message": "No file provided"}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"success": False, "message": "No file selected"}), 400
+
+        # Validate file
+        allowed_ext = current_app.config.get("ALLOWED_EXTENSIONS", {"pdf", "png", "jpg", "jpeg", "webp"})
+        if not allowed_file(file.filename, allowed_ext):
+            return jsonify({"success": False, "message": "File type not allowed"}), 400
+
+        # Map document types to model enum
+        doc_type_mapping = {
+            "fee_receipt": "semester_fee_receipt",
+            "tuition_fee": "semester_fee_receipt",
+            "semester_fee": "semester_fee_receipt",
+            "semester_fee_receipt": "semester_fee_receipt",
+            "exam_fee": "exam_fee_receipt",
+            "exam_fee_receipt": "exam_fee_receipt",
+            "next_sem_fee": "next_sem_fee_receipt",
+            "next_sem_fee_receipt": "next_sem_fee_receipt",
+            "hostel_dues": "other",
+            "hostel_receipt": "other",
+            "mess_bill": "other",
+            "mess_receipt": "other",
+            "transport_pass": "other",
+            "transport_receipt": "other",
+            "scholarship_doc": "scholarship_document",
+            "scholarship_document": "scholarship_document",
+            "library_clearance": "library_clearance",
+            "library_receipt": "library_clearance",
+            "lab_clearance": "lab_clearance",
+            "identity_proof": "identity_proof",
+            "other": "other",
+            "other_document": "other",
+        }
+        raw_doc_type = request.form.get("document_type", "other")
+        document_type = doc_type_mapping.get(raw_doc_type, "other")
+
+        upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "static", "uploads"))
+        app_dir = os.path.join(upload_folder, "applications", str(app_id))
+        os.makedirs(app_dir, exist_ok=True)
+        
+        file_bytes = file.read()
+        if not file_bytes:
+            return jsonify({"success": False, "message": "Uploaded file is empty"}), 400
+
+        from werkzeug.utils import secure_filename
+        import time, hashlib
+        clean_orig_name = secure_filename(file.filename) or "receipt.pdf"
+        unique_name = f"{int(time.time())}_{clean_orig_name}"
+        full_save_path = os.path.join(app_dir, unique_name)
+        with open(full_save_path, "wb") as f_out:
+            f_out.write(file_bytes)
+
+        # Calculate hash for integrity
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        # Create document record with explicit tenant isolation and database persistence
+        document = Document(
+            application_id=application.id,
+            document_type=document_type,
+            file_name=file.filename,
+            file_path=full_save_path,
+            file_data=file_bytes,
+            file_size=len(file_bytes),
+            mime_type=file.content_type or ("application/pdf" if file.filename.lower().endswith(".pdf") else "image/jpeg"),
+            file_hash=file_hash,
+            uploaded_by=user.id,
+            university_id=student.university_id or application.university_id or user.university_id,
+            status="pending",
+        )
+        db.session.add(document)
+        db.session.flush()
+
+        # Create audit log
+        try:
+            audit = AuditLog(
+                user_id=user.id,
+                action="upload",
+                resource_type="document",
+                resource_id=document.id,
+                university_id=document.university_id or user.university_id,
+                details={"type": document_type, "file_name": file.filename},
+                ip_address=get_client_ip(),
+                user_agent=get_user_agent(),
+            )
+            db.session.add(audit)
+        except Exception:
+            pass
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Document uploaded successfully",
+            "data": {"document": document.to_dict()},
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error uploading document: {e}")
+        return jsonify({"success": False, "message": f"Document upload failed: {str(e)}"}), 500
 
 
 @student_bp.route("/api/apply", methods=["POST"])
@@ -527,16 +649,7 @@ def create_application():
                     })
                     step_order += 1
 
-        # 2. Add Academic HOD Department
-        if hod_dept:
-            active_workflow.append({
-                "department": hod_dept,
-                "step_order": step_order,
-                "is_required": True,
-            })
-            step_order += 1
-
-        # 3. Add Accounts Department (Fee clearance & Financial Audit)
+        # 2. Add Accounts Department (Fee clearance & Financial Audit)
         accounts_dept = None
         if u_id:
             accounts_dept = Department.query.filter(
@@ -566,6 +679,15 @@ def create_application():
         if accounts_dept:
             active_workflow.append({
                 "department": accounts_dept,
+                "step_order": step_order,
+                "is_required": True,
+            })
+            step_order += 1
+
+        # 3. Add Academic HOD Department
+        if hod_dept:
+            active_workflow.append({
+                "department": hod_dept,
                 "step_order": step_order,
                 "is_required": True,
             })
@@ -808,105 +930,6 @@ def submit_application(app_id):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error submitting application: {e}")
-        return jsonify({"success": False, "message": f"Submission failed: {str(e)}"}), 500
-
-
-@student_bp.route("/api/upload-document/<app_id>", methods=["POST"])
-@jwt_required(optional=True)
-def upload_document(app_id):
-    """Upload a document/receipt for an application."""
-    try:
-        user = _get_authenticated_student_user()
-        if not user:
-            return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 401
-
-        student = _ensure_student_profile(user)
-
-        application = NoDuesApplication.query.filter_by(
-            id=app_id, student_id=student.id
-        ).first()
-
-        if not application:
-            return jsonify({"success": False, "message": "Application not found"}), 404
-
-        if "file" not in request.files:
-            return jsonify({"success": False, "message": "No file provided"}), 400
-
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"success": False, "message": "No file selected"}), 400
-
-        # Validate file
-        allowed_ext = current_app.config.get("ALLOWED_EXTENSIONS", {"pdf", "png", "jpg", "jpeg", "webp"})
-        if not allowed_file(file.filename, allowed_ext):
-            return jsonify({"success": False, "message": "File type not allowed"}), 400
-
-        # Read file bytes for persistent database storage & save to disk
-        document_type = request.form.get("document_type", "other")
-        upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "static", "uploads"))
-        app_dir = os.path.join(upload_folder, "applications", str(app_id))
-        os.makedirs(app_dir, exist_ok=True)
-        
-        file_bytes = file.read()
-        if not file_bytes:
-            return jsonify({"success": False, "message": "Uploaded file is empty"}), 400
-
-        from werkzeug.utils import secure_filename
-        import time, hashlib
-        clean_orig_name = secure_filename(file.filename) or "receipt.pdf"
-        unique_name = f"{int(time.time())}_{clean_orig_name}"
-        full_save_path = os.path.join(app_dir, unique_name)
-        with open(full_save_path, "wb") as f_out:
-            f_out.write(file_bytes)
-
-        # Calculate hash for duplicate detection
-        file_hash = hashlib.sha256(file_bytes).hexdigest()
-
-        # Create document record with explicit tenant isolation and database persistence
-        document = Document(
-            application_id=application.id,
-            document_type=document_type,
-            file_name=file.filename,
-            file_path=full_save_path,
-            file_data=file_bytes,
-            file_size=len(file_bytes),
-            mime_type=file.content_type or ("application/pdf" if file.filename.lower().endswith(".pdf") else "image/jpeg"),
-            file_hash=file_hash,
-            uploaded_by=user.id,
-            university_id=student.university_id or user.university_id,
-            status="pending",
-        )
-        db.session.add(document)
-        db.session.flush()
-
-        # Create audit log
-        try:
-            audit = AuditLog(
-                user_id=user.id,
-                action="upload",
-                resource_type="document",
-                resource_id=document.id,
-                details={"type": document_type, "file_name": file.filename},
-                ip_address=get_client_ip(),
-                user_agent=get_user_agent(),
-            )
-            db.session.add(audit)
-        except Exception:
-            pass
-
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "message": "Document uploaded successfully",
-            "data": {"document": document.to_dict()},
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error uploading document: {e}")
-        return jsonify({"success": False, "message": f"Document upload failed: {str(e)}"}), 500
-
-
 @student_bp.route("/api/notifications")
 @jwt_required()
 def get_notifications():

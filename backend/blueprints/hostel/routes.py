@@ -176,9 +176,13 @@ def dashboard_data():
 def process_clearance(app_dept_id=None):
     """Approve or reject a hostel application clearance."""
     user_id = get_jwt_identity()
-    hostel_dept = Department.query.filter_by(role="hostel").first()
-    if not hostel_dept:
-        return jsonify({"success": False, "message": "Hostel department not configured"}), 500
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
 
     data = request.get_json(silent=True) or {}
     target_app_dept_id = app_dept_id or data.get("app_dept_id")
@@ -191,13 +195,13 @@ def process_clearance(app_dept_id=None):
     if action not in ("approved", "rejected", "in_review"):
         return jsonify({"success": False, "message": "Invalid action. Must be 'approved', 'rejected', or 'in_review'"}), 400
 
-    app_dept = ApplicationDepartment.query.filter_by(
-        id=target_app_dept_id,
-        department_id=hostel_dept.id,
-    ).first()
-
+    app_dept = ApplicationDepartment.query.get(target_app_dept_id)
     if not app_dept:
         return jsonify({"success": False, "message": "Application record not found for Hostel Department"}), 404
+
+    dept = Department.query.get(app_dept.department_id)
+    if not dept or dept.role != "hostel":
+        return jsonify({"success": False, "message": "Unauthorized: Step is not a Hostel clearance"}), 403
 
     app_dept.status = action
     app_dept.remarks = remarks
