@@ -841,30 +841,36 @@ def upload_document(app_id):
         if not allowed_file(file.filename, allowed_ext):
             return jsonify({"success": False, "message": "File type not allowed"}), 400
 
-        # Save file with cross-platform path in app UPLOAD_FOLDER
+        # Read file bytes for persistent database storage & save to disk
         document_type = request.form.get("document_type", "other")
         upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(current_app.root_path, "static", "uploads"))
         app_dir = os.path.join(upload_folder, "applications", str(app_id))
         os.makedirs(app_dir, exist_ok=True)
         
+        file_bytes = file.read()
+        if not file_bytes:
+            return jsonify({"success": False, "message": "Uploaded file is empty"}), 400
+
         from werkzeug.utils import secure_filename
-        import time
+        import time, hashlib
         clean_orig_name = secure_filename(file.filename) or "receipt.pdf"
         unique_name = f"{int(time.time())}_{clean_orig_name}"
         full_save_path = os.path.join(app_dir, unique_name)
-        file.save(full_save_path)
+        with open(full_save_path, "wb") as f_out:
+            f_out.write(file_bytes)
 
         # Calculate hash for duplicate detection
-        file_hash = calculate_file_hash(full_save_path)
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
 
-        # Create document record with explicit tenant isolation
+        # Create document record with explicit tenant isolation and database persistence
         document = Document(
             application_id=application.id,
             document_type=document_type,
             file_name=file.filename,
             file_path=full_save_path,
-            file_size=os.path.getsize(full_save_path),
-            mime_type=file.content_type,
+            file_data=file_bytes,
+            file_size=len(file_bytes),
+            mime_type=file.content_type or ("application/pdf" if file.filename.lower().endswith(".pdf") else "image/jpeg"),
             file_hash=file_hash,
             uploaded_by=user.id,
             university_id=student.university_id or user.university_id,

@@ -26,6 +26,7 @@ class Document(db.Model):
     )
     file_name = db.Column(db.String(255), nullable=False)
     file_path = db.Column(db.Text, nullable=False)
+    file_data = db.Column(db.LargeBinary, nullable=True)
     file_size = db.Column(db.BigInteger, nullable=False)
     mime_type = db.Column(db.String(100))
     file_hash = db.Column(db.String(64))
