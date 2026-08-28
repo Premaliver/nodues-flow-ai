@@ -672,12 +672,43 @@ def get_application_detail(app_id):
     if not app_obj:
         return jsonify({"success": False, "message": "Application not found"}), 404
 
+    def get_canonical_department_rank(ad):
+        role = ""
+        name = ""
+        if hasattr(ad, "department") and ad.department:
+            role = (ad.department.role or "").lower()
+            name = (ad.department.name or "").lower()
+        elif isinstance(ad, dict):
+            role = (ad.get("department_role") or "").lower()
+            name = (ad.get("department_name") or "").lower()
+
+        if "hostel" in role or "hostel" in name:
+            return 10
+        if "mess" in role or "mess" in name:
+            return 20
+        if "transport" in role or "bus" in name or "transport" in name:
+            return 30
+        if "scholarship" in role or "scholarship" in name:
+            return 40
+        if "account" in role or "finance" in role or "account" in name or "finance" in name:
+            return 50  # Accounts is ALWAYS before HOD
+        if "hod" in role or "head of department" in name or "academic" in name:
+            return 60  # HOD is ALWAYS after Accounts
+        if "exam" in role or "examination" in name:
+            return 70  # Exam is ALWAYS last
+        return 80
+
+    sorted_approvals = sorted(
+        app_obj.department_approvals,
+        key=lambda x: (get_canonical_department_rank(x), x.display_order or 0)
+    )
+
     return jsonify({
         "success": True,
         "data": {
             "application": app_obj.to_dict(),
             "student": app_obj.student.to_dict() if app_obj.student else None,
-            "department_approvals": [ad.to_dict() for ad in app_obj.department_approvals],
+            "department_approvals": [ad.to_dict() for ad in sorted_approvals],
             "documents": [doc.to_dict() for doc in app_obj.documents],
             "admit_card": app_obj.admit_card.to_dict() if app_obj.admit_card else None,
         },

@@ -303,6 +303,71 @@ def get_courses_by_department(dept_id):
     })
 
 
+def get_canonical_department_rank(ad):
+    """
+    Returns integer rank guaranteeing strict sequential institutional pipeline:
+    10: Hostel
+    20: Mess
+    30: Transport
+    40: Scholarship
+    50: Accounts & Finance (MUST BE BEFORE HOD)
+    60: Head of Department (HOD) (MUST BE AFTER ACCOUNTS)
+    70: Examination Department (MUST BE LAST)
+    """
+    role = ""
+    name = ""
+    if hasattr(ad, "department") and ad.department:
+        role = (ad.department.role or "").lower()
+        name = (ad.department.name or "").lower()
+    elif isinstance(ad, dict):
+        role = (ad.get("department_role") or "").lower()
+        name = (ad.get("department_name") or "").lower()
+
+    if "hostel" in role or "hostel" in name:
+        return 10
+    if "mess" in role or "mess" in name:
+        return 20
+    if "transport" in role or "bus" in name or "transport" in name:
+        return 30
+    if "scholarship" in role or "scholarship" in name:
+        return 40
+    if "account" in role or "finance" in role or "account" in name or "finance" in name:
+        return 50  # Accounts is ALWAYS #2 (or after facilities)
+    if "hod" in role or "head of department" in name or "academic" in name:
+        return 60  # HOD is ALWAYS after Accounts
+    if "exam" in role or "examination" in name:
+        return 70  # Exam is ALWAYS last
+    return 80
+
+
+def normalize_application_department_approvals(app_record):
+    """
+    Sorts department approvals by canonical rank (Facilities -> Accounts -> HOD -> Exam)
+    and re-indexes display_order (1, 2, 3, 4) in database if needed.
+    """
+    if not app_record or not app_record.department_approvals:
+        return []
+    
+    sorted_approvals = sorted(
+        app_record.department_approvals,
+        key=lambda x: (get_canonical_department_rank(x), x.display_order or 0)
+    )
+    
+    changed = False
+    for idx, ad in enumerate(sorted_approvals, 1):
+        if ad.display_order != idx:
+            ad.display_order = idx
+            changed = True
+            
+    if changed:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            
+    return sorted_approvals
+
+
 @student_bp.route("/api/dashboard")
 @jwt_required(optional=True)
 def dashboard_data():
@@ -352,9 +417,10 @@ def dashboard_data():
         active_app = applications[0]
 
     if active_app:
+        sorted_approvals = normalize_application_department_approvals(active_app)
         data["active_application"] = active_app.to_dict()
         data["department_approvals"] = [
-            ad.to_dict() for ad in active_app.department_approvals
+            ad.to_dict() for ad in sorted_approvals
         ]
         docs = Document.query.filter_by(application_id=active_app.id).all()
         data["documents"] = [d.to_dict() for d in docs]
@@ -397,8 +463,8 @@ def get_application_detail(app_id):
         if not app or (student and str(app.student_id) != str(student.id)):
             return jsonify({"success": False, "message": "Application not found"}), 404
 
-    # Sort department approvals strictly by display_order
-    sorted_approvals = sorted(app.department_approvals, key=lambda x: (x.display_order or 0))
+    # Normalize and sort department approvals strictly Facilities -> Accounts -> HOD -> Exam
+    sorted_approvals = normalize_application_department_approvals(app)
     docs = Document.query.filter_by(application_id=app.id).all()
     admit_card = AdmitCard.query.filter_by(application_id=app.id).first()
 

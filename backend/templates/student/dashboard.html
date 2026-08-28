@@ -1580,205 +1580,31 @@
                             </div>
                         `;
 
-                        // Sort department approvals strictly by display_order so Facilities -> Accounts -> HOD -> Exam always displays in exact sequential order
-                        let deptApprovals = (d.department_approvals || []).slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-
-                        // ── Compute 4 Institutional Clearance Stages ──
-                        // Stage 1: Facilities & Support Services (Hostel, Mess, Transport, Scholarship)
-                        const facilityDepts = deptApprovals.filter(ad => {
+                        // Canonical Department Rank Function to guarantee strict sequential ordering:
+                        // Facilities -> Accounts -> HOD -> Examination
+                        function getDeptCanonicalRank(ad) {
                             const role = (ad.department_role || '').toLowerCase();
                             const name = (ad.department_name || '').toLowerCase();
-                            return ['hostel', 'mess', 'transport', 'scholarship'].some(k => role.includes(k) || name.includes(k));
-                        });
-
-                        let stage1Status = 'completed';
-                        let stage1Text = 'Day Scholar (Auto-Cleared)';
-                        let stage1Badge = 'success';
-                        if (facilityDepts.length > 0) {
-                            const allFacApp = facilityDepts.every(ad => ad.status === 'approved');
-                            const anyFacRej = facilityDepts.some(ad => ad.status === 'rejected');
-                            if (allFacApp) {
-                                stage1Status = 'completed';
-                                stage1Text = `${facilityDepts.length} Facilities Cleared ✓`;
-                                stage1Badge = 'success';
-                            } else if (anyFacRej) {
-                                stage1Status = 'rejected';
-                                stage1Text = 'Revision Needed ❌';
-                                stage1Badge = 'danger';
-                            } else {
-                                stage1Status = 'active';
-                                stage1Text = 'Under Review ⏳';
-                                stage1Badge = 'primary';
-                            }
+                            if (role.includes('hostel') || name.includes('hostel')) return 10;
+                            if (role.includes('mess') || name.includes('mess')) return 20;
+                            if (role.includes('transport') || name.includes('transport') || name.includes('bus')) return 30;
+                            if (role.includes('scholarship') || name.includes('scholarship')) return 40;
+                            if (role.includes('account') || name.includes('account') || name.includes('finance')) return 50; // ALWAYS BEFORE HOD!
+                            if (role.includes('hod') || name.includes('hod') || name.includes('head of department')) return 60; // ALWAYS AFTER ACCOUNTS!
+                            if (role.includes('exam') || name.includes('exam')) return 70; // ALWAYS LAST!
+                            return 80;
                         }
 
-                        // Stage 2: Accounts & Finance Audit
-                        const accountsDept = deptApprovals.find(ad => {
-                            const role = (ad.department_role || '').toLowerCase();
-                            const name = (ad.department_name || '').toLowerCase();
-                            return role.includes('account') || name.includes('account') || name.includes('finance');
+                        // Sort department approvals strictly by canonical rank
+                        let deptApprovals = (d.department_approvals || []).slice().sort((a, b) => {
+                            const rankA = getDeptCanonicalRank(a);
+                            const rankB = getDeptCanonicalRank(b);
+                            if (rankA !== rankB) return rankA - rankB;
+                            return (a.display_order || 0) - (b.display_order || 0);
                         });
-                        let stage2Status = 'pending';
-                        let stage2Text = 'Queued 🔒';
-                        let stage2Badge = 'secondary';
-                        if (accountsDept) {
-                            if (accountsDept.status === 'approved') {
-                                stage2Status = 'completed';
-                                stage2Text = 'Fees Cleared ✓';
-                                stage2Badge = 'success';
-                            } else if (accountsDept.status === 'rejected') {
-                                stage2Status = 'rejected';
-                                stage2Text = 'Fee Hold ❌';
-                                stage2Badge = 'danger';
-                            } else if (stage1Status === 'completed') {
-                                stage2Status = 'active';
-                                stage2Text = 'Auditing Receipts ⏳';
-                                stage2Badge = 'primary';
-                            } else {
-                                stage2Status = 'pending';
-                                stage2Text = 'Awaiting Facilities 🔒';
-                                stage2Badge = 'secondary';
-                            }
-                        }
 
-                        // Stage 3: Academic HOD Clearance
-                        const hodDept = deptApprovals.find(ad => {
-                            const role = (ad.department_role || '').toLowerCase();
-                            const name = (ad.department_name || '').toLowerCase();
-                            return role.includes('hod') || name.includes('hod') || name.includes('department');
-                        });
-                        let stage3Status = 'pending';
-                        let stage3Text = 'Queued 🔒';
-                        let stage3Badge = 'secondary';
-                        if (hodDept) {
-                            if (hodDept.status === 'approved') {
-                                stage3Status = 'completed';
-                                stage3Text = 'Academic Cleared ✓';
-                                stage3Badge = 'success';
-                            } else if (hodDept.status === 'rejected') {
-                                stage3Status = 'rejected';
-                                stage3Text = 'Academic Dues ❌';
-                                stage3Badge = 'danger';
-                            } else if (stage2Status === 'completed') {
-                                stage3Status = 'active';
-                                stage3Text = 'Academic Review ⏳';
-                                stage3Badge = 'primary';
-                            } else {
-                                stage3Status = 'pending';
-                                stage3Text = 'Awaiting Accounts 🔒';
-                                stage3Badge = 'secondary';
-                            }
-                        }
-
-                        // Stage 4: Examination & Digital Pass
-                        const examDept = deptApprovals.find(ad => {
-                            const role = (ad.department_role || '').toLowerCase();
-                            const name = (ad.department_name || '').toLowerCase();
-                            return role.includes('exam') || name.includes('exam');
-                        });
-                        let stage4Status = 'pending';
-                        let stage4Text = 'Queued 🔒';
-                        let stage4Badge = 'secondary';
-                        if (examDept) {
-                            if (examDept.status === 'approved' || app.status === 'approved') {
-                                stage4Status = 'completed';
-                                stage4Text = 'Admit Pass Ready 🎓';
-                                stage4Badge = 'success';
-                            } else if (examDept.status === 'rejected') {
-                                stage4Status = 'rejected';
-                                stage4Text = 'Exam Hold ❌';
-                                stage4Badge = 'danger';
-                            } else if (stage3Status === 'completed') {
-                                stage4Status = 'active';
-                                stage4Text = 'Ready for Pass ⏳';
-                                stage4Badge = 'primary';
-                            } else {
-                                stage4Status = 'pending';
-                                stage4Text = 'Awaiting HOD 🔒';
-                                stage4Badge = 'secondary';
-                            }
-                        }
-
-                        // Build 4-Stage Pipeline Roadmap HTML
-                        const pipelineRoadmapHtml = `
-                            <div class="pipeline-stage-container">
-                                <!-- Stage 1 -->
-                                <div class="pipeline-stage-card ${stage1Status}">
-                                    <div>
-                                        <div class="stage-num-badge">
-                                            <span>STAGE 01</span>
-                                            <span>${stage1Status === 'completed' ? '✓' : stage1Status === 'active' ? '⚡' : '⏳'}</span>
-                                        </div>
-                                        <div class="stage-title">
-                                            <span>🏠</span> <span>Facilities & Services</span>
-                                        </div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35;">
-                                            ${facilityDepts.length > 0 ? facilityDepts.map(f => f.department_name).join(', ') : 'Hostel & Mess verification (if opted)'}
-                                        </div>
-                                    </div>
-                                    <span class="stage-status-pill badge-${stage1Badge}">
-                                        ${stage1Text}
-                                    </span>
-                                </div>
-
-                                <!-- Stage 2 -->
-                                <div class="pipeline-stage-card ${stage2Status}">
-                                    <div>
-                                        <div class="stage-num-badge">
-                                            <span>STAGE 02</span>
-                                            <span>${stage2Status === 'completed' ? '✓' : stage2Status === 'active' ? '⚡' : '🔒'}</span>
-                                        </div>
-                                        <div class="stage-title">
-                                            <span>💳</span> <span>Accounts & Finance</span>
-                                        </div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35;">
-                                            Tuition fees & fee receipt audit
-                                        </div>
-                                    </div>
-                                    <span class="stage-status-pill badge-${stage2Badge}">
-                                        ${stage2Text}
-                                    </span>
-                                </div>
-
-                                <!-- Stage 3 -->
-                                <div class="pipeline-stage-card ${stage3Status}">
-                                    <div>
-                                        <div class="stage-num-badge">
-                                            <span>STAGE 03</span>
-                                            <span>${stage3Status === 'completed' ? '✓' : stage3Status === 'active' ? '⚡' : '🔒'}</span>
-                                        </div>
-                                        <div class="stage-title">
-                                            <span>🎓</span> <span>Academic HOD</span>
-                                        </div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35;">
-                                            Attendance & lab dues clearance
-                                        </div>
-                                    </div>
-                                    <span class="stage-status-pill badge-${stage3Badge}">
-                                        ${stage3Text}
-                                    </span>
-                                </div>
-
-                                <!-- Stage 4 -->
-                                <div class="pipeline-stage-card ${stage4Status}">
-                                    <div>
-                                        <div class="stage-num-badge">
-                                            <span>STAGE 04</span>
-                                            <span>${stage4Status === 'completed' ? '✓' : stage4Status === 'active' ? '⚡' : '🔒'}</span>
-                                        </div>
-                                        <div class="stage-title">
-                                            <span>📝</span> <span>Examination Pass</span>
-                                        </div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.35;">
-                                            Admit card issuance & QR verification
-                                        </div>
-                                    </div>
-                                    <span class="stage-status-pill badge-${stage4Badge}">
-                                        ${stage4Text}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
+                        // Re-assign sequential 1-based step order
+                        deptApprovals.forEach((ad, i) => { ad._displayStep = i + 1; });
 
                         // Find current active pending department where application is sitting right now
                         let currentPendingDept = null;
@@ -1789,203 +1615,82 @@
                             }
                         }
 
-                        // Determine status location banner
-                        let locationBannerHtml = '';
                         const isFullyApproved = app.status === 'approved' || pct === 100;
                         const hasRejection = deptApprovals.some(ad => ad.status === 'rejected');
 
+                        // 1. Success Banner (when 100% complete)
+                        let statusBannerHtml = '';
                         if (isFullyApproved) {
-                            locationBannerHtml = `
-                                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)); border: 2px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                        <div>
-                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--emerald); display: flex; align-items: center; gap: 0.45rem;">
-                                                <span class="cyber-status-dot" style="background:#10b981;"></span>
-                                                FINAL CLEARANCE STATUS: 100% CLEARED & APPROVED
-                                            </div>
-                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0;">
-                                                🎉 All Institutional Departments Cleared!
-                                            </h3>
-                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 620px;">
-                                                Your clearance request is complete across Facilities, Accounts, Academic HOD, and Examination. Your official Admit Card is issued and ready.
-                                            </p>
+                            statusBannerHtml = `
+                                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1)); border: 1.5px solid var(--emerald); border-radius: var(--radius-xl); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 1.1rem; color: var(--emerald); display: flex; align-items: center; gap: 0.45rem;">
+                                            🎉 All Departments Cleared & Approved!
                                         </div>
-                                        <div style="display: flex; gap: 0.75rem;">
-                                            <button class="btn btn-success btn-lg" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);">
-                                                🎓 Download Admit Card PDF
-                                            </button>
-                                        </div>
+                                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0.25rem 0 0 0;">
+                                            Your clearance is 100% complete. Official Examination Admit Card is ready for download!
+                                        </p>
                                     </div>
+                                    <button class="btn btn-success" onclick="switchToPanel('panelAdmitCards')" style="box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); font-weight: 700;">
+                                        🎓 Download Admit Card
+                                    </button>
                                 </div>
                             `;
                         } else if (hasRejection) {
-                            const rejectedDepts = deptApprovals.filter(ad => ad.status === 'rejected');
-                            const rejNames = rejectedDepts.map(r => r.department_name || 'Department').join(', ');
-                            locationBannerHtml = `
-                                <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08)); border: 2px solid var(--crimson); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                        <div>
-                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--crimson); display: flex; align-items: center; gap: 0.45rem;">
-                                                <span class="cyber-status-dot" style="background:#ef4444;"></span>
-                                                ACTION REQUIRED: CLEARANCE REVISION REQUESTED
-                                            </div>
-                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--crimson); margin: 0.35rem 0;">
-                                                ⚠️ Clearance Hold at: ${rejNames}
-                                            </h3>
-                                            <p style="font-size: 0.88rem; color: var(--text-primary); margin: 0; max-width: 640px;">
-                                                The department has requested clarification or revised receipts. Check their remarks below and click "Upload Revised Receipt" to resume.
-                                            </p>
+                            statusBannerHtml = `
+                                <div style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid var(--crimson); border-radius: var(--radius-xl); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--crimson); display: flex; align-items: center; gap: 0.45rem;">
+                                            ❌ Action Required: Clearance Revision Requested
                                         </div>
-                                        <button class="btn btn-danger btn-lg" onclick="showUploadModal()" style="box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
-                                            📤 Upload Revised Receipt
-                                        </button>
+                                        <p style="font-size: 0.85rem; color: var(--text-primary); margin: 0.25rem 0 0 0;">
+                                            One or more departments requested revised receipts. Please check remarks below and upload the fix.
+                                        </p>
                                     </div>
-                                </div>
-                            `;
-                        } else if (app.status === 'draft') {
-                            locationBannerHtml = `
-                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(79, 70, 229, 0.08)); border: 2px solid var(--accent); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                        <div>
-                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); display: flex; align-items: center; gap: 0.45rem;">
-                                                <span class="cyber-status-dot" style="background:#6366f1;"></span>
-                                                APPLICATION STATUS: DRAFT MODE
-                                            </div>
-                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0;">
-                                                📝 Application Saved as Draft
-                                            </h3>
-                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 620px;">
-                                                Ensure both Examination Fee & Next Semester Fee receipts are attached, then click "Submit Application" to start department verification.
-                                            </p>
-                                        </div>
-                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                            <button class="btn btn-outline btn-sm" onclick="showUploadModal()">📤 Upload Receipts</button>
-                                            <button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">🚀 Submit Application</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (currentPendingDept) {
-                            const deptRole = (currentPendingDept.department_role || '').toLowerCase();
-                            const deptName = currentPendingDept.department_name || 'Department';
-                            let roleExpl = 'Staff is currently verifying your records in sequence.';
-                            if (deptRole.includes('hostel')) roleExpl = 'Hostel Warden is verifying room clearance, furniture inventory, and key handover.';
-                            else if (deptRole.includes('mess')) roleExpl = 'Mess Incharge is auditing dining hall dues and cafeteria billing.';
-                            else if (deptRole.includes('transport')) roleExpl = 'Transport Incharge is verifying college bus route fees and travel pass.';
-                            else if (deptRole.includes('scholarship')) roleExpl = 'Scholarship cell is verifying fee concession & government grant status.';
-                            else if (deptRole.includes('account')) roleExpl = 'Accounts & Finance Department is auditing tuition fees, exam fee receipt & next semester receipt.';
-                            else if (deptRole.includes('hod')) roleExpl = 'Academic Head of Department (HOD) is verifying lab dues, attendance, and coursework.';
-                            else if (deptRole.includes('exam')) roleExpl = 'Examination Department is conducting the final audit to generate your official Admit Card.';
-
-                            locationBannerHtml = `
-                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(59, 130, 246, 0.08)); border: 2px solid var(--accent); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.75rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                                        <div>
-                                            <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); display: flex; align-items: center; gap: 0.45rem;">
-                                                <span class="cyber-status-dot" style="background:#6366f1;"></span>
-                                                CURRENT APPLICATION LOCATION: STEP #${currentPendingDept.display_order || 1} OF ${deptApprovals.length}
-                                            </div>
-                                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--text-primary); margin: 0.35rem 0; display: flex; align-items: center; gap: 0.5rem;">
-                                                📍 Currently Under Review at: <span style="color: var(--accent);">${deptName}</span>
-                                            </h3>
-                                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 680px;">
-                                                ${roleExpl} Once verified, your application will automatically proceed to the next department.
-                                            </p>
-                                        </div>
-                                        <div style="display: flex; align-items: center; gap: 0.6rem;">
-                                            <span class="badge badge-primary" style="font-size: 0.85rem; padding: 0.45rem 0.9rem;">
-                                                ⚡ Active Queue
-                                            </span>
-                                            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()" title="Check for real-time updates">
-                                                🔄 Refresh Status
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <button class="btn btn-danger" onclick="showUploadModal()" style="box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3); font-weight: 700;">
+                                        📤 Upload Revised Receipt
+                                    </button>
                                 </div>
                             `;
                         }
 
-                        // Build Modern Department Clearance Grid Tiles with Sequential State
-                        let activeStepFound = false;
-                        const deptTilesHtml = `
-                            <div class="dept-cyber-grid">
+                        // 2. Horizontal Stepper with Connected Line & Nodes (Matching user screenshot)
+                        const totalNodes = deptApprovals.length;
+                        const approvedNodes = deptApprovals.filter(ad => ad.status === 'approved').length;
+                        let lineProgressPct = 0;
+                        if (totalNodes > 1) {
+                            lineProgressPct = (approvedNodes / (totalNodes - 1)) * 100;
+                            lineProgressPct = Math.min(lineProgressPct, 100);
+                        }
+
+                        const stepperHtml = `
+                            <div class="clearance-stepper" style="position: relative; display: flex; justify-content: space-between; align-items: flex-start; padding: 1.25rem 0.5rem; margin: 1.5rem 0; overflow-x: auto;">
+                                <div style="position: absolute; top: 32px; left: 30px; right: 30px; height: 3px; background: var(--border-light); z-index: 1;"></div>
+                                <div style="position: absolute; top: 32px; left: 30px; width: calc(${lineProgressPct}% * 0.85); max-width: calc(100% - 60px); height: 3px; background: var(--gradient-primary); z-index: 2; transition: width 0.6s ease-in-out;"></div>
                                 ${deptApprovals.map((ad, idx) => {
                                     const st = ad.status;
-                                    let borderStatus = 'pending';
-                                    let badgeColor = 'secondary';
-                                    let iconEmoji = '⏳';
-                                    let deptEmoji = '🏛️';
-                                    let statusLabel = 'Queued';
-
-                                    const deptName = ad.department_name || 'Department';
-                                    const deptRole = (ad.department_role || '').toLowerCase();
-                                    const lowerName = deptName.toLowerCase();
-
-                                    if (deptRole.includes('hostel') || lowerName.includes('hostel')) deptEmoji = '🏨';
-                                    else if (deptRole.includes('mess') || lowerName.includes('mess')) deptEmoji = '🍽️';
-                                    else if (deptRole.includes('transport') || lowerName.includes('transport') || lowerName.includes('bus')) deptEmoji = '🚌';
-                                    else if (deptRole.includes('scholarship') || lowerName.includes('scholarship')) deptEmoji = '🎓';
-                                    else if (deptRole.includes('account') || lowerName.includes('account') || lowerName.includes('finance')) deptEmoji = '💳';
-                                    else if (deptRole.includes('hod') || lowerName.includes('hod')) deptEmoji = '🏛️';
-                                    else if (deptRole.includes('exam') || lowerName.includes('exam')) deptEmoji = '📝';
-
+                                    let nodeClass = '';
+                                    let nodeContent = (idx + 1);
+                                    let nodeStyle = '';
+                                    
                                     if (st === 'approved') {
-                                        borderStatus = 'approved';
-                                        badgeColor = 'success';
-                                        iconEmoji = '✅';
-                                        statusLabel = 'Approved & Cleared';
-                                    } else if (st === 'rejected') {
-                                        borderStatus = 'rejected';
-                                        badgeColor = 'danger';
-                                        iconEmoji = '❌';
-                                        statusLabel = 'Action Required';
-                                    } else if (!activeStepFound) {
-                                        // This is the active department currently reviewing
-                                        activeStepFound = true;
-                                        borderStatus = 'in-review';
-                                        badgeColor = 'primary';
-                                        iconEmoji = '⚡';
-                                        statusLabel = 'Under Active Review';
+                                        nodeClass = 'completed';
+                                        nodeContent = '✓';
+                                        nodeStyle = 'background: #10b981; border-color: #10b981; color: white; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);';
+                                    } else if (ad === currentPendingDept) {
+                                        nodeClass = 'active';
+                                        nodeStyle = 'background: var(--gradient-primary); border-color: transparent; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);';
                                     } else {
-                                        // Subsequent departments waiting for preceding approvals
-                                        borderStatus = 'pending';
-                                        badgeColor = 'secondary';
-                                        iconEmoji = '🔒';
-                                        statusLabel = 'Awaiting Prior Steps';
+                                        nodeStyle = 'background: var(--bg-card); border: 2px solid var(--border-medium); color: var(--text-muted);';
                                     }
 
                                     return `
-                                        <div class="dept-cyber-tile status-${borderStatus}">
-                                            <div>
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; gap: 0.5rem;">
-                                                    <div style="display: flex; align-items: center; gap: 0.55rem;">
-                                                        <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--bg-secondary); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                                            ${deptEmoji}
-                                                        </div>
-                                                        <div>
-                                                            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); line-height: 1.2;">
-                                                                ${deptName}
-                                                            </div>
-                                                            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px;">
-                                                                Step #${ad.display_order || (idx + 1)} of ${deptApprovals.length}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <span class="badge badge-${badgeColor}" style="font-size: 0.72rem; text-transform: uppercase;">
-                                                        ${iconEmoji} ${statusLabel}
-                                                    </span>
-                                                </div>
-
-                                                ${ad.remarks ? `
-                                                    <div style="font-size: 0.82rem; background: var(--bg-secondary); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border-left: 2.5px solid var(--accent); margin: 0.75rem 0; color: var(--text-secondary); line-height: 1.4;">
-                                                        💬 "${ad.remarks}"
-                                                    </div>
-                                                ` : ''}
+                                        <div class="stepper-item ${nodeClass}" style="position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; min-width: 85px; flex-shrink: 0; text-align: center;">
+                                            <div class="stepper-node" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; transition: all 0.3s ease; ${nodeStyle}">
+                                                ${nodeContent}
                                             </div>
-
-                                            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 0.6rem; margin-top: 0.75rem;">
-                                                <span>${ad.processed_at ? `Verified: ${new Date(ad.processed_at).toLocaleDateString()}` : (borderStatus === 'in-review' ? '⚡ Currently in Queue' : '🔒 Awaiting Prior Step')}</span>
-                                                ${st === 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="showUploadModal()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">📤 Upload Fix</button>` : ''}
+                                            <div class="stepper-label" style="font-size: 0.75rem; font-weight: 700; color: ${st === 'approved' ? 'var(--emerald)' : (ad === currentPendingDept ? 'var(--accent)' : 'var(--text-secondary)')}; max-width: 105px; line-height: 1.25;">
+                                                ${ad.department_name}
                                             </div>
                                         </div>
                                     `;
@@ -1993,9 +1698,74 @@
                             </div>
                         `;
 
+                        // 3. Department Verification Status List (Matching user screenshot)
+                        const deptListHtml = `
+                            <div style="margin-top: 2rem;">
+                                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-primary);">
+                                    Department Verification Status
+                                </h3>
+                                <div style="display: flex; flex-direction: column;">
+                                    ${deptApprovals.map((ad, idx) => {
+                                        const st = ad.status;
+                                        let badgeStyle = 'background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25);';
+                                        let badgeIcon = '⏳';
+                                        let badgeText = 'PENDING';
+                                        let statusSubtext = 'Awaiting Review';
+
+                                        if (st === 'approved') {
+                                            badgeStyle = 'background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25);';
+                                            badgeIcon = '✅';
+                                            badgeText = 'APPROVED';
+                                            statusSubtext = ad.processed_at ? `Verified on ${new Date(ad.processed_at).toLocaleDateString()}` : 'Cleared';
+                                        } else if (st === 'rejected') {
+                                            badgeStyle = 'background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25);';
+                                            badgeIcon = '❌';
+                                            badgeText = 'REJECTED';
+                                            statusSubtext = 'Revision Requested';
+                                        } else if (ad === currentPendingDept) {
+                                            badgeStyle = 'background: rgba(99, 102, 241, 0.12); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.25);';
+                                            badgeIcon = '⏳';
+                                            badgeText = 'UNDER REVIEW';
+                                            statusSubtext = 'Currently Under Review';
+                                        }
+
+                                        return `
+                                            <div style="padding: 1.15rem 0; border-bottom: 1px solid var(--border-light);">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; flex-wrap: wrap; gap: 0.5rem;">
+                                                    <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">
+                                                        ${ad.department_name}
+                                                    </div>
+                                                    <span style="font-size: 0.76rem; font-weight: 700; padding: 0.3rem 0.75rem; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px; ${badgeStyle}">
+                                                        <span>${badgeIcon}</span> <span>${badgeText}</span>
+                                                    </span>
+                                                </div>
+                                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: 500;">
+                                                    Step Order: #${ad._displayStep || (idx + 1)}
+                                                </div>
+                                                <div style="font-size: 0.82rem; color: var(--text-muted);">
+                                                    ${statusSubtext}
+                                                </div>
+                                                ${ad.remarks ? `
+                                                    <div style="font-size: 0.82rem; background: var(--bg-secondary); padding: 0.6rem 0.85rem; border-radius: var(--radius-md); border-left: 3px solid var(--accent); margin-top: 0.6rem; color: var(--text-secondary); line-height: 1.4;">
+                                                        💬 "${ad.remarks}"
+                                                    </div>
+                                                ` : ''}
+                                                ${st === 'rejected' ? `
+                                                    <div style="margin-top: 0.6rem;">
+                                                        <button class="btn btn-danger btn-sm" onclick="showUploadModal()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">📤 Upload Fix</button>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+
+                        // 4. Documents & Receipts Locker
                         const docsList = d.documents || [];
                         const docsSectionHtml = `
-                            <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.35rem; margin-top: 1.75rem; box-shadow: var(--shadow-sm);">
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.35rem; margin-top: 2rem; box-shadow: var(--shadow-sm);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
                                         <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.45rem;">
@@ -2036,34 +1806,26 @@
                         `;
 
                         document.getElementById('activeClearanceBody').innerHTML = `
-                            ${locationBannerHtml}
+                            ${statusBannerHtml}
                             <div style="margin-bottom: 1.75rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-primary);">Overall Clearance Progress (${pct}%)</div>
-                                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Sequential verification pipeline active</div>
+                                        <div style="font-weight: 700; font-size: 1.15rem; color: var(--text-primary);">Overall Clearance Progress (${pct}%)</div>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                        ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
+                                        ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')" style="box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); font-weight: 700;">🚀 Submit Application</button>` : ''}
                                         <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 700;" title="Cancel & delete this application to submit a fresh one">
                                             🗑️ Stop / Delete Application
                                         </button>
                                     </div>
                                 </div>
-                                <div class="progress-bar" style="height: 12px; border-radius: 6px;">
-                                    <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+                                <div class="progress-bar" style="height: 10px; border-radius: 5px; background: rgba(99, 102, 241, 0.12);">
+                                    <div class="progress-bar-fill" style="width: ${pct}%; background: var(--gradient-primary); border-radius: 5px;"></div>
                                 </div>
                             </div>
 
-                            <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; margin: 1.75rem 0 0.5rem 0; color: var(--text-primary); display: flex; align-items: center; gap: 0.45rem;">
-                                <span>⚡</span> <span>Institutional Clearance Roadmap (4 Stages)</span>
-                            </h4>
-                            ${pipelineRoadmapHtml}
-
-                            <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.15rem; margin: 1.75rem 0 0.5rem 0; color: var(--text-primary); display: flex; align-items: center; gap: 0.45rem;">
-                                <span>🏛️</span> <span>Sequential Department Review Status</span>
-                            </h4>
-                            ${deptTilesHtml}
+                            ${stepperHtml}
+                            ${deptListHtml}
                             ${docsSectionHtml}
                         `;
                     } else {
