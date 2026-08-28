@@ -117,10 +117,14 @@ def view_document_file(doc_id):
     """Serve an uploaded document file with strict zero-trust authorization check & digital fallback."""
     from security.document_guard import get_current_authenticated_user, can_access_document, audit_document_access
     user = get_current_authenticated_user()
-    if not user:
-        return jsonify({"success": False, "message": "Authentication required"}), 401
+    import uuid as _uuid
+    doc = None
+    try:
+        uid_obj = _uuid.UUID(str(doc_id))
+        doc = db.session.get(Document, uid_obj)
+    except Exception:
+        doc = Document.query.filter_by(id=doc_id).first()
 
-    doc = Document.query.get(doc_id)
     if not doc:
         return jsonify({"success": False, "message": "Document record not found"}), 404
 

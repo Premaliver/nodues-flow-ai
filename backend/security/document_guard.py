@@ -78,14 +78,14 @@ def can_access_document(user: User, document: Document) -> Tuple[bool, str]:
     if not application:
         return False, "Orphaned document"
 
+    if user.role == "super_admin":
+        return True, "Authorized as Super Admin"
+
     # Multi-tenant strict isolation: user and document must belong to same university
     doc_univ_id = str(document.university_id or application.university_id or "")
     user_univ_id = str(user.university_id or "")
     if user_univ_id and doc_univ_id and user_univ_id != doc_univ_id:
         return False, "Access denied: Cross-tenant data isolation violation"
-
-    if user.role == "super_admin":
-        return True, "Authorized as University Admin"
 
     # If student, verify direct ownership
     if user.role == "student":

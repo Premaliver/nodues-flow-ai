@@ -1074,4 +1074,11 @@ def get_feedback_status():
     })
 
 
+@student_bp.route("/api/documents/file/<doc_id>")
+def student_view_document_file(doc_id):
+    """Forward document viewing to main api blueprint handler."""
+    from blueprints.api.routes import view_document_file
+    return view_document_file(doc_id)
+
+
 
