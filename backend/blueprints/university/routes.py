@@ -25,14 +25,38 @@ from licensing.crypto import LicenseCrypto
 
 
 def get_current_university():
-    """Helper to fetch logged-in university from session."""
+    """Helper to fetch logged-in university from session, current_user, or JWT."""
+    from flask_login import current_user
     univ_id = session.get("university_id")
+    if not univ_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id") and current_user.university_id:
+        univ_id = current_user.university_id
+
     if not univ_id:
-        return None
-    try:
-        return UniversityTenant.query.get(uuid.UUID(str(univ_id)))
-    except Exception:
-        return None
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt
+            verify_jwt_in_request(optional=True)
+            claims = get_jwt()
+            if claims and claims.get("university_id"):
+                univ_id = claims.get("university_id")
+        except Exception:
+            pass
+
+    if univ_id:
+        try:
+            u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
+            univ = UniversityTenant.query.get(u_uuid)
+            if univ:
+                return univ
+        except Exception:
+            pass
+
+    univ_slug = session.get("university_slug") or session.get("portal_slug")
+    if univ_slug:
+        univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
+        if univ:
+            return univ
+
+    return None
 
 
 # ─────────────────────────────────────────────────────────────
@@ -711,6 +735,59 @@ def portal_staff_login(slug):
 # 12. UNIVERSITY ADMIN: BRANDING & CUSTOMIZATION API
 # ─────────────────────────────────────────────────────────────
 
+@university_bp.route("/api/branding/upload-logo", methods=["POST"])
+def upload_branding_logo():
+    """Handle direct image file upload for university logo and persist locally."""
+    univ = get_current_university()
+    if not univ:
+        return jsonify({"success": False, "message": "Please log in to your university account."}), 401
+
+    if "file" not in request.files and "logo" not in request.files:
+        return jsonify({"success": False, "message": "No logo image file uploaded."}), 400
+
+    logo_file = request.files.get("file") or request.files.get("logo")
+    if not logo_file or not logo_file.filename:
+        return jsonify({"success": False, "message": "No file selected."}), 400
+
+    from werkzeug.utils import secure_filename
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
+    _, ext = os.path.splitext(logo_file.filename.lower())
+    if ext not in allowed_exts:
+        return jsonify({
+            "success": False,
+            "message": f"Invalid image format '{ext}'. Allowed formats: PNG, JPG, JPEG, WEBP, SVG, GIF."
+        }), 400
+
+    try:
+        # Destination directory in static uploads
+        static_dir = current_app.static_folder or os.path.join(parent_dir, "backend", "static")
+        logos_dir = os.path.join(static_dir, "uploads", "logos")
+        os.makedirs(logos_dir, exist_ok=True)
+
+        safe_slug = "".join(c for c in (univ.slug or "univ") if c.isalnum() or c == "-")[:20]
+        timestamp = int(datetime.now(timezone.utc).timestamp())
+        unique_filename = f"logo_{safe_slug}_{timestamp}{ext}"
+        target_path = os.path.join(logos_dir, unique_filename)
+
+        logo_file.save(target_path)
+
+        logo_url = f"/static/uploads/logos/{unique_filename}"
+        univ.logo_url = logo_url
+        session["university_logo"] = logo_url
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Logo uploaded successfully for {univ.name}!",
+            "logo_url": logo_url,
+            "data": univ.to_dict(),
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Logo upload error: {e}")
+        return jsonify({"success": False, "message": f"Failed to upload logo: {str(e)}"}), 500
+
+
 @university_bp.route("/api/branding", methods=["POST"])
 def update_branding():
     """Update institutional branding (Logo, theme colors, notice text)."""
@@ -729,6 +806,7 @@ def update_branding():
     if logo_url:
         from utils.helpers import normalize_logo_url
         univ.logo_url = normalize_logo_url(logo_url)
+        session["university_logo"] = univ.logo_url
 
     if primary_color and primary_color.startswith("#"):
         univ.primary_color = primary_color

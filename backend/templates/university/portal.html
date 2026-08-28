@@ -624,10 +624,10 @@
         <div class="header-content">
             <a href="/u/{{ university.slug }}" class="brand-group">
                 <div class="univ-logo-badge">
-                    {% if university.logo_url %}
-                    <img src="{{ university.logo_url }}" alt="{{ university.name }} Logo" onerror="this.onerror=null; this.src='/static/images/radha_vallabh_logo.png';">
+                    {% if university and university.logo_url %}
+                    <img src="{{ university.logo_url }}" alt="{{ university.name }} Logo" onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'font-size:1.4rem;\'>🏛️</span>';">
                     {% else %}
-                    <img src="/static/images/radha_vallabh_logo.png" alt="{{ university.name }} Logo">
+                    <span style="font-size: 1.4rem;">🏛️</span>
                     {% endif %}
                 </div>
                 <div class="brand-text">

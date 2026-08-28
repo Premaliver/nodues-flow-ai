@@ -207,14 +207,35 @@
 
                     <!-- Institutional Branding Studio -->
                     <div class="glass-panel">
-                        <div class="glass-panel-header">
+                        <div class="glass-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                             <h3>🎨 Brand Appearance Studio</h3>
+                            <span class="badge badge-primary">Institutional Identity</span>
                         </div>
                         <div class="glass-panel-body">
+                            <!-- Live Logo Preview & File Upload Box -->
+                            <div style="background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                                <div id="superLogoPreviewBox" style="width: 58px; height: 58px; min-width: 58px; border-radius: 12px; background: white; border: 1.5px solid var(--border-medium); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: var(--shadow-sm); padding: 3px;">
+                                    {% if university and university.logo_url %}
+                                    <img id="superLiveLogoImg" src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                                    {% else %}
+                                    <img id="superLiveLogoImg" src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI" style="width: 100%; height: 100%; object-fit: contain;">
+                                    {% endif %}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary);">University Official Logo</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;">PNG, JPG, WEBP, or SVG image file</div>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        <input type="file" id="superLogoFileInput" accept="image/*" style="display:none;" onchange="handleSuperLogoFileSelected(event)">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('superLogoFileInput').click()">📁 Choose Image File</button>
+                                        <button type="button" class="btn btn-primary btn-sm" id="btnUploadLogoFile" onclick="uploadSuperLogoFile()" disabled>⚡ Upload Logo</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <form id="superBrandingForm" onsubmit="return saveSuperBranding(event)">
                                 <div class="form-group">
-                                    <label class="form-label">University Logo URL</label>
-                                    <input type="url" class="form-input" id="superBrandLogo" value="{{ university.logo_url if university and university.logo_url else '' }}" placeholder="https://example.com/logo.png">
+                                    <label class="form-label">University Logo URL (or Direct Link)</label>
+                                    <input type="url" class="form-input" id="superBrandLogo" value="{{ university.logo_url if university and university.logo_url else '' }}" placeholder="https://example.com/logo.png" oninput="updateLogoPreviewFromUrl(this.value)">
                                 </div>
                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                                     <div class="form-group">
@@ -1074,10 +1095,77 @@ async function uploadSuperCsv() {
     }
 }
 
+let superSelectedLogoFile = null;
+
+function handleSuperLogoFileSelected(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        superSelectedLogoFile = e.target.files[0];
+        document.getElementById('btnUploadLogoFile').disabled = false;
+        
+        // Show live thumbnail preview immediately
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const previewImg = document.getElementById('superLiveLogoImg');
+            if (previewImg) previewImg.src = evt.target.result;
+        };
+        reader.readAsDataURL(superSelectedLogoFile);
+        showToast('Logo file selected: ' + superSelectedLogoFile.name, 'info');
+    }
+}
+
+function updateLogoPreviewFromUrl(url) {
+    if (!url) return;
+    const previewImg = document.getElementById('superLiveLogoImg');
+    if (previewImg) previewImg.src = url;
+}
+
+async function uploadSuperLogoFile() {
+    if (!superSelectedLogoFile) return;
+    const formData = new FormData();
+    formData.append('file', superSelectedLogoFile);
+
+    const btn = document.getElementById('btnUploadLogoFile');
+    btn.disabled = true;
+    btn.innerText = 'Uploading...';
+
+    try {
+        const res = await fetch('/university/api/branding/upload-logo', {
+            method: 'POST',
+            body: formData,
+            headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Logo uploaded and saved successfully!', 'success');
+            document.getElementById('superBrandLogo').value = data.logo_url;
+            
+            // Update live preview & sidebar brand icon
+            const previewImg = document.getElementById('superLiveLogoImg');
+            if (previewImg) previewImg.src = data.logo_url;
+            
+            const sidebarBrandIcon = document.querySelector('.super-sidebar-brand .brand-icon img');
+            if (sidebarBrandIcon) sidebarBrandIcon.src = data.logo_url;
+
+            superSelectedLogoFile = null;
+            btn.innerText = '⚡ Upload Logo';
+            btn.disabled = true;
+        } else {
+            showToast('Error: ' + data.message, 'error');
+            btn.innerText = '⚡ Upload Logo';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        showToast('Upload error: ' + e, 'error');
+        btn.innerText = '⚡ Upload Logo';
+        btn.disabled = false;
+    }
+}
+
 async function saveSuperBranding(e) {
     e.preventDefault();
+    const logoUrl = document.getElementById('superBrandLogo').value.trim();
     const payload = {
-        logo_url: document.getElementById('superBrandLogo').value.trim(),
+        logo_url: logoUrl,
         primary_color: document.getElementById('superBrandPrimary').value,
         accent_color: document.getElementById('superBrandAccent').value,
         banner_text: document.getElementById('superBrandBanner').value.trim()
@@ -1092,6 +1180,12 @@ async function saveSuperBranding(e) {
         const data = await res.json();
         if (data.success) {
             showToast('Institutional branding saved successfully!', 'success');
+            if (logoUrl) {
+                const sidebarBrandIcon = document.querySelector('.super-sidebar-brand .brand-icon img');
+                if (sidebarBrandIcon) sidebarBrandIcon.src = logoUrl;
+                const previewImg = document.getElementById('superLiveLogoImg');
+                if (previewImg) previewImg.src = logoUrl;
+            }
         } else {
             showToast('Error: ' + data.message, 'error');
         }

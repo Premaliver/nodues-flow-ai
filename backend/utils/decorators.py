@@ -11,17 +11,19 @@ from models.user import User
 def role_required(*roles: str):
     """Decorator that restricts access to specified roles.
     Works with both JWT and session-based auth.
-
-    Usage:
-        @role_required('accounts', 'super_admin')
-        def dashboard():
-            ...
+    Safely redirects browser navigation when unauthorized to prevent URL tampering.
     """
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Try JWT first
+            is_browser_request = (
+                not request.is_json
+                and not request.path.startswith("/api/")
+                and "/api/" not in request.path
+            )
+
+            # Try JWT first (for API calls)
             auth_header = request.headers.get("Authorization", "")
             if auth_header.startswith("Bearer "):
                 token_val = auth_header[7:].strip()
@@ -33,14 +35,34 @@ def role_required(*roles: str):
                         if user and user.role in roles:
                             request.current_user = user
                             return f(*args, **kwargs)
+                        elif user:
+                            return jsonify({
+                                "success": False,
+                                "message": f"Access denied. Required roles: {', '.join(roles)}",
+                            }), 403
                     except Exception:
                         pass  # Fall through to session auth
 
-            # Try session auth
+            # Try session auth (Flask-Login)
             from flask_login import current_user
-            from flask import session
+            from flask import session, redirect
             if current_user and current_user.is_authenticated:
                 if current_user.role not in roles:
+                    if is_browser_request:
+                        # Redirect user safely to their authorized dashboard
+                        role_dashboards = {
+                            "student": "/student/dashboard",
+                            "accounts": "/accounts/dashboard",
+                            "hostel": "/hostel/dashboard",
+                            "mess": "/mess/dashboard",
+                            "transport": "/transport/dashboard",
+                            "scholarship": "/scholarship/dashboard",
+                            "hod": "/hod/dashboard",
+                            "examination": "/examination/dashboard",
+                            "super_admin": "/superadmin/dashboard",
+                        }
+                        target = role_dashboards.get(current_user.role, "/auth/login")
+                        return redirect(target)
                     return jsonify({
                         "success": False,
                         "message": f"Access denied. Required roles: {', '.join(roles)}",
@@ -48,12 +70,12 @@ def role_required(*roles: str):
                 request.current_user = current_user
                 return f(*args, **kwargs)
 
-            # Try University tenant session for super_admin roles
-            if "super_admin" in roles and session.get("university_id"):
-                sa = User.query.filter_by(role="super_admin").first()
-                if sa:
-                    request.current_user = sa
-                return f(*args, **kwargs)
+            # Unauthenticated access attempt
+            if is_browser_request:
+                portal_slug = session.get("portal_slug") or session.get("university_slug")
+                if portal_slug:
+                    return redirect(f"/u/{portal_slug}")
+                return redirect("/auth/login")
 
             return jsonify({"success": False, "message": "Authentication required"}), 401
 
@@ -82,26 +104,68 @@ def admin_only(f):
 
 def department_access(department_role: str):
     """Decorator that restricts access to a specific department role
-    or super_admin.
-
-    Usage:
-        @department_access('accounts')
-        def accounts_dashboard():
-            ...
+    or super_admin. Prevents browser URL tampering and cross-role access.
     """
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             from flask_login import current_user
+            from flask import session, redirect
 
-            if current_user.is_authenticated:
+            is_browser_request = (
+                not request.is_json
+                and not request.path.startswith("/api/")
+                and "/api/" not in request.path
+            )
+
+            # Try JWT first (for API calls)
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                token_val = auth_header[7:].strip()
+                if token_val and token_val not in ("null", "undefined", ""):
+                    try:
+                        verify_jwt_in_request()
+                        user_id = get_jwt_identity()
+                        user = User.query.get(user_id)
+                        if user and user.role in (department_role, "super_admin"):
+                            request.current_user = user
+                            return f(*args, **kwargs)
+                        elif user:
+                            return jsonify({
+                                "success": False,
+                                "message": f"Access denied. {department_role} access required",
+                            }), 403
+                    except Exception:
+                        pass
+
+            if current_user and current_user.is_authenticated:
                 if current_user.role in (department_role, "super_admin"):
                     return f(*args, **kwargs)
+                if is_browser_request:
+                    role_dashboards = {
+                        "student": "/student/dashboard",
+                        "accounts": "/accounts/dashboard",
+                        "hostel": "/hostel/dashboard",
+                        "mess": "/mess/dashboard",
+                        "transport": "/transport/dashboard",
+                        "scholarship": "/scholarship/dashboard",
+                        "hod": "/hod/dashboard",
+                        "examination": "/examination/dashboard",
+                        "super_admin": "/superadmin/dashboard",
+                    }
+                    return redirect(role_dashboards.get(current_user.role, "/auth/login"))
                 return jsonify({
                     "success": False,
                     "message": f"Access denied. {department_role} access required",
                 }), 403
+
+            if is_browser_request:
+                portal_slug = session.get("portal_slug") or session.get("university_slug")
+                if portal_slug:
+                    return redirect(f"/u/{portal_slug}")
+                return redirect("/auth/login")
+
             return jsonify({"success": False, "message": "Authentication required"}), 401
 
         return decorated_function

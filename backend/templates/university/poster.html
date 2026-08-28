@@ -325,7 +325,11 @@
             <!-- Letterhead -->
             <div class="letterhead">
                 <div style="display: flex; justify-content: center; margin-bottom: 0.85rem;">
-                    <img src="{{ university.logo_url if university.logo_url else '/static/images/radha_vallabh_logo.png' }}" alt="{{ university.name }} Logo" style="height: 72px; width: auto; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/radha_vallabh_logo.png';">
+                    {% if university and university.logo_url %}
+                    <img src="{{ university.logo_url }}" alt="{{ university.name }} Logo" style="height: 72px; width: auto; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                    {% else %}
+                    <img src="/static/images/smartnodues_logo.svg" alt="{{ university.name }} Logo" style="height: 72px; width: auto; object-fit: contain;">
+                    {% endif %}
                 </div>
                 <h1 class="univ-title">{{ university.name }}</h1>
                 <div class="univ-subtitle">Office of the Registrar & Academic Affairs</div>

@@ -71,49 +71,77 @@ def _get_admin_audit_user_id(user_obj=None):
 @superadmin_bp.route("/dashboard")
 def dashboard():
     from flask_jwt_extended import create_access_token
-    from flask_login import login_user
+    from models.university import UniversityTenant
+    import uuid
 
     try:
         db.session.rollback()
     except Exception:
         pass
 
-    # Must be logged in via University Portal or active super_admin session
-    if not session.get("university_id") and not (current_user and current_user.is_authenticated and current_user.role == "super_admin"):
-        return redirect("/university/login")
+    # Strict Authentication & Role Protection:
+    # Non-authenticated users or non-superadmin roles MUST NOT access this dashboard.
+    if not current_user or not current_user.is_authenticated:
+        portal_slug = session.get("portal_slug") or session.get("university_slug")
+        if portal_slug:
+            return redirect(f"/u/{portal_slug}")
+        return redirect("/auth/login")
+
+    if current_user.role != "super_admin":
+        # Redirect unauthorized role to their respective authorized dashboard
+        role_dashboards = {
+            "student": "/student/dashboard",
+            "accounts": "/accounts/dashboard",
+            "hostel": "/hostel/dashboard",
+            "mess": "/mess/dashboard",
+            "transport": "/transport/dashboard",
+            "scholarship": "/scholarship/dashboard",
+            "hod": "/hod/dashboard",
+            "examination": "/examination/dashboard",
+        }
+        return redirect(role_dashboards.get(current_user.role, "/auth/login"))
 
     try:
-        sa_user = current_user if (current_user and current_user.is_authenticated and current_user.role == "super_admin") else User.query.filter_by(role="super_admin").first()
-        if sa_user and not (current_user and current_user.is_authenticated):
-            login_user(sa_user)
-
-        token = create_access_token(identity=str(sa_user.id), additional_claims={"role": "super_admin"}) if sa_user else ""
+        token = create_access_token(
+            identity=str(current_user.id),
+            additional_claims={
+                "role": "super_admin",
+                "university_id": str(current_user.university_id) if current_user.university_id else None
+            }
+        )
     except Exception as e:
-        db.session.rollback()
-        sa_user = None
         token = ""
 
-    from models.university import UniversityTenant
-    import uuid
-
     univ = None
-    univ_id = session.get("university_id")
-    if univ_id:
+    # 1. Check user's assigned university
+    if current_user.university_id:
         try:
-            univ = UniversityTenant.query.get(uuid.UUID(str(univ_id)))
+            univ = UniversityTenant.query.get(current_user.university_id)
         except Exception:
             univ = None
 
-    if not univ:
-        # Fallback to university slug in session or first tenant
-        univ_slug = session.get("university_slug")
-        if univ_slug:
-            univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
-        if not univ:
-            univ = UniversityTenant.query.first()
+    # 2. Check session university_id
+    if not univ and session.get("university_id"):
+        try:
+            univ = UniversityTenant.query.get(uuid.UUID(str(session["university_id"])))
+        except Exception:
+            univ = None
 
-    univ_name = univ.name if univ else session.get("university_name", "University Command Center")
-    univ_slug = univ.slug if univ else session.get("university_slug", "campus")
+    # 3. Fallback to slug in session
+    if not univ and session.get("university_slug"):
+        univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
+
+    # 4. If platform master admin without tenant, fallback to first tenant for preview
+    if not univ:
+        univ = UniversityTenant.query.first()
+
+    if univ:
+        session["university_id"] = str(univ.id)
+        session["university_name"] = univ.name
+        session["university_slug"] = univ.slug
+
+    univ_name = univ.name if univ else "University Command Center"
+    univ_slug = univ.slug if univ else "campus"
 
     return render_template(
         "superadmin/dashboard.html",
@@ -122,6 +150,14 @@ def dashboard():
         university_slug=univ_slug,
         university=univ,
     )
+
+
+@superadmin_bp.route("/api/branding/upload-logo", methods=["POST"])
+@admin_only
+def upload_branding_logo_superadmin():
+    """SuperAdmin endpoint for uploading university institutional logo."""
+    from blueprints.university.routes import upload_branding_logo
+    return upload_branding_logo()
 
 
 # ──────────────────────────────────────

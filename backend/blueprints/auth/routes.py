@@ -30,7 +30,9 @@ from app import bcrypt
 def login():
     """Handle user login — supports both form and JSON."""
     if request.method == "GET":
-        return render_template("auth/login.html")
+        from utils.tenant_helpers import get_current_context_university
+        univ = get_current_context_university()
+        return render_template("auth/login.html", university=univ)
 
 # Support both JSON and form submissions
     data = request.get_json(silent=True)

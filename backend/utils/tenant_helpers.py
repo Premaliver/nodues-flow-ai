@@ -60,10 +60,31 @@ def ensure_university_departments(university_id) -> None:
 
 
 def get_current_context_university() -> Optional[UniversityTenant]:
-    """Resolve the active university tenant object from session or logged-in user."""
+    """Resolve the active university tenant object from session, logged-in user, JWT, or query params."""
+    # 1. From request query params (e.g. ?u=slug or ?university=slug)
+    query_slug = request.args.get("u") or request.args.get("university") or request.args.get("slug")
+    if query_slug:
+        univ = UniversityTenant.query.filter_by(slug=query_slug.strip().lower()).first()
+        if univ:
+            return univ
+
+    # 2. From session university_id
     univ_id = session.get("university_id")
+
+    # 3. From current_user
     if not univ_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id"):
         univ_id = current_user.university_id
+
+    # 4. From JWT token claims
+    if not univ_id:
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt
+            verify_jwt_in_request(optional=True)
+            claims = get_jwt()
+            if claims and claims.get("university_id"):
+                univ_id = claims.get("university_id")
+        except Exception:
+            pass
 
     if univ_id:
         try:
@@ -74,10 +95,15 @@ def get_current_context_university() -> Optional[UniversityTenant]:
         except Exception:
             pass
 
-    univ_slug = session.get("university_slug")
+    # 5. From session slug / portal_slug
+    univ_slug = session.get("university_slug") or session.get("portal_slug")
     if univ_slug:
         univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
         if univ:
             return univ
 
-    return None
+    # 6. Fallback to default registered university
+    try:
+        return UniversityTenant.query.first()
+    except Exception:
+        return None
