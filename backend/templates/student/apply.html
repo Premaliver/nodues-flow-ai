@@ -894,16 +894,24 @@
 
             try {
                 const token = localStorage.getItem('access_token');
+                const authHeader = (token && token !== 'null' && token !== 'undefined') ? { 'Authorization': `Bearer ${token}` } : {};
 
                 // 1. Create application
                 const appRes = await fetch('/student/api/apply', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json', ...authHeader },
                     body: JSON.stringify({
                         selected_departments: selectedDepts,
                     })
                 });
-                const appData = await appRes.json();
+
+                let appData;
+                try {
+                    appData = await appRes.json();
+                } catch(parseErr) {
+                    appData = { success: false, message: `Server error (${appRes.status}): Please try again.` };
+                }
+
                 if (!appData.success) {
                     showError(appData.message || 'Failed to initialize application.');
                     btn.disabled = false;
@@ -927,10 +935,17 @@
                     formData.append('document_type', docType);
                     const upRes = await fetch(`/student/api/upload-document/${appId}`, {
                         method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
+                        headers: { ...authHeader },
                         body: formData
                     });
-                    const upData = await upRes.json();
+
+                    let upData;
+                    try {
+                        upData = await upRes.json();
+                    } catch(parseErr) {
+                        upData = { success: false, message: `Document upload error (${upRes.status})` };
+                    }
+
                     if (!upData.success) {
                         showError('Error uploading ' + docType + ': ' + upData.message);
                         btn.disabled = false;
@@ -942,9 +957,16 @@
                 // 3. Final Submit application
                 const subRes = await fetch(`/student/api/submit/${appId}`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { ...authHeader }
                 });
-                const subData = await subRes.json();
+
+                let subData;
+                try {
+                    subData = await subRes.json();
+                } catch(parseErr) {
+                    subData = { success: false, message: `Final submission error (${subRes.status})` };
+                }
+
                 if (!subData.success) {
                     showError(subData.message || 'Failed to finalize submission.');
                     btn.disabled = false;
