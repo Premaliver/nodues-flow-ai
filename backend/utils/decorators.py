@@ -47,7 +47,20 @@ def role_required(*roles: str):
             from flask_login import current_user
             from flask import session, redirect
             if current_user and current_user.is_authenticated:
-                if current_user.role not in roles:
+                active_user = current_user
+                try:
+                    role_val = active_user.role
+                except Exception:
+                    from models import db
+                    from models.user import User
+                    uid = session.get("_user_id") or active_user.__dict__.get("id")
+                    if uid:
+                        import uuid
+                        uid_obj = uuid.UUID(str(uid)) if not isinstance(uid, uuid.UUID) else uid
+                        active_user = db.session.get(User, uid_obj)
+                    role_val = active_user.role if active_user else None
+
+                if not active_user or role_val not in roles:
                     if is_browser_request:
                         # Redirect user safely to their authorized dashboard
                         role_dashboards = {
@@ -61,13 +74,13 @@ def role_required(*roles: str):
                             "examination": "/examination/dashboard",
                             "super_admin": "/superadmin/dashboard",
                         }
-                        target = role_dashboards.get(current_user.role, "/auth/login")
+                        target = role_dashboards.get(role_val, "/auth/login")
                         return redirect(target)
                     return jsonify({
                         "success": False,
                         "message": f"Access denied. Required roles: {', '.join(roles)}",
                     }), 403
-                request.current_user = current_user
+                request.current_user = active_user
                 return f(*args, **kwargs)
 
             # Unauthenticated access attempt

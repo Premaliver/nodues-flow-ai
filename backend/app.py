@@ -262,7 +262,8 @@ def register_login_callbacks(login_manager: LoginManager) -> None:
         from models.user import User
 
         try:
-            return User.query.get(uuid.UUID(str(user_id)))
+            from models import db
+            return db.session.get(User, uuid.UUID(str(user_id)))
         except Exception:
             return None
 
