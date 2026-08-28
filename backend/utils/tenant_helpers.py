@@ -88,7 +88,7 @@ def get_current_context_university() -> Optional[UniversityTenant]:
 
     if univ_id:
         try:
-            u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
+            u_uuid = uuid.UUID(str(university_id)) if isinstance(univ_id, str) else univ_id
             univ = UniversityTenant.query.get(u_uuid)
             if univ:
                 return univ
