@@ -38,15 +38,34 @@ def _generate_temp_password(length: int = 10) -> str:
 
 def _get_active_tenant_id():
     import uuid
+    # 1. Check session university_id
     if session.get("university_id"):
         try:
             return uuid.UUID(str(session["university_id"]))
         except Exception:
             pass
+    # 2. Check current_user
     if current_user and current_user.is_authenticated and current_user.university_id:
         return current_user.university_id
+    # 3. Check request.current_user
     if hasattr(request, "current_user") and request.current_user and request.current_user.university_id:
         return request.current_user.university_id
+    # 4. Check JWT claims
+    try:
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt
+        verify_jwt_in_request(optional=True)
+        claims = get_jwt()
+        if claims and claims.get("university_id"):
+            return uuid.UUID(str(claims["university_id"]))
+    except Exception:
+        pass
+    # 5. Check session slug / portal_slug
+    slug = session.get("university_slug") or session.get("portal_slug")
+    if slug:
+        from models.university import UniversityTenant
+        u = UniversityTenant.query.filter_by(slug=slug).first()
+        if u:
+            return u.id
     return None
 
 
@@ -322,10 +341,10 @@ def list_staff():
         User.role.in_(SUPERVISOR_ROLES),
         User.deleted_at.is_(None),
     )
-    # Scope to active tenant if present
-    tenant_id = getattr(g, "university_id", None)
+    # Scope strictly to active tenant if present
+    tenant_id = _get_active_tenant_id()
     if tenant_id:
-        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+        query = query.filter(User.university_id == tenant_id)
 
     if role_filter:
         query = query.filter_by(role=role_filter)
@@ -371,7 +390,7 @@ def create_staff():
         return jsonify({"success": False, "message": "A user with this email already exists"}), 409
 
     temp_password = _generate_temp_password()
-    tenant_id = getattr(g, "university_id", None)
+    tenant_id = _get_active_tenant_id()
 
     user = User(
         email=email,
@@ -533,7 +552,7 @@ def delete_user(user_id):
 @superadmin_bp.route("/api/users/students", methods=["GET"])
 @admin_only
 def list_students():
-    """List all student users with pagination, scoped to university tenant."""
+    """List all student users with pagination, strictly scoped to university tenant."""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     search = request.args.get("search", "").strip().lower()
@@ -541,9 +560,9 @@ def list_students():
 
     query = User.query.filter_by(role="student").filter(User.deleted_at.is_(None))
     
-    tenant_id = getattr(g, "university_id", None)
+    tenant_id = _get_active_tenant_id()
     if tenant_id:
-        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+        query = query.filter(User.university_id == tenant_id)
 
     if status_filter:
         query = query.filter_by(status=status_filter)
@@ -578,9 +597,9 @@ def list_all_users():
     status_filter = request.args.get("status")
 
     query = User.query.filter(User.deleted_at.is_(None))
-    tenant_id = getattr(g, "university_id", None)
+    tenant_id = _get_active_tenant_id()
     if tenant_id:
-        query = query.filter((User.university_id == tenant_id) | (User.university_id.is_(None)))
+        query = query.filter(User.university_id == tenant_id)
 
     if role_filter:
         query = query.filter_by(role=role_filter)
@@ -597,7 +616,7 @@ def list_all_users():
 @superadmin_bp.route("/api/applications")
 @admin_only
 def list_all_applications():
-    """List all applications with filters."""
+    """List all applications strictly scoped to current university tenant."""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     status_filter = request.args.get("status")
@@ -605,6 +624,9 @@ def list_all_applications():
     search = request.args.get("search", "").strip().lower()
 
     query = NoDuesApplication.query.filter(NoDuesApplication.deleted_at.is_(None))
+    tenant_id = _get_active_tenant_id()
+    if tenant_id:
+        query = query.filter(NoDuesApplication.university_id == tenant_id)
 
     if status_filter:
         query = query.filter_by(status=status_filter)
@@ -638,10 +660,15 @@ def list_all_applications():
 @superadmin_bp.route("/api/applications/<app_id>")
 @admin_only
 def get_application_detail(app_id):
-    """Get full detail of a specific application."""
-    app_obj = NoDuesApplication.query.filter_by(id=app_id).filter(
+    """Get full detail of a specific application strictly scoped to current university tenant."""
+    query = NoDuesApplication.query.filter_by(id=app_id).filter(
         NoDuesApplication.deleted_at.is_(None),
-    ).first()
+    )
+    tenant_id = _get_active_tenant_id()
+    if tenant_id:
+        query = query.filter(NoDuesApplication.university_id == tenant_id)
+
+    app_obj = query.first()
     if not app_obj:
         return jsonify({"success": False, "message": "Application not found"}), 404
 

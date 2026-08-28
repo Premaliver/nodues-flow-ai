@@ -854,7 +854,7 @@ def upload_document(app_id):
         # Calculate hash for duplicate detection
         file_hash = calculate_file_hash(file_path)
 
-        # Create document record
+        # Create document record with explicit tenant isolation
         document = Document(
             application_id=application.id,
             document_type=document_type,
@@ -864,6 +864,7 @@ def upload_document(app_id):
             mime_type=file.content_type,
             file_hash=file_hash,
             uploaded_by=user.id,
+            university_id=student.university_id or user.university_id,
             status="pending",
         )
         db.session.add(document)
