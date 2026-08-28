@@ -913,7 +913,24 @@
                 }
 
                 if (!appData.success) {
-                    showError(appData.message || 'Failed to initialize application.');
+                    if (appRes.status === 409 || (appData.data && appData.data.application)) {
+                        const existingId = (appData.data && appData.data.application && appData.data.application.id) ? appData.data.application.id : '';
+                        const appNum = (appData.data && appData.data.application && appData.data.application.application_number) ? appData.data.application.application_number : '';
+                        showError(`
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div>⚠️ <strong>Active Application Already Exists:</strong> You already have application #${appNum || 'active'} in progress.</div>
+                                <div style="font-size: 0.85rem;">To submit this new application, you can delete/stop your existing application:</div>
+                                <div style="margin-top: 0.4rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="cancelExistingApp('${existingId}')" style="box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">
+                                        🗑️ Delete Old Application & Proceed
+                                    </button>
+                                    <a href="/student/dashboard" class="btn btn-outline btn-sm">📊 View on Dashboard</a>
+                                </div>
+                            </div>
+                        `);
+                    } else {
+                        showError(appData.message || 'Failed to initialize application.');
+                    }
                     btn.disabled = false;
                     btn.innerHTML = '🚀 Submit Application For Clearance';
                     return;
@@ -1001,6 +1018,28 @@
         function hideError() {
             const err = document.getElementById('errorMsg');
             if (err) err.style.display = 'none';
+        }
+
+        async function cancelExistingApp(appId) {
+            if (!confirm('⚠️ Are you sure you want to delete your active application and submit this new one?')) return;
+            try {
+                const token = localStorage.getItem('access_token');
+                const authHeader = (token && token !== 'null' && token !== 'undefined') ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch(`/student/api/application/${appId}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...authHeader }
+                });
+                const d = await res.json();
+                if (d.success) {
+                    alert('✓ Previous application deleted! Click "Submit Application For Clearance" now.');
+                    hideError();
+                } else {
+                    alert(d.message || 'Could not delete previous application');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Error deleting previous application');
+            }
         }
 
         // ───────────────────────────────

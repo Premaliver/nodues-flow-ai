@@ -872,6 +872,69 @@ def get_application(app_id):
         return jsonify({"success": False, "message": f"Error fetching application: {str(e)}"}), 500
 
 
+@student_bp.route("/api/application/<app_id>/delete", methods=["DELETE", "POST"])
+@student_bp.route("/api/application/<app_id>/cancel", methods=["DELETE", "POST"])
+@student_bp.route("/api/application/delete/<app_id>", methods=["DELETE", "POST"])
+@student_bp.route("/api/application/cancel/<app_id>", methods=["DELETE", "POST"])
+@jwt_required(optional=True)
+def delete_or_cancel_application(app_id):
+    """Delete or cancel an existing clearance application so the student can submit a fresh one."""
+    try:
+        user = _get_authenticated_student_user()
+        if not user:
+            return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 401
+
+        student = _ensure_student_profile(user)
+
+        application = NoDuesApplication.query.filter_by(
+            id=app_id, student_id=student.id
+        ).first()
+
+        if not application:
+            return jsonify({"success": False, "message": "Application not found or already removed."}), 404
+
+        app_num = application.application_number or str(app_id)[:8]
+
+        # 1. Clean notifications referencing this application
+        Notification.query.filter_by(application_id=application.id).delete()
+        # 2. Clean uploaded documents referencing this application
+        Document.query.filter_by(application_id=application.id).delete()
+        # 3. Clean admit cards referencing this application
+        AdmitCard.query.filter_by(application_id=application.id).delete()
+        # 4. Clean department approvals referencing this application
+        ApplicationDepartment.query.filter_by(application_id=application.id).delete()
+
+        # 5. Delete application record completely
+        db.session.delete(application)
+
+        # 6. Create audit log
+        try:
+            audit = AuditLog(
+                user_id=user.id,
+                action="delete",
+                resource_type="application",
+                resource_id=app_id,
+                university_id=student.university_id,
+                details={"action": "student_deleted_application", "app_number": app_num},
+                ip_address=get_client_ip(),
+                user_agent=get_user_agent(),
+            )
+            db.session.add(audit)
+        except Exception:
+            pass
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Application #{app_num} has been successfully deleted. You can now submit a fresh application!",
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error cancelling application: {e}")
+        return jsonify({"success": False, "message": f"Could not delete application: {str(e)}"}), 500
+
+
 @student_bp.route("/api/submit/<app_id>", methods=["POST"])
 @jwt_required(optional=True)
 def submit_application(app_id):

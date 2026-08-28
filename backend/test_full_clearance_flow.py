@@ -326,8 +326,26 @@ def run_e2e_clearance_test():
         print("Public Verification Page Status:", verify_res.status_code)
         assert verify_res.status_code == 200
 
+        # Step 11: Application Deletion / Cancel and Re-application Test
+        print("\n[Step 11] Testing Application Cancellation / Deletion & Fresh Re-application...")
+        del_res = client.post(f"/student/api/application/{app_id}/delete", headers=headers_student)
+        print("Delete Application Status:", del_res.status_code, del_res.get_json())
+        assert del_res.status_code == 200
+        assert del_res.get_json()["success"] is True
+
+        # Verify Student can create a brand new application immediately without 409 conflict
+        re_create_res = client.post(
+            "/student/api/apply",
+            headers=headers_student,
+            json={"selected_departments": ["hostel", "mess"]},
+        )
+        print("Re-Create Application Status:", re_create_res.status_code)
+        assert re_create_res.status_code == 201
+        new_app_id = re_create_res.get_json()["data"]["application"]["id"]
+        print(f"Successfully Created Fresh Application ID: {new_app_id}")
+
         print("\n" + "=" * 70)
-        print("ALL 10 VERIFICATION CHECKS PASSED PERFECTLY! 100% WORKING.")
+        print("ALL 11 VERIFICATION CHECKS (INCLUDING DELETE & RE-APPLY) PASSED PERFECTLY! 100% WORKING.")
         print("=" * 70)
 
 

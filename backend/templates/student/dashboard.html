@@ -1346,12 +1346,15 @@
                                     <td style="font-size: 0.8rem; color: var(--text-muted);">
                                         ${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not Submitted'}
                                     </td>
-                                    <td>
+                                    <td style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
                                         ${app.status === 'draft' ? `
                                             <button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit</button>
                                         ` : `
                                             <button class="btn btn-ghost btn-sm" onclick="viewAppDetails('${app.id}')">🔍 View</button>
                                         `}
+                                        <button class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.25rem 0.55rem; font-size: 0.78rem; font-weight: 600;" title="Delete this application to submit a new one">
+                                            🗑️ Delete
+                                        </button>
                                     </td>
                                 </tr>
                             `;
@@ -1377,11 +1380,16 @@
                         // Update Circular Gauge
                         updateGauge(pct);
 
-                        // Render Active Application Header Badge
+                        // Render Active Application Header Badge & Actions
                         document.getElementById('activeAppBadgeSlot').innerHTML = `
-                            <span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}">
-                                ${app.application_number} — ${app.status.toUpperCase()}
-                            </span>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <span class="badge badge-${app.status === 'approved' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}">
+                                    ${app.application_number} — ${app.status.toUpperCase()}
+                                </span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.3rem 0.65rem; font-size: 0.78rem; font-weight: 600;" title="Cancel & delete this application to submit a fresh one">
+                                    🗑️ Stop / Delete Application
+                                </button>
+                            </div>
                         `;
 
                         // Build Department Stepper Timeline & Grid Cards
@@ -1463,9 +1471,14 @@
                         document.getElementById('activeClearanceBody').innerHTML = `
                             ${approvalBanner}
                             <div style="margin-bottom: 1.5rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div style="font-weight: 700; font-size: 1rem;">Overall Clearance Progress (${pct}%)</div>
-                                    ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
+                                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                        ${app.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitApplication('${app.id}')">📤 Submit Application</button>` : ''}
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.3rem 0.65rem; font-size: 0.78rem; font-weight: 600;" title="Cancel & delete this application to submit a fresh one">
+                                            🗑️ Stop / Delete Application
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="progress-bar" style="height: 10px;">
                                     <div class="progress-bar-fill" style="width: ${pct}%;"></div>
@@ -1476,7 +1489,19 @@
                             ${cardsHtml}
                         `;
                     } else {
+                        currentActiveAppId = null;
                         updateGauge(0);
+                        document.getElementById('activeAppBadgeSlot').innerHTML = `<span class="badge badge-secondary">No Active App</span>`;
+                        document.getElementById('activeClearanceBody').innerHTML = `
+                            <div style="text-align: center; padding: 2.5rem 1.5rem; color: var(--text-muted);">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+                                <p style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">No active clearance application</p>
+                                <p style="font-size: 0.85rem; max-width: 420px; margin: 0.5rem auto 1.5rem auto; line-height: 1.5;">
+                                    You have no application in progress. You can start a fresh institutional clearance application anytime!
+                                </p>
+                                <a href="/student/apply" class="btn btn-primary" style="box-shadow: var(--shadow-md);">+ Start New Clearance Application</a>
+                            </div>
+                        `;
                     }
 
                     // Render Issued Admit Cards Showcase
@@ -1837,6 +1862,35 @@
             } catch (e) {
                 alert('Error submitting application');
                 console.error(e);
+            }
+        }
+
+        // Application Stop / Delete Action
+        async function cancelApplication(appId, appNumber) {
+            const displayNum = appNumber || (appId ? appId.slice(0, 8) : 'active');
+            const confirmed = confirm(`⚠️ Are you sure you want to delete / cancel application #${displayNum}?\n\nThis will remove all associated pending clearance steps and let you submit a brand new application immediately.`);
+            if (!confirmed) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/student/api/application/${appId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✓ ${data.message || 'Application deleted successfully! You can now start a fresh clearance application.'}`);
+                    currentActiveAppId = null;
+                    loadDashboard();
+                } else {
+                    alert(`⚠️ ${data.message || 'Could not delete application.'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error deleting application. Please try again.');
             }
         }
 
