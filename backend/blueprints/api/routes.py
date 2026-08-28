@@ -134,30 +134,68 @@ def view_document_file(doc_id):
 
     # 1. Search comprehensively for the physical file on disk
     target_path = None
-    candidate_paths = []
-    if doc.file_path:
-        candidate_paths.extend([
-            doc.file_path,
-            os.path.join(os.getcwd(), doc.file_path.lstrip("/\\")),
-            os.path.join(current_app.root_path, "..", doc.file_path.lstrip("/\\")),
-            os.path.join(os.getcwd(), "uploads", "applications", str(doc.application_id), os.path.basename(doc.file_path)),
-            os.path.join(os.getcwd(), "uploads", "applications", str(doc.application_id), doc.file_name),
-            os.path.join(os.getcwd(), "uploads", doc.file_name),
-        ])
+    raw_path = (doc.file_path or "").replace("\\", "/")
+    real_file_basename = raw_path.split("/")[-1] if raw_path else ""
+    orig_file_basename = (doc.file_name or "").replace("\\", "/").split("/")[-1]
+    app_id_str = str(doc.application_id)
+
+    upload_cfg = current_app.config.get("UPLOAD_FOLDER") or os.path.join(current_app.root_path, "static", "uploads")
+    static_uploads = os.path.join(current_app.root_path, "static", "uploads")
+
+    candidate_paths = [
+        doc.file_path,
+        os.path.join(upload_cfg, "applications", app_id_str, real_file_basename),
+        os.path.join(upload_cfg, "applications", app_id_str, orig_file_basename),
+        os.path.join(static_uploads, "applications", app_id_str, real_file_basename),
+        os.path.join(static_uploads, "applications", app_id_str, orig_file_basename),
+        os.path.join(os.getcwd(), raw_path),
+        os.path.join(current_app.root_path, "..", raw_path),
+        os.path.join(os.getcwd(), "uploads", "applications", app_id_str, real_file_basename),
+        os.path.join(os.getcwd(), "uploads", "applications", app_id_str, orig_file_basename),
+        os.path.join(os.getcwd(), "backend", "static", "uploads", "applications", app_id_str, real_file_basename),
+        os.path.join(os.getcwd(), "uploads", real_file_basename),
+        os.path.join(os.getcwd(), "uploads", orig_file_basename),
+    ]
 
     for p in candidate_paths:
         if p and os.path.exists(p) and os.path.isfile(p):
             target_path = p
             break
 
-    # 2. Recursive search in uploads folder if still not found
+    # 2. Check all files inside this application's upload folder
+    if not target_path:
+        for app_dir_cand in [
+            os.path.join(upload_cfg, "applications", app_id_str),
+            os.path.join(static_uploads, "applications", app_id_str),
+            os.path.join(os.getcwd(), "uploads", "applications", app_id_str),
+            os.path.join(os.getcwd(), "backend", "static", "uploads", "applications", app_id_str),
+            os.path.join(current_app.root_path, "..", "uploads", "applications", app_id_str),
+        ]:
+            if os.path.exists(app_dir_cand) and os.path.isdir(app_dir_cand):
+                app_files = [f for f in os.listdir(app_dir_cand) if os.path.isfile(os.path.join(app_dir_cand, f))]
+                # Match by document type or filename keyword
+                for af in app_files:
+                    if real_file_basename and af.lower() == real_file_basename.lower():
+                        target_path = os.path.join(app_dir_cand, af)
+                        break
+                    if orig_file_basename and orig_file_basename.lower() in af.lower():
+                        target_path = os.path.join(app_dir_cand, af)
+                        break
+                if not target_path and app_files:
+                    target_path = os.path.join(app_dir_cand, app_files[0])
+                if target_path:
+                    break
+
+    # 3. Recursive search in uploads folder if still not found
     if not target_path:
         base_uploads = os.path.join(os.getcwd(), "uploads")
         if os.path.exists(base_uploads):
-            search_name = (doc.file_name or os.path.basename(doc.file_path or "")).lower()
+            search_name1 = real_file_basename.lower() if real_file_basename else ""
+            search_name2 = orig_file_basename.lower() if orig_file_basename else ""
             for root, _, files in os.walk(base_uploads):
                 for f in files:
-                    if f.lower() == search_name or (doc.file_path and f.lower() == os.path.basename(doc.file_path).lower()):
+                    fl = f.lower()
+                    if (search_name1 and fl == search_name1) or (search_name2 and fl == search_name2):
                         target_path = os.path.join(root, f)
                         break
                 if target_path:
