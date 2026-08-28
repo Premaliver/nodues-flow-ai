@@ -170,13 +170,9 @@ def create_app(config_name: str = "default") -> Flask:
     # Create upload directory
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# Auto-seed on first run (development only)
-    if config_name == "development":
-        with app.app_context():
-            _auto_seed(app)
-    elif config_name == "production":
-        with app.app_context():
-            _auto_seed(app)
+    with app.app_context():
+        _auto_migrate_schema(app)
+        _auto_seed(app)
 
     # Initialize keep-alive self ping worker for cloud deployments (Render free tier)
     from utils.keep_alive import start_keep_alive
@@ -188,6 +184,19 @@ def create_app(config_name: str = "default") -> Flask:
     )
 
     return app
+
+
+def _auto_migrate_schema(app: Flask) -> None:
+    """Ensure all required columns and enum values exist in PostgreSQL database."""
+    from models import db
+    from sqlalchemy import text
+    try:
+        db.session.execute(text("ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data BYTEA;"))
+        db.session.execute(text("ALTER TYPE audit_action ADD VALUE IF NOT EXISTS 'view';"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        app.logger.warning(f"Auto-migration notice: {e}")
 
 
 def _auto_seed(app: Flask) -> None:
