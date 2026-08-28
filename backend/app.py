@@ -173,6 +173,7 @@ def create_app(config_name: str = "default") -> Flask:
     with app.app_context():
         _auto_migrate_schema(app)
         _auto_seed(app)
+        _auto_fix_department_order(app)
 
     # Initialize keep-alive self ping worker for cloud deployments (Render free tier)
     from utils.keep_alive import start_keep_alive
@@ -276,6 +277,58 @@ def _auto_seed(app: Flask) -> None:
         seed_data()
     except Exception as e:
         app.logger.warning(f"Auto-seed notice: {e}")
+
+
+def _auto_fix_department_order(app: Flask) -> None:
+    """
+    Fix department display_order on every startup to guarantee:
+    Facilities (Hostel/Mess/Transport/Scholarship) -> Accounts -> HOD -> Examination
+    This corrects any legacy applications where HOD was saved before Accounts.
+    """
+    try:
+        from models.application import NoDuesApplication
+
+        def _canonical_rank(dept):
+            role = (dept.role or "").lower()
+            name = (dept.name or "").lower()
+            if "hostel" in role or "hostel" in name:
+                return 10
+            if "mess" in role or "mess" in name:
+                return 20
+            if "transport" in role or "bus" in name or "transport" in name:
+                return 30
+            if "scholarship" in role or "scholarship" in name:
+                return 40
+            if "account" in role or "finance" in role or "account" in name or "finance" in name:
+                return 50
+            if "hod" in role or "head" in name:
+                return 60
+            if "exam" in role or "exam" in name:
+                return 70
+            return 80
+
+        from models import db
+        all_apps = NoDuesApplication.query.all()
+        fixed = 0
+        for app_rec in all_apps:
+            if not app_rec.department_approvals:
+                continue
+            sorted_ads = sorted(
+                app_rec.department_approvals,
+                key=lambda x: (_canonical_rank(x.department) if x.department else 99, x.display_order or 0)
+            )
+            changed = False
+            for idx, ad in enumerate(sorted_ads, 1):
+                if ad.display_order != idx:
+                    ad.display_order = idx
+                    changed = True
+            if changed:
+                fixed += 1
+        if fixed > 0:
+            db.session.commit()
+            app.logger.info(f"Auto-fixed department display_order for {fixed} application(s).")
+    except Exception as e:
+        app.logger.warning(f"Auto-fix department order notice: {e}")
 
 
 def configure_logging(app: Flask) -> None:
