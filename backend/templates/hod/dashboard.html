@@ -129,7 +129,7 @@
                                 <span style="font-size:0.8rem;color:var(--text-muted);">${doc.file_name}</span>
                                 <br><span style="font-size:0.75rem;color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
                             </div>
-                            <a href="${doc.file_url || '/api/documents/file/' + doc.id}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View Document</a>
+                            <a href="${(doc.file_url || '/api/documents/file/' + doc.id)}?token=${encodeURIComponent(localStorage.getItem('access_token') || localStorage.getItem('token') || '')}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem;font-size:0.75rem;">👁️ View Document</a>
                         </div>
                     `).join('');
                 } else { dv.innerHTML = '<span style="font-size:0.85rem;color:var(--text-muted);">No documents uploaded</span>'; }

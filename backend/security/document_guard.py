@@ -18,8 +18,28 @@ from utils.helpers import get_client_ip, get_user_agent
 
 
 def get_current_authenticated_user() -> Optional[User]:
-    """Resolves authenticated user from JWT Bearer token or active Flask-Login session."""
+    """Resolves authenticated user from JWT Bearer token, URL query token, or active Flask-Login session."""
     import uuid as _uuid
+    
+    # 1. Check URL query param ?token= (used when opening document in new tab via <a target="_blank">)
+    query_token = request.args.get("token") or request.args.get("jwt") or request.args.get("auth")
+    if query_token and query_token not in ("null", "undefined", ""):
+        try:
+            from flask_jwt_extended import decode_token
+            decoded = decode_token(query_token)
+            user_id = decoded.get("sub")
+            if user_id:
+                try:
+                    uid = _uuid.UUID(str(user_id))
+                except Exception:
+                    uid = user_id
+                user_found = db.session.get(User, uid)
+                if user_found:
+                    return user_found
+        except Exception:
+            pass
+
+    # 2. Check Authorization Header (Standard API requests)
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         try:
@@ -32,7 +52,7 @@ def get_current_authenticated_user() -> Optional[User]:
                     uid = user_id
                 return db.session.get(User, uid)
         except Exception:
-            return None
+            pass
 
     try:
         if current_user and current_user.is_authenticated:

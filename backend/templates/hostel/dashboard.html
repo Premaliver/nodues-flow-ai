@@ -446,7 +446,7 @@
                                 <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 4px;">${doc.file_name}</span>
                                 <div style="font-size: 0.72rem; color: var(--emerald); margin-top: 2px;">✓ SHA-256 Verified</div>
                             </div>
-                            <a href="/${doc.file_path}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                            <a href="${(doc.file_url || '/api/documents/file/' + doc.id)}?token=${encodeURIComponent(localStorage.getItem('access_token') || localStorage.getItem('token') || '')}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
                                 👁️ View Receipt
                             </a>
                         </div>
