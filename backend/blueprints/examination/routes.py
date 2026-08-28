@@ -79,19 +79,38 @@ def _is_preceding_clearance_complete(application_id, exam_dept_id=None) -> bool:
 @login_required
 @department_access("examination")
 def dashboard():
-    return render_template("examination/dashboard.html")
+    from utils.tenant_helpers import get_current_context_university
+    univ = get_current_context_university()
+    return render_template("examination/dashboard.html", university=univ)
 
 
 @exam_bp.route("/api/dashboard")
 @jwt_required()
 def dashboard_data():
     """Get examination dashboard data — applications ready for admit cards."""
-    exam_dept = _get_exam_dept()
-    exam_depts = Department.query.filter_by(role="examination").all()
+    user_id = get_jwt_identity()
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
+    u_id = user.university_id if user else None
+
+    if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        ensure_university_departments(u_id)
+        exam_dept = _get_exam_dept(u_id)
+        exam_depts = Department.query.filter_by(role="examination", university_id=u_id).all()
+    else:
+        exam_dept = _get_exam_dept()
+        exam_depts = Department.query.filter_by(role="examination").all()
+
     exam_dept_ids = [str(d.id) for d in exam_depts] if exam_depts else ([str(exam_dept.id)] if exam_dept else [])
 
-    # Fetch all applications that are not rejected or soft-deleted
-    apps_query = (
+    # Fetch all applications strictly belonging to this university
+    q = (
         db.session.query(NoDuesApplication, Student, User)
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
@@ -99,9 +118,11 @@ def dashboard_data():
             NoDuesApplication.status.notin_(["rejected"]),
             NoDuesApplication.deleted_at.is_(None),
         )
-        .order_by(NoDuesApplication.created_at.desc())
-        .all()
     )
+    if u_id:
+        q = q.filter(NoDuesApplication.university_id == u_id)
+
+    apps_query = q.order_by(NoDuesApplication.created_at.desc()).all()
 
     ready_list = []
     for app, student, user in apps_query:

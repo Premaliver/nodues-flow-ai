@@ -26,7 +26,9 @@ from utils.helpers import paginate_query, get_client_ip, get_user_agent
 @department_access("accounts")
 def dashboard():
     """Render accounts dashboard."""
-    return render_template("accounts/dashboard.html")
+    from utils.tenant_helpers import get_current_context_university
+    univ = get_current_context_university()
+    return render_template("accounts/dashboard.html", university=univ)
 
 
 @accounts_bp.route("/api/dashboard")
@@ -34,14 +36,20 @@ def dashboard():
 def dashboard_data():
     """Get accounts dashboard analytics data."""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id) if user_id else None
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
     u_id = user.university_id if user else None
     
     accounts_dept = None
     if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        ensure_university_departments(u_id)
         accounts_dept = Department.query.filter_by(role="accounts", university_id=u_id).first()
-    if not accounts_dept:
-        accounts_dept = Department.query.filter_by(role="accounts").first()
 
     if not accounts_dept:
         return jsonify({
@@ -83,8 +91,8 @@ def dashboard_data():
         ApplicationDepartment.status.in_(["approved", "rejected"]),
     ).count()
 
-    # Pending applications with full details
-    pending_apps = (
+    # Pending applications with full details strictly isolated by university
+    query = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
         .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
         .join(Student, NoDuesApplication.student_id == Student.id)
@@ -93,6 +101,12 @@ def dashboard_data():
             ApplicationDepartment.department_id == accounts_dept.id,
             ApplicationDepartment.status == "pending",
         )
+    )
+    if u_id:
+        query = query.filter(NoDuesApplication.university_id == u_id)
+
+    pending_apps = (
+        query
         .order_by(NoDuesApplication.created_at.desc())
         .limit(10)
         .all()

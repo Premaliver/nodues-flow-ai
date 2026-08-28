@@ -24,21 +24,29 @@ from utils.helpers import get_client_ip, get_user_agent
 @login_required
 @department_access("hod")
 def dashboard():
-    return render_template("hod/dashboard.html")
+    from utils.tenant_helpers import get_current_context_university
+    univ = get_current_context_university()
+    return render_template("hod/dashboard.html", university=univ)
 
 
 @hod_bp.route("/api/dashboard")
 @jwt_required()
 def dashboard_data():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id) if user_id else None
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
     u_id = user.university_id if user else None
 
     hod_dept = None
     if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        ensure_university_departments(u_id)
         hod_dept = Department.query.filter_by(role="hod", university_id=u_id).first()
-    if not hod_dept:
-        hod_dept = Department.query.filter_by(role="hod").first()
 
     if not hod_dept:
         return jsonify({
@@ -59,7 +67,7 @@ def dashboard_data():
         department_id=hod_dept.id, status="rejected"
     ).count()
 
-    pending_apps = (
+    query = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
         .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
         .join(Student, NoDuesApplication.student_id == Student.id)
@@ -68,6 +76,12 @@ def dashboard_data():
             ApplicationDepartment.department_id == hod_dept.id,
             ApplicationDepartment.status == "pending",
         )
+    )
+    if u_id:
+        query = query.filter(NoDuesApplication.university_id == u_id)
+
+    pending_apps = (
+        query
         .order_by(NoDuesApplication.created_at.desc())
         .limit(10)
         .all()

@@ -89,10 +89,15 @@
         <div class="dashboard-header" style="margin-bottom: 1.5rem;">
             <div class="dashboard-header-title">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">
-                        🏠
+                    <div style="width: 44px; height: 44px; min-width: 44px; border-radius: 12px; overflow: hidden; background: white; padding: 2px; border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+                        {% if university and university.logo_url %}
+                        <img src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                        {% else %}
+                        <img src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI" style="width: 100%; height: 100%; object-fit: contain;">
+                        {% endif %}
                     </div>
                     <div>
+                        <div style="font-weight: 800; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">{{ university.name if university else 'Institutional Campus' }}</div>
                         <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; margin: 0;">Hostel Clearance Dashboard</h1>
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Hostel accommodation, room inventory & dues verification portal</p>
                     </div>

@@ -25,7 +25,9 @@ from utils.helpers import paginate_query, get_client_ip, get_user_agent
 @department_access("hostel")
 def dashboard():
     """Render hostel clearance dashboard."""
-    return render_template("hostel/dashboard.html")
+    from utils.tenant_helpers import get_current_context_university
+    univ = get_current_context_university()
+    return render_template("hostel/dashboard.html", university=univ)
 
 
 @hostel_bp.route("/api/dashboard")
@@ -33,17 +35,34 @@ def dashboard():
 def dashboard_data():
     """Get hostel dashboard data with all assigned applications."""
     user_id = get_jwt_identity()
-    user = User.query.get(user_id) if user_id else None
+    user = None
+    if user_id:
+        try:
+            import uuid as _uuid
+            user = User.query.get(_uuid.UUID(str(user_id)))
+        except Exception:
+            user = User.query.get(user_id)
     u_id = user.university_id if user else None
 
     hostel_dept = None
     if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        ensure_university_departments(u_id)
         hostel_dept = Department.query.filter_by(role="hostel", university_id=u_id).first()
-    if not hostel_dept:
-        hostel_dept = Department.query.filter_by(role="hostel").first()
 
     if not hostel_dept:
-        return jsonify({"success": False, "message": "Hostel department not found"}), 404
+        return jsonify({
+            "success": True,
+            "data": {
+                "stats": {
+                    "pending_count": 0, "in_review_count": 0,
+                    "approved_count": 0, "rejected_count": 0,
+                    "approved_today": 0, "total_assigned": 0,
+                },
+                "pending_applications": [],
+                "recent_processed": []
+            }
+        })
 
     pending_count = ApplicationDepartment.query.filter_by(
         department_id=hostel_dept.id,
@@ -73,8 +92,8 @@ def dashboard_data():
         ),
     ).count()
 
-    # Query ALL pending & in_review applications assigned to hostel department
-    pending_apps = (
+    # Query ALL pending & in_review applications assigned strictly to this university
+    p_query = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
         .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
         .join(Student, NoDuesApplication.student_id == Student.id)
@@ -83,12 +102,18 @@ def dashboard_data():
             ApplicationDepartment.department_id == hostel_dept.id,
             ApplicationDepartment.status.in_(["pending", "in_review"]),
         )
+    )
+    if u_id:
+        p_query = p_query.filter(NoDuesApplication.university_id == u_id)
+
+    pending_apps = (
+        p_query
         .order_by(NoDuesApplication.created_at.desc())
         .all()
     )
 
     # Query recent processed applications
-    recent_processed = (
+    r_query = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
         .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
         .join(Student, NoDuesApplication.student_id == Student.id)
@@ -97,6 +122,12 @@ def dashboard_data():
             ApplicationDepartment.department_id == hostel_dept.id,
             ApplicationDepartment.status.in_(["approved", "rejected"]),
         )
+    )
+    if u_id:
+        r_query = r_query.filter(NoDuesApplication.university_id == u_id)
+
+    recent_processed = (
+        r_query
         .order_by(ApplicationDepartment.processed_at.desc())
         .limit(20)
         .all()

@@ -21,11 +21,17 @@
 
 <aside class="super-sidebar" id="superSidebar">
     <div class="super-sidebar-header">
-        <a href="/superadmin/dashboard" class="super-sidebar-brand">
-            <div class="brand-icon">🏛️</div>
-            <div>
-                <div class="brand-text">{{ university_name or 'Smart NoDues' }}</div>
-                <div class="brand-sub">University Command Hub</div>
+        <a href="/superadmin/dashboard" class="super-sidebar-brand" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+            <div class="brand-icon" style="width: 42px; height: 42px; min-width: 42px; border-radius: 10px; overflow: hidden; background: white; padding: 2px; border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+                {% if university and university.logo_url %}
+                <img src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                {% else %}
+                <img src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI" style="width: 100%; height: 100%; object-fit: contain;">
+                {% endif %}
+            </div>
+            <div style="overflow: hidden; min-width: 0;">
+                <div class="brand-text" style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ university_name or (university.name if university else 'Smart NoDues AI') }}</div>
+                <div class="brand-sub" style="font-size: 0.7rem; color: var(--accent); font-weight: 700; text-transform: uppercase;">Command & Control Hub</div>
             </div>
         </a>
     </div>

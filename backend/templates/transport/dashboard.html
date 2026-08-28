@@ -18,8 +18,17 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.125rem; font-family: 'DM Serif Display', serif;">T</div>
-                    <div><div style="font-weight: 600; font-size: 0.85rem;">Smart NoDues</div><div style="font-size: 0.7rem; color: var(--text-muted);">Transport Portal</div></div>
+                    <div style="width: 38px; height: 38px; min-width: 38px; border-radius: 10px; overflow: hidden; background: white; padding: 2px; border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+                        {% if university and university.logo_url %}
+                        <img src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                        {% else %}
+                        <img src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI" style="width: 100%; height: 100%; object-fit: contain;">
+                        {% endif %}
+                    </div>
+                    <div style="overflow: hidden; min-width: 0;">
+                        <div style="font-weight: 800; font-size: 0.8rem; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">{{ university.name if university else 'Institutional Campus' }}</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary);">Transport Portal</div>
+                    </div>
                 </div>
             </div>
             <nav class="sidebar-nav">

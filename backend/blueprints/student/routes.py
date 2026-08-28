@@ -98,13 +98,14 @@ def _get_authenticated_student_user():
     # 2. Check JWT Identity
     jwt_id = get_jwt_identity()
     if jwt_id:
-        jwt_user = User.query.get(jwt_id)
+        try:
+            import uuid as _uuid
+            u_id = _uuid.UUID(str(jwt_id))
+        except Exception:
+            u_id = jwt_id
+        jwt_user = User.query.get(u_id)
         if jwt_user and jwt_user.role == "student":
             return jwt_user
-
-    # 3. Fallback to session user if role is student
-    if current_user and current_user.is_authenticated and current_user.role == "student":
-        return User.query.get(current_user.id)
 
     return None
 
@@ -384,6 +385,9 @@ def create_application():
         selected_depts = ["hostel", "mess"]
 
     u_id = student.university_id
+    if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        ensure_university_departments(u_id)
 
     # Find HOD department (auto-assigned matching student's branch/course within this university)
     hod_dept = None
@@ -397,10 +401,21 @@ def create_application():
         ).first()
     if not hod_dept and u_id:
         hod_dept = Department.query.filter_by(role="hod", university_id=u_id, is_active=True).first()
+    if not hod_dept and u_id:
+        hod_dept = Department.query.filter_by(role="hod", university_id=u_id).first()
+    if not hod_dept and u_id:
+        hod_dept = Department(
+            university_id=u_id,
+            code="HOD",
+            name=f"Head of Department ({student_branch or 'Academic'})",
+            role="hod",
+            display_order=6,
+            is_active=True
+        )
+        db.session.add(hod_dept)
+        db.session.commit()
     if not hod_dept:
-        hod_dept = Department.query.filter_by(role="hod", is_active=True).first() or Department.query.filter_by(role="hod").first()
-    if not hod_dept:
-        return jsonify({"success": False, "message": "HOD department not configured"}), 400
+        hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
 
     # Determine workflow steps based on selected departments
     # Sequence: Facilities (Hostel/Mess/Transport/Scholarship) -> Academic HOD -> Accounts -> Examination
@@ -408,14 +423,30 @@ def create_application():
     step_order = 1
 
     # 1. Add selected facility departments (hostel, mess, transport, scholarship)
+    from utils.tenant_helpers import STANDARD_DEPARTMENTS
     facility_order = ["hostel", "mess", "transport", "scholarship"]
     for dept_role in facility_order:
         if dept_role in selected_depts:
             dept = None
             if u_id:
-                dept = Department.query.filter_by(role=dept_role, university_id=u_id, is_active=True).first()
-            if not dept:
-                dept = Department.query.filter_by(role=dept_role, is_active=True).first() or Department.query.filter_by(role=dept_role).first()
+                dept = Department.query.filter(
+                    Department.role == dept_role,
+                    (Department.university_id == u_id) | (Department.university_id == str(u_id)),
+                    Department.is_active == True
+                ).first()
+            if not dept and u_id:
+                dept_spec = next((d for d in STANDARD_DEPARTMENTS if d["role"] == dept_role), None)
+                if dept_spec:
+                    dept = Department(
+                        university_id=u_id,
+                        code=dept_spec["code"],
+                        name=dept_spec["name"],
+                        role=dept_role,
+                        display_order=dept_spec["display_order"],
+                        is_active=True
+                    )
+                    db.session.add(dept)
+                    db.session.commit()
             if dept:
                 active_workflow.append({
                     "department": dept,
@@ -436,9 +467,22 @@ def create_application():
     # 3. Add Accounts Department (Fee clearance & Financial Audit)
     accounts_dept = None
     if u_id:
-        accounts_dept = Department.query.filter_by(role="accounts", university_id=u_id, is_active=True).first()
-    if not accounts_dept:
-        accounts_dept = Department.query.filter_by(role="accounts", is_active=True).first() or Department.query.filter_by(role="accounts").first()
+        accounts_dept = Department.query.filter(
+            Department.role == "accounts",
+            (Department.university_id == u_id) | (Department.university_id == str(u_id)),
+            Department.is_active == True
+        ).first()
+    if not accounts_dept and u_id:
+        accounts_dept = Department(
+            university_id=u_id,
+            code="ACC",
+            name="Accounts & Finance",
+            role="accounts",
+            display_order=7,
+            is_active=True
+        )
+        db.session.add(accounts_dept)
+        db.session.commit()
     if accounts_dept:
         active_workflow.append({
             "department": accounts_dept,
@@ -450,9 +494,22 @@ def create_application():
     # 4. Add Examination Department (Final Clearance & Admit Card Generation)
     exam_dept = None
     if u_id:
-        exam_dept = Department.query.filter_by(role="examination", university_id=u_id, is_active=True).first()
-    if not exam_dept:
-        exam_dept = Department.query.filter_by(role="examination", is_active=True).first() or Department.query.filter_by(role="examination").first()
+        exam_dept = Department.query.filter(
+            Department.role == "examination",
+            (Department.university_id == u_id) | (Department.university_id == str(u_id)),
+            Department.is_active == True
+        ).first()
+    if not exam_dept and u_id:
+        exam_dept = Department(
+            university_id=u_id,
+            code="EXAM",
+            name="Examination Department",
+            role="examination",
+            display_order=8,
+            is_active=True
+        )
+        db.session.add(exam_dept)
+        db.session.commit()
     if exam_dept:
         active_workflow.append({
             "department": exam_dept,
@@ -500,7 +557,7 @@ def create_application():
     # Save digital signature record if provided
     if signature_data:
         digi_sig = DigitalSignature(
-            user_id=user_id,
+            user_id=user.id,
             signature_data=signature_data,
             signature_hash=sig_hash,
             ip_address=get_client_ip(),
@@ -518,14 +575,10 @@ def create_application():
         )
         db.session.add(dept_approval)
 
-    # Create notification for accounts department in this university tenant
-    if student.university_id:
-        accounts_staff = User.query.filter_by(role="accounts", university_id=student.university_id).all()
-    else:
-        accounts_staff = User.query.filter_by(role="accounts").all()
-    
-    if not accounts_staff:
-        accounts_staff = User.query.filter_by(role="accounts").all()
+    # Notify university staff members
+    accounts_staff = []
+    if u_id:
+        accounts_staff = User.query.filter_by(role="accounts", university_id=u_id).all()
 
     for staff in accounts_staff:
         notif = Notification(
@@ -539,13 +592,14 @@ def create_application():
 
     # Create audit log
     audit = AuditLog(
-        user_id=user_id,
+        user_id=user.id,
         action="create",
         resource_type="application",
         resource_id=application.id,
         details={
             "selected_departments": selected_depts,
             "category": category,
+            "university_id": str(u_id) if u_id else None,
         },
         ip_address=get_client_ip(),
         user_agent=get_user_agent(),
