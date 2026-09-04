@@ -942,40 +942,6 @@ def create_application():
         return jsonify({"success": False, "message": f"Application initialization failed: {str(e)}"}), 500
 
 
-@student_bp.route("/api/application/<app_id>")
-@jwt_required(optional=True)
-def get_application(app_id):
-    """Get application details with all approvals and documents."""
-    try:
-        user = _get_authenticated_student_user()
-        if not user:
-            return jsonify({"success": False, "message": "Access restricted. Active student login required."}), 401
-
-        student = _ensure_student_profile(user)
-
-        application = NoDuesApplication.query.filter_by(
-            id=app_id, student_id=student.id
-        ).first()
-
-        if not application:
-            return jsonify({"success": False, "message": "Application not found"}), 404
-
-        documents = Document.query.filter_by(application_id=application.id).all()
-        admit_card = AdmitCard.query.filter_by(application_id=application.id).first()
-
-        return jsonify({
-            "success": True,
-            "data": {
-                "application": application.to_dict(),
-                "department_approvals": [ad.to_dict() for ad in application.department_approvals],
-                "documents": [doc.to_dict() for doc in documents],
-                "admit_card": admit_card.to_dict() if admit_card else None,
-            },
-        })
-    except Exception as e:
-        current_app.logger.error(f"Error fetching application: {e}")
-        return jsonify({"success": False, "message": f"Error fetching application: {str(e)}"}), 500
-
 
 @student_bp.route("/api/application/<app_id>/delete", methods=["DELETE", "POST"])
 @student_bp.route("/api/application/<app_id>/cancel", methods=["DELETE", "POST"])

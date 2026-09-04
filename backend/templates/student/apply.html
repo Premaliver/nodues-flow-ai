@@ -604,9 +604,12 @@
 
         function autoDetectHOD() {
             const hodDisplay = document.getElementById('hodDeptDisplay');
-            const detectedDept = studentData.branch || studentData.course_name || 'Academic HOD Department';
-            hodDisplay.value = detectedDept.includes('HOD') ? detectedDept : detectedDept + ' HOD Department';
-            document.getElementById('hodSection').style.display = 'block';
+            if (!hodDisplay) return;
+            const branch = studentData.branch || studentData.course_name || 'Academic Department';
+            const clean = branch.replace(/\(HOD.*?\)/gi, '').replace(/\bHOD\b/gi, '').replace(/\s+/g, ' ').trim();
+            hodDisplay.value = `Head of Department (${clean})`;
+            const section = document.getElementById('hodSection');
+            if (section) section.style.display = 'block';
         }
 
         function renderPersonalInfo() {

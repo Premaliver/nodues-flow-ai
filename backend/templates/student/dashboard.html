@@ -304,20 +304,23 @@
             border: 1px solid rgba(245, 158, 11, 0.35);
         }
 
-        /* ── INNOVATIVE CLEARANCE PIPELINE TRACKER ── */
+        /* ── 4-STAGE SEQUENTIAL CLEARANCE PIPELINE TRACKER ── */
         .pipeline-tracker-wrap {
             position: relative;
-            padding: 1rem 0.5rem 1.5rem 0.5rem;
-            margin-bottom: 2rem;
+            padding: 1.25rem 0.75rem 1.75rem 0.75rem;
+            margin-bottom: 2.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
             overflow-x: auto;
         }
         .pipeline-track-bar {
             position: absolute;
-            top: 48px;
-            left: 50px;
-            right: 50px;
-            height: 4px;
-            background: var(--border-light);
+            top: 58px;
+            left: 70px;
+            right: 70px;
+            height: 5px;
+            background: var(--border-medium);
             border-radius: 9999px;
             z-index: 1;
         }
@@ -326,22 +329,22 @@
             top: 0;
             left: 0;
             height: 100%;
-            background: linear-gradient(90deg, #6366f1, #818cf8, #10b981);
+            background: linear-gradient(90deg, #6366f1 0%, #818cf8 40%, #10b981 100%);
             border-radius: 9999px;
-            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 0 14px rgba(99, 102, 241, 0.5);
+            transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.6);
         }
 
-        .pipeline-nodes-flex {
+        .pipeline-milestones-flex {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             position: relative;
             z-index: 2;
-            min-width: 650px;
+            min-width: 680px;
         }
 
-        .pipeline-node-col {
+        .pipeline-milestone-col {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -349,189 +352,242 @@
             flex: 1;
             padding: 0 0.5rem;
             cursor: pointer;
-            transition: transform 0.25s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .pipeline-node-col:hover {
-            transform: translateY(-3px);
+        .pipeline-milestone-col:hover {
+            transform: translateY(-4px);
         }
 
-        .pipeline-node-bubble {
-            width: 52px;
-            height: 52px;
+        .milestone-bubble {
+            width: 58px;
+            height: 58px;
             border-radius: 50%;
             background: var(--bg-card);
-            border: 2.5px solid var(--border-medium);
+            border: 3px solid var(--border-medium);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             color: var(--text-muted);
-            margin-bottom: 0.65rem;
+            margin-bottom: 0.75rem;
             position: relative;
-            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
         }
-        
-        /* Node Status States */
-        .pipeline-node-bubble.approved {
+
+        /* Milestone Status States */
+        .milestone-bubble.cleared {
             background: #10b981;
             border-color: #10b981;
             color: #ffffff;
-            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.2), 0 6px 18px rgba(16, 185, 129, 0.35);
+            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.22), 0 8px 22px rgba(16, 185, 129, 0.38);
         }
-        .pipeline-node-bubble.in-review {
+        .milestone-bubble.active {
             background: #6366f1;
             border-color: #6366f1;
             color: #ffffff;
-            box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.25), 0 6px 20px rgba(99, 102, 241, 0.4);
-            animation: activeNodePulse 2s infinite;
+            box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.25), 0 8px 24px rgba(99, 102, 241, 0.45);
+            animation: activeMilestoneRadar 2.2s infinite;
         }
-        .pipeline-node-bubble.rejected {
+        .milestone-bubble.locked {
+            background: var(--bg-card);
+            border-color: var(--border-light);
+            color: var(--text-muted);
+            opacity: 0.75;
+        }
+        .milestone-bubble.rejected {
             background: #ef4444;
             border-color: #ef4444;
             color: #ffffff;
-            box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.2), 0 6px 18px rgba(239, 68, 68, 0.35);
-        }
-        .pipeline-node-bubble.waiting {
-            background: var(--bg-secondary);
-            border-color: var(--border-light);
-            color: var(--text-muted);
+            box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.22), 0 8px 22px rgba(239, 68, 68, 0.38);
         }
 
-        @keyframes activeNodePulse {
-            0%, 100% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.25), 0 6px 20px rgba(99, 102, 241, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0.12), 0 8px 24px rgba(99, 102, 241, 0.5); }
+        @keyframes activeMilestoneRadar {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5), 0 6px 20px rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 14px rgba(99, 102, 241, 0), 0 8px 26px rgba(99, 102, 241, 0.5); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), 0 6px 20px rgba(99, 102, 241, 0.4); }
         }
 
-        .pipeline-node-step-tag {
-            font-size: 0.68rem;
+        .milestone-step-tag {
+            font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.07em;
             color: var(--text-muted);
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.25rem;
         }
-        .pipeline-node-name {
-            font-size: 0.82rem;
+        .milestone-name {
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--text-primary);
-            line-height: 1.25;
-            max-width: 95px;
+            line-height: 1.3;
+            max-width: 125px;
         }
-        .pipeline-node-status-pill {
-            display: inline-block;
-            margin-top: 0.35rem;
-            padding: 0.2rem 0.55rem;
+        .milestone-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.4rem;
+            padding: 0.25rem 0.65rem;
             border-radius: 9999px;
-            font-size: 0.68rem;
+            font-size: 0.72rem;
             font-weight: 700;
+            letter-spacing: 0.02em;
         }
-        .pipeline-node-status-pill.approved { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-        .pipeline-node-status-pill.in-review { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
-        .pipeline-node-status-pill.rejected { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
-        .pipeline-node-status-pill.waiting { background: var(--bg-secondary); color: var(--text-muted); }
+        .milestone-status-pill.cleared { background: rgba(16, 185, 129, 0.14); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .milestone-status-pill.active { background: rgba(99, 102, 241, 0.14); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .milestone-status-pill.locked { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-light); }
+        .milestone-status-pill.rejected { background: rgba(239, 68, 68, 0.14); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        /* ── DEPARTMENT CLEARANCE CARD GRID ── */
-        .dept-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 2rem;
-        }
-        .dept-card-item {
-            background: var(--bg-card);
-            border: 1.5px solid var(--border-light);
-            border-radius: 18px;
-            padding: 1.35rem;
-            position: relative;
-            overflow: hidden;
+        /* ── 4-STAGE DETAILED CLEARANCE JOURNEY CARDS ── */
+        .clearance-stages-container {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        }
-        .dept-card-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.07);
-            border-color: rgba(99, 102, 241, 0.35);
-        }
-        .dept-card-item.approved {
-            border-left: 4.5px solid #10b981;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, var(--bg-card) 60%);
-        }
-        .dept-card-item.in-review {
-            border-left: 4.5px solid #6366f1;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, var(--bg-card) 60%);
-        }
-        .dept-card-item.rejected {
-            border-left: 4.5px solid #ef4444;
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, var(--bg-card) 60%);
-        }
-        .dept-card-item.waiting {
-            border-left: 4.5px solid var(--border-medium);
-            opacity: 0.85;
+            gap: 1.35rem;
+            margin-bottom: 2rem;
         }
 
-        .dept-card-header {
+        .stage-journey-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-light);
+            border-radius: 20px;
+            padding: 1.6rem 1.8rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+        .stage-journey-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
+        }
+        .stage-journey-card.cleared {
+            border-left: 6px solid #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.035) 0%, var(--bg-card) 65%);
+        }
+        .stage-journey-card.active {
+            border-left: 6px solid #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.045) 0%, var(--bg-card) 65%);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.12);
+        }
+        .stage-journey-card.locked {
+            border-left: 6px solid var(--border-medium);
+            opacity: 0.85;
+            background: var(--bg-card);
+        }
+        .stage-journey-card.rejected {
+            border-left: 6px solid #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.045) 0%, var(--bg-card) 65%);
+        }
+
+        .stage-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--border-light);
         }
-        .dept-card-title-group {
+        .stage-card-title-group {
             display: flex;
             align-items: center;
-            gap: 0.65rem;
+            gap: 0.9rem;
         }
-        .dept-card-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+        .stage-card-icon-bubble {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
             background: var(--bg-secondary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             flex-shrink: 0;
+            border: 1px solid var(--border-light);
         }
-        .dept-card-name {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .dept-card-step-order {
+        .stage-card-phase-tag {
             font-size: 0.72rem;
             font-weight: 800;
-            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
             font-family: var(--font-mono);
+            margin-bottom: 0.15rem;
+        }
+        .stage-card-name {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.25;
+        }
+        .stage-card-role {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
-        .dept-card-body {
-            font-size: 0.82rem;
-            color: var(--text-secondary);
-            line-height: 1.45;
-            margin-bottom: 0.85rem;
+        /* Facility Chips Grid (Stage 1) */
+        .facility-chips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
         }
-        .dept-card-remark-box {
+        .facility-chip-card {
             background: var(--bg-secondary);
-            border-left: 3px solid var(--accent);
-            padding: 0.5rem 0.75rem;
-            border-radius: 0 8px 8px 0;
-            font-size: 0.8rem;
-            color: var(--text-primary);
-            margin-top: 0.5rem;
-            font-style: italic;
-        }
-        .dept-card-footer {
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 0.85rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 1px solid var(--border-light);
-            padding-top: 0.75rem;
-            font-size: 0.75rem;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        .facility-chip-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+
+        /* Day Scholar Bypass Box */
+        .day-scholar-exempt-box {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1.5px dashed rgba(16, 185, 129, 0.4);
+            margin-top: 0.85rem;
+        }
+
+        /* Lock Notice Banner */
+        .stage-lock-notice {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.15rem;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border-left: 3.5px solid var(--border-medium);
+            font-size: 0.82rem;
             color: var(--text-muted);
+            margin-top: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Department Remark Callout */
+        .stage-remark-box {
+            background: var(--bg-secondary);
+            border-left: 3.5px solid var(--accent);
+            padding: 0.65rem 0.95rem;
+            border-radius: 0 10px 10px 0;
+            font-size: 0.84rem;
+            color: var(--text-primary);
+            margin-top: 0.75rem;
+            font-style: italic;
         }
 
         /* ── ADMIT CARD UNLOCKED CELEBRATION SHOWCASE ── */
@@ -1643,6 +1699,41 @@
             return '🏛️';
         }
 
+        function getCleanHODTitle(ad, studentData) {
+            const branch = studentData?.branch || studentData?.course_name || '';
+            if (!ad) return branch ? `Head of Department (${branch})` : 'Academic Head of Department';
+            let name = (ad.department_name || '').trim();
+            // Remove any redundant/repeated HOD text like (HOD) or HOD HOD
+            name = name.replace(/\(HOD\)/gi, '').replace(/\bHOD\b/gi, '').replace(/\s+/g, ' ').trim();
+            name = name.replace(/\s*-\s*$/, '').trim();
+            if (name.toLowerCase().startsWith('head of department')) {
+                return name;
+            }
+            if (name) {
+                return `Head of Department (${name})`;
+            }
+            return branch ? `Head of Department (${branch})` : 'Academic Head of Department';
+        }
+
+        function formatDeptDisplayName(ad, studentData) {
+            const role = (ad.department_role || '').toLowerCase();
+            const name = (ad.department_name || '').trim();
+            if (role === 'hod' || name.toLowerCase().includes('head of department') || name.toLowerCase().includes('hod')) {
+                return getCleanHODTitle(ad, studentData);
+            }
+            if (role === 'accounts' || name.toLowerCase().includes('account') || name.toLowerCase().includes('finance')) {
+                return 'Accounts & Finance (Accountant)';
+            }
+            if (role === 'examination' || name.toLowerCase().includes('exam')) {
+                return 'Examination Department (Controller)';
+            }
+            if (role === 'hostel' || name.toLowerCase().includes('hostel')) return 'Hostel Administration';
+            if (role === 'mess' || name.toLowerCase().includes('mess')) return 'Mess & Dining Services';
+            if (role === 'transport' || name.toLowerCase().includes('transport') || name.toLowerCase().includes('bus')) return 'Transport & Bus Logistics';
+            if (role === 'scholarship' || name.toLowerCase().includes('scholarship')) return 'Scholarship & Financial Aid';
+            return name || 'Department';
+        }
+
         // Dynamic Time Greeting
         function getGreeting() {
             const hour = new Date().getHours();
@@ -1843,7 +1934,7 @@
         }
 
         // ============================================================
-        // RENDER ACTIVE CLEARANCE STATUS (THE UNIQUE HERO TRACKER)
+        // RENDER ACTIVE CLEARANCE STATUS (THE UNIQUE 4-STAGE PIPELINE)
         // ============================================================
         function renderActiveClearanceStatus(d) {
             const bodyEl = document.getElementById('activeClearanceBody');
@@ -1855,13 +1946,13 @@
                 updateGauge(0);
                 badgeSlot.innerHTML = `<span class="badge badge-secondary">No Active App</span>`;
                 bodyEl.innerHTML = `
-                    <div style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
-                        <div style="font-size: 3.2rem; margin-bottom: 0.75rem;">📝</div>
-                        <h3 style="font-weight: 700; font-size: 1.25rem; color: var(--text-primary); margin-bottom: 0.35rem;">No Active Clearance Application</h3>
-                        <p style="font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem auto; line-height: 1.5;">
-                            Submit a clearance request to initiate the automated multi-department review process.
+                    <div style="text-align: center; padding: 3.5rem 1.5rem; color: var(--text-muted);">
+                        <div style="font-size: 3.4rem; margin-bottom: 0.75rem;">📝</div>
+                        <h3 style="font-weight: 700; font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.35rem;">No Active Clearance Application</h3>
+                        <p style="font-size: 0.92rem; max-width: 480px; margin: 0 auto 1.5rem auto; line-height: 1.55;">
+                            Submit a clearance request to initiate the automated 4-stage institutional review pipeline across campus facilities, accounts, academic department, and examination controller.
                         </p>
-                        <a href="/student/apply" class="btn btn-primary" style="box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);">
+                        <a href="/student/apply" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);">
                             + Start New Clearance Application
                         </a>
                     </div>
@@ -1871,25 +1962,87 @@
 
             const app = d.active_application;
             currentActiveAppId = app.id;
-            const pct = app.progress_percentage || 0;
-            updateGauge(pct);
+            const approvals = (d.department_approvals || []).slice().sort((a, b) => getDeptRank(a) - getDeptRank(b));
+            const studentInfo = d.student || cachedStudentData || {};
+            const studentBranch = studentInfo.branch || studentInfo.course_name || '';
 
-            // Sort department approvals canonically
-            const depts = (d.department_approvals || []).slice().sort((a, b) => getDeptRank(a) - getDeptRank(b));
-            const firstPendingIdx = depts.findIndex(ad => ad.status !== 'approved');
-            const hasRejection = depts.some(ad => ad.status === 'rejected');
-            const approvedCount = depts.filter(ad => ad.status === 'approved').length;
-            const isFullyCleared = app.status === 'approved' || (approvedCount === depts.length && depts.length > 0);
+            // ── CANONICAL 4-STAGE CLASSIFICATION ──
+            // STAGE 1: Campus Facilities (Hostel, Mess, Transport, Scholarship)
+            const facilityRoles = ['hostel', 'mess', 'transport', 'scholarship'];
+            const stage1Depts = approvals.filter(ad => {
+                const r = (ad.department_role || '').toLowerCase();
+                const n = (ad.department_name || '').toLowerCase();
+                return facilityRoles.some(fr => r.includes(fr) || n.includes(fr));
+            });
+            const isDayScholar = stage1Depts.length === 0;
+            const stage1HasRejection = stage1Depts.some(ad => ad.status === 'rejected');
+            const stage1AllApproved = isDayScholar || (stage1Depts.length > 0 && stage1Depts.every(ad => ad.status === 'approved'));
+            const stage1Active = !isDayScholar && !stage1AllApproved && !stage1HasRejection;
 
-            // App Status Badge in header
+            // STAGE 2: Accounts & Finance (Accountant)
+            const accountsDept = approvals.find(ad => {
+                const r = (ad.department_role || '').toLowerCase();
+                const n = (ad.department_name || '').toLowerCase();
+                return r.includes('account') || r.includes('finance') || n.includes('account') || n.includes('finance');
+            });
+            const stage2Locked = !stage1AllApproved;
+            const stage2Approved = accountsDept ? accountsDept.status === 'approved' : false;
+            const stage2Rejected = accountsDept ? accountsDept.status === 'rejected' : false;
+            const stage2Active = !stage2Locked && !stage2Approved && !stage2Rejected;
+
+            // STAGE 3: Academic Department Clearance (HOD Sign-off)
+            const hodDept = approvals.find(ad => {
+                const r = (ad.department_role || '').toLowerCase();
+                const n = (ad.department_name || '').toLowerCase();
+                return r.includes('hod') || n.includes('head of department') || n.includes('hod') || n.includes('academic');
+            });
+            const stage3Locked = !stage2Approved;
+            const stage3Approved = hodDept ? hodDept.status === 'approved' : false;
+            const stage3Rejected = hodDept ? hodDept.status === 'rejected' : false;
+            const stage3Active = !stage3Locked && !stage3Approved && !stage3Rejected;
+
+            // STAGE 4: Examination Department & Hall Ticket Issuance
+            const examDept = approvals.find(ad => {
+                const r = (ad.department_role || '').toLowerCase();
+                const n = (ad.department_name || '').toLowerCase();
+                return r.includes('exam') || n.includes('exam');
+            });
+            const stage4Locked = !stage3Approved;
+            const stage4Approved = (examDept && examDept.status === 'approved') || app.status === 'approved' || !!d.admit_card;
+            const stage4Rejected = examDept ? examDept.status === 'rejected' : false;
+            const stage4Active = !stage4Locked && !stage4Approved && !stage4Rejected;
+
+            // Progress Calculations
+            let clearedStages = 0;
+            if (stage1AllApproved) clearedStages++;
+            if (stage2Approved) clearedStages++;
+            if (stage3Approved) clearedStages++;
+            if (stage4Approved) clearedStages++;
+
+            const overallStagePct = Math.round((clearedStages / 4) * 100);
+            updateGauge(overallStagePct);
+
+            // Active Step Number
+            let currentActiveStep = 1;
+            if (stage4Approved) currentActiveStep = 4;
+            else if (stage4Active) currentActiveStep = 4;
+            else if (stage3Active) currentActiveStep = 3;
+            else if (stage2Active) currentActiveStep = 2;
+            else currentActiveStep = 1;
+
+            // Track Fill Width: 0% -> 33% -> 66% -> 88% -> 100%
+            const fillWidths = [0, 33, 66, 88, 100];
+            const trackFillWidth = fillWidths[clearedStages] || 0;
+
+            // Header Live Badge
             badgeSlot.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
                     <span class="live-app-badge ${app.status}">
-                        <span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: currentColor;"></span>
                         APP #${app.application_number} • ${app.status.toUpperCase()}
                     </span>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="viewAppDetails('${app.id}')" title="Inspect Full Verification Audit" style="border: 1px solid var(--border-light); font-weight: 600;">
-                        🔍 Inspect Deep-Dive
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="viewAppDetails('${app.id}')" title="Inspect Full Verification Audit" style="border: 1px solid var(--border-light); font-weight: 700;">
+                        🔍 Detailed Audit Trail
                     </button>
                     <button type="button" class="btn btn-danger btn-sm" onclick="cancelApplication('${app.id}', '${app.application_number || ''}')" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 600;" title="Delete and restart">
                         🗑️ Delete
@@ -1897,154 +2050,431 @@
                 </div>
             `;
 
-            // Progress Bar Track Fill Percentage
-            const trackFillPct = depts.length > 1 ? (approvedCount / (depts.length - 1)) * 100 : (approvedCount >= depts.length ? 100 : 0);
+            // 1. STEPPER MILESTONES HTML
+            // Milestone 1 State
+            let m1Cls = stage1AllApproved ? 'cleared' : (stage1HasRejection ? 'rejected' : 'active');
+            let m1Pill = isDayScholar ? '✓ Exempted' : (stage1AllApproved ? '✓ Cleared' : (stage1HasRejection ? '✕ Action' : '⏳ Reviewing'));
+            let m1Icon = isDayScholar ? '🚶' : '🏢';
 
-            // 1. Pipeline Stepper HTML
-            const pipelineHtml = `
+            // Milestone 2 State
+            let m2Cls = stage2Approved ? 'cleared' : (stage2Rejected ? 'rejected' : (stage2Active ? 'active' : 'locked'));
+            let m2Pill = stage2Approved ? '✓ Cleared' : (stage2Rejected ? '✕ Dues Query' : (stage2Active ? '⚡ Reviewing' : '🔒 Locked'));
+            let m2Icon = stage2Approved ? '✓' : (stage2Locked ? '🔒' : '💳');
+
+            // Milestone 3 State
+            let m3Cls = stage3Approved ? 'cleared' : (stage3Rejected ? 'rejected' : (stage3Active ? 'active' : 'locked'));
+            let m3Pill = stage3Approved ? '✓ Cleared' : (stage3Rejected ? '✕ Attendance' : (stage3Active ? '⚡ Reviewing' : '🔒 Locked'));
+            let m3Icon = stage3Approved ? '✓' : (stage3Locked ? '🔒' : '👨‍🏫');
+
+            // Milestone 4 State
+            let m4Cls = stage4Approved ? 'cleared' : (stage4Rejected ? 'rejected' : (stage4Active ? 'active' : 'locked'));
+            let m4Pill = stage4Approved ? '🎉 Issued' : (stage4Rejected ? '✕ Hold' : (stage4Active ? '⚡ Reviewing' : '🔒 Locked'));
+            let m4Icon = stage4Approved ? '🎓' : (stage4Locked ? '🔒' : '📄');
+
+            const stepperHtml = `
                 <div class="pipeline-tracker-wrap">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                        <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">
-                            SEQUENTIAL CLEARANCE PIPELINE • STEP ${Math.min(approvedCount + 1, depts.length)} OF ${depts.length}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 1.1rem;">⚡</span>
+                            <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-family: var(--font-mono);">
+                                SEQUENTIAL CLEARANCE PIPELINE • CURRENTLY AT STAGE 0${currentActiveStep} OF 04
+                            </div>
                         </div>
-                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); font-family: var(--font-mono);">
-                            ${pct}% COMPLETED
+                        <div style="font-size: 0.84rem; font-weight: 800; color: var(--accent); font-family: var(--font-mono); background: rgba(99, 102, 241, 0.1); padding: 0.25rem 0.75rem; border-radius: 9999px;">
+                            ${overallStagePct}% INSTITUTIONALLY CLEARED
                         </div>
                     </div>
 
                     <div style="position: relative;">
                         <div class="pipeline-track-bar">
-                            <div class="pipeline-track-fill" style="width: ${Math.min(trackFillPct, 100)}%;"></div>
+                            <div class="pipeline-track-fill" style="width: ${trackFillWidth}%;"></div>
                         </div>
 
-                        <div class="pipeline-nodes-flex">
-                            ${depts.map((ad, idx) => {
-                                const st = ad.status;
-                                const isActive = (idx === firstPendingIdx) && !hasRejection;
-                                const isDone = st === 'approved';
-                                const isRej = st === 'rejected';
-
-                                let nodeClass = 'waiting';
-                                let statusText = 'Waiting';
-                                let iconContent = getDeptIcon(ad);
-
-                                if (isDone) {
-                                    nodeClass = 'approved';
-                                    statusText = '✓ Cleared';
-                                } else if (isRej) {
-                                    nodeClass = 'rejected';
-                                    statusText = '✕ Action';
-                                } else if (isActive) {
-                                    nodeClass = 'in-review';
-                                    statusText = '⏳ Reviewing';
-                                }
-
-                                return `
-                                    <div class="pipeline-node-col" onclick="viewAppDetails('${app.id}')" title="Click to inspect ${ad.department_name || 'step'}">
-                                        <div class="pipeline-node-step-tag">STEP 0${idx + 1}</div>
-                                        <div class="pipeline-node-bubble ${nodeClass}">
-                                            ${isDone ? '✓' : (isRej ? '✕' : iconContent)}
-                                        </div>
-                                        <div class="pipeline-node-name">${ad.department_name || 'Department'}</div>
-                                        <span class="pipeline-node-status-pill ${nodeClass}">${statusText}</span>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // 2. Department Cards Grid HTML
-            const deptCardsHtml = `
-                <div style="margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                        <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🏛️</span> Department Clearance Matrix (${depts.length} Verified Nodes)
-                        </div>
-                        <div style="display: flex; gap: 0.4rem;">
-                            <button type="button" class="btn btn-ghost btn-sm" onclick="showUploadModal()">+ Upload Receipts</button>
-                        </div>
-                    </div>
-
-                    <div class="dept-cards-grid">
-                        ${depts.map((ad, idx) => {
-                            const st = ad.status;
-                            const isActive = (idx === firstPendingIdx) && !hasRejection;
-                            const isDone = st === 'approved';
-                            const isRej = st === 'rejected';
-                            const cardStatusCls = isDone ? 'approved' : isRej ? 'rejected' : isActive ? 'in-review' : 'waiting';
-                            const statusPillCls = isDone ? 'badge-success' : isRej ? 'badge-danger' : isActive ? 'badge-primary' : 'badge-secondary';
-                            const statusLabel = isDone ? '✓ Cleared' : isRej ? '✕ Rejected' : isActive ? '⏳ In Review' : '○ Pending';
-                            const processedDate = ad.processed_at ? new Date(ad.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
-
-                            return `
-                                <div class="dept-card-item ${cardStatusCls}">
-                                    <div>
-                                        <div class="dept-card-header">
-                                            <div class="dept-card-title-group">
-                                                <div class="dept-card-icon">${getDeptIcon(ad)}</div>
-                                                <div>
-                                                    <div class="dept-card-step-order">STEP 0${idx + 1}</div>
-                                                    <div class="dept-card-name">${ad.department_name || 'Department'}</div>
-                                                </div>
-                                            </div>
-                                            <span class="badge ${statusPillCls}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem;">${statusLabel}</span>
-                                        </div>
-
-                                        <div class="dept-card-body">
-                                            ${processedDate ? `Processed on <strong>${processedDate}</strong>` : (isActive ? 'Under review by designated institutional officer' : 'Awaiting preceding department verification')}
-                                            ${ad.remarks ? `<div class="dept-card-remark-box">💬 "${ad.remarks}"</div>` : ''}
-                                        </div>
-                                    </div>
-
-                                    <div class="dept-card-footer">
-                                        <span>Officer Clearance</span>
-                                        <button type="button" class="btn btn-ghost btn-sm" onclick="viewAppDetails('${app.id}')" style="font-size: 0.74rem; padding: 0.2rem 0.5rem;">
-                                            Details →
-                                        </button>
-                                    </div>
+                        <div class="pipeline-milestones-flex">
+                            <!-- Milestone 1 -->
+                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard1')?.scrollIntoView({behavior:'smooth'})" title="Stage 1: Campus Facilities Verification">
+                                <div class="milestone-step-tag">STAGE 01</div>
+                                <div class="milestone-bubble ${m1Cls}">
+                                    ${stage1AllApproved && !isDayScholar ? '✓' : m1Icon}
                                 </div>
-                            `;
-                        }).join('')}
+                                <div class="milestone-name">${isDayScholar ? 'Day Scholar' : 'Campus Facilities'}</div>
+                                <span class="milestone-status-pill ${m1Cls}">${m1Pill}</span>
+                            </div>
+
+                            <!-- Milestone 2 -->
+                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard2')?.scrollIntoView({behavior:'smooth'})" title="Stage 2: Accounts & Finance Review">
+                                <div class="milestone-step-tag">STAGE 02</div>
+                                <div class="milestone-bubble ${m2Cls}">
+                                    ${m2Icon}
+                                </div>
+                                <div class="milestone-name">Accounts & Finance</div>
+                                <span class="milestone-status-pill ${m2Cls}">${m2Pill}</span>
+                            </div>
+
+                            <!-- Milestone 3 -->
+                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard3')?.scrollIntoView({behavior:'smooth'})" title="Stage 3: Academic Department Clearance (HOD)">
+                                <div class="milestone-step-tag">STAGE 03</div>
+                                <div class="milestone-bubble ${m3Cls}">
+                                    ${m3Icon}
+                                </div>
+                                <div class="milestone-name">Academic HOD</div>
+                                <span class="milestone-status-pill ${m3Cls}">${m3Pill}</span>
+                            </div>
+
+                            <!-- Milestone 4 -->
+                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard4')?.scrollIntoView({behavior:'smooth'})" title="Stage 4: Examination Department & Hall Ticket">
+                                <div class="milestone-step-tag">STAGE 04</div>
+                                <div class="milestone-bubble ${m4Cls}">
+                                    ${m4Icon}
+                                </div>
+                                <div class="milestone-name">Hall Ticket Release</div>
+                                <span class="milestone-status-pill ${m4Cls}">${m4Pill}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
 
-            // 3. Admit Card Unlocked Celebration Card (if cleared or admit card present)
-            let admitCardBannerHtml = '';
-            if (isFullyCleared || d.admit_card) {
-                const ac = d.admit_card || (d.admit_cards && d.admit_cards[0]);
+            // 2. CELEBRATION ADMIT CARD SHOWCASE (IF STAGE 4 CLEARED)
+            let celebrationBannerHtml = '';
+            const ac = d.admit_card || (d.admit_cards && d.admit_cards[0]);
+            if (stage4Approved || ac) {
                 const cardNum = ac ? ac.card_number : 'AC-' + app.application_number;
-                admitCardBannerHtml = `
+                celebrationBannerHtml = `
                     <div class="admit-card-unlocked-banner">
                         <div style="position: relative; z-index: 2;">
-                            <div style="font-size: 0.78rem; font-weight: 800; color: #10b981; letter-spacing: 0.05em; text-transform: uppercase;">
-                                🎉 ALL CLEARANCES 100% COMPLETE
+                            <div style="font-size: 0.8rem; font-weight: 800; color: #10b981; letter-spacing: 0.07em; text-transform: uppercase;">
+                                🎉 ALL 4 INSTITUTIONAL STAGES COMPLETED & CERTIFIED
                             </div>
-                            <h3 style="font-family: 'DM Serif Display', Georgia, serif; font-size: 1.7rem; font-weight: 400; margin: 0.25rem 0; color: var(--text-primary);">
-                                Examination Hall Ticket Ready!
+                            <h3 style="font-family: 'DM Serif Display', Georgia, serif; font-size: 1.85rem; font-weight: 400; margin: 0.25rem 0; color: var(--text-primary);">
+                                Official Term Examination Hall Ticket Ready!
                             </h3>
-                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; max-width: 480px;">
-                                Card Number: <strong style="font-family: var(--font-mono);">${cardNum}</strong> • Digitally signed & verified for official term examinations.
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; max-width: 520px; line-height: 1.45;">
+                                Hall Ticket Number: <strong style="font-family: var(--font-mono); color: var(--text-primary); font-size: 0.95rem;">${cardNum}</strong> • Digitally signed & validated by Controller of Examinations.
                             </p>
                         </div>
                         <div style="position: relative; z-index: 2;">
-                            <a href="/student/api/admit-card/${cardNum}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45); font-weight: 700;">
-                                📥 Download Official PDF Hall Ticket
+                            <a href="/student/api/admit-card/${cardNum}/pdf" target="_blank" class="btn btn-success btn-lg" style="box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45); font-weight: 700; font-size: 0.95rem; padding: 0.85rem 1.6rem;">
+                                📥 Download PDF Hall Ticket
                             </a>
                         </div>
                     </div>
                 `;
             }
 
-            // 4. Uploaded Receipts & Documents Row
+            // 3. THE 4 SEQUENTIAL STAGE CARDS
+            // ── STAGE 1 CARD ──
+            const s1CardCls = stage1AllApproved ? 'cleared' : (stage1HasRejection ? 'rejected' : 'active');
+            let s1StatusBadge = '';
+            if (isDayScholar) {
+                s1StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ EXEMPTED (DAY SCHOLAR)</span>`;
+            } else if (stage1AllApproved) {
+                s1StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ CLEARED & SIGNED OFF</span>`;
+            } else if (stage1HasRejection) {
+                s1StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ DUES / ACTION REQUIRED</span>`;
+            } else {
+                s1StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ UNDER ACTIVE REVIEW</span>`;
+            }
+
+            let s1ContentHtml = '';
+            if (isDayScholar) {
+                s1ContentHtml = `
+                    <div class="day-scholar-exempt-box">
+                        <span style="font-size: 1.85rem;">📍</span>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.95rem; color: #10b981;">Day Scholar Clearance — No Campus Facilities Requested</div>
+                            <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 2px;">
+                                You are registered as a Day Scholar with no hostel room, dining mess, or institutional bus transport allocations. Pre-cleared to proceed immediately to Stage 2 Accounts & Finance review.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                s1ContentHtml = `
+                    <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                        <strong>Institutional Sequence Rule:</strong> If any campus facility is selected, its verification must complete first before the Accountant can process fee clearance.
+                    </div>
+                    <div class="facility-chips-grid">
+                        ${stage1Depts.map(ad => {
+                            const isDone = ad.status === 'approved';
+                            const isRej = ad.status === 'rejected';
+                            const badgeCls = isDone ? 'badge-success' : (isRej ? 'badge-danger' : 'badge-primary');
+                            const label = isDone ? '✓ Cleared' : (isRej ? '✕ Dues Flagged' : '⏳ Reviewing');
+                            const procDate = ad.processed_at ? new Date(ad.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : null;
+
+                            return `
+                                <div class="facility-chip-card">
+                                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                                        <span style="font-size: 1.3rem;">${getDeptIcon(ad)}</span>
+                                        <div style="min-width: 0; overflow: hidden;">
+                                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                ${ad.department_name || 'Facility'}
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--text-muted);">
+                                                ${procDate ? `Verified ${procDate}` : 'In verification queue'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="badge ${badgeCls}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; flex-shrink: 0;">
+                                        ${label}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    ${stage1Depts.some(ad => ad.remarks) ? `
+                        <div class="stage-remark-box">
+                            💬 <strong>Facility Notes:</strong> "${stage1Depts.filter(ad => ad.remarks).map(ad => ad.remarks).join('; ')}"
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            const stage1CardHtml = `
+                <div class="stage-journey-card ${s1CardCls}" id="stageCard1">
+                    <div class="stage-card-header">
+                        <div class="stage-card-title-group">
+                            <div class="stage-card-icon-bubble">🏢</div>
+                            <div>
+                                <div class="stage-card-phase-tag">STAGE 01 • CAMPUS FACILITIES</div>
+                                <div class="stage-card-name">Campus Facilities Verification</div>
+                                <div class="stage-card-role">Hostel Administration, Mess & Dining, Transport Logistics, Scholarship Desk</div>
+                            </div>
+                        </div>
+                        <div>${s1StatusBadge}</div>
+                    </div>
+                    <div class="stage-card-body">
+                        ${s1ContentHtml}
+                    </div>
+                </div>
+            `;
+
+            // ── STAGE 2 CARD (ACCOUNTS & FINANCE) ──
+            const s2CardCls = stage2Approved ? 'cleared' : (stage2Rejected ? 'rejected' : (stage2Active ? 'active' : 'locked'));
+            let s2StatusBadge = '';
+            if (stage2Locked) {
+                s2StatusBadge = `<span class="badge badge-secondary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">🔒 LOCKED (AWAITING STAGE 1)</span>`;
+            } else if (stage2Approved) {
+                s2StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ ALL FINANCIAL DUES CLEARED</span>`;
+            } else if (stage2Rejected) {
+                s2StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ FEE DUES FLAGGED</span>`;
+            } else {
+                s2StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ ACCOUNTANT REVIEWING</span>`;
+            }
+
+            const s2ProcDate = accountsDept?.processed_at ? new Date(accountsDept.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+
+            let s2BodyHtml = '';
+            if (stage2Locked) {
+                s2BodyHtml = `
+                    <div class="stage-lock-notice">
+                        <span style="font-size: 1.4rem;">🔒</span>
+                        <div>
+                            <strong>Sequential Lock Active:</strong> Stage 2 is waiting for Stage 1 Campus Facilities to verify room, mess, or transport dues. The Accountant review desk automatically unlocks once all facility approvals are in place.
+                        </div>
+                    </div>
+                `;
+            } else {
+                s2BodyHtml = `
+                    <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                        <strong>Accountant Review Scope:</strong> Audits semester tuition receipts, term examination fees, late fines, and scholarship credits in the university ledger.
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; background: var(--bg-secondary); border-radius: 12px; padding: 0.85rem 1.15rem; border: 1px solid var(--border-light);">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Review Desk</div>
+                            <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-primary);">Accounts & Finance Division</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                                ${s2ProcDate ? `Verified & Approved on <strong>${s2ProcDate}</strong>` : 'Currently evaluating uploaded receipts and ledger balances'}
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="showUploadModal()" style="font-size: 0.78rem;">
+                                📤 Upload Fee Receipt
+                            </button>
+                        </div>
+                    </div>
+                    ${accountsDept?.remarks ? `
+                        <div class="stage-remark-box">
+                            💬 <strong>Accountant Remarks:</strong> "${accountsDept.remarks}"
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            const stage2CardHtml = `
+                <div class="stage-journey-card ${s2CardCls}" id="stageCard2">
+                    <div class="stage-card-header">
+                        <div class="stage-card-title-group">
+                            <div class="stage-card-icon-bubble">💳</div>
+                            <div>
+                                <div class="stage-card-phase-tag">STAGE 02 • ACCOUNTS & FINANCE</div>
+                                <div class="stage-card-name">Accounts & Financial Clearance</div>
+                                <div class="stage-card-role">Senior Accountant & Financial Ledger Review Desk</div>
+                            </div>
+                        </div>
+                        <div>${s2StatusBadge}</div>
+                    </div>
+                    <div class="stage-card-body">
+                        ${s2BodyHtml}
+                    </div>
+                </div>
+            `;
+
+            // ── STAGE 3 CARD (ACADEMIC HOD CLEARANCE) ──
+            const s3CardCls = stage3Approved ? 'cleared' : (stage3Rejected ? 'rejected' : (stage3Active ? 'active' : 'locked'));
+            let s3StatusBadge = '';
+            if (stage3Locked) {
+                s3StatusBadge = `<span class="badge badge-secondary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">🔒 LOCKED (AWAITING ACCOUNTS)</span>`;
+            } else if (stage3Approved) {
+                s3StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ ACADEMIC CLEARANCE GRANTED</span>`;
+            } else if (stage3Rejected) {
+                s3StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ ATTENDANCE / ACADEMIC HOLD</span>`;
+            } else {
+                s3StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ HOD REVIEWING</span>`;
+            }
+
+            const cleanHODTitle = getCleanHODTitle(hodDept, studentInfo);
+            const s3ProcDate = hodDept?.processed_at ? new Date(hodDept.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+
+            let s3BodyHtml = '';
+            if (stage3Locked) {
+                s3BodyHtml = `
+                    <div class="stage-lock-notice">
+                        <span style="font-size: 1.4rem;">🔒</span>
+                        <div>
+                            <strong>Sequential Lock Active:</strong> Stage 3 Academic HOD sign-off requires preceding financial clearance. As soon as the Accountant verifies tuition dues (Stage 2), your application unlocks on your department HOD's desk.
+                        </div>
+                    </div>
+                `;
+            } else {
+                s3BodyHtml = `
+                    <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                        <strong>HOD Verification Scope:</strong> Mandatory minimum 75% lecture & tutorial attendance check, laboratory/practical project sign-off, and term eligibility confirmation.
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 12px; padding: 0.85rem 1.15rem; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Assigned Academic Department</div>
+                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-top: 2px;">
+                            👔 ${cleanHODTitle}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
+                            ${s3ProcDate ? `Academic sign-off completed on <strong>${s3ProcDate}</strong>` : 'Academic department faculty is inspecting attendance registers and lab records'}
+                        </div>
+                    </div>
+                    ${hodDept?.remarks ? `
+                        <div class="stage-remark-box">
+                            💬 <strong>HOD Remarks:</strong> "${hodDept.remarks}"
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            const stage3CardHtml = `
+                <div class="stage-journey-card ${s3CardCls}" id="stageCard3">
+                    <div class="stage-card-header">
+                        <div class="stage-card-title-group">
+                            <div class="stage-card-icon-bubble">👨‍🏫</div>
+                            <div>
+                                <div class="stage-card-phase-tag">STAGE 03 • ACADEMIC CLEARANCE</div>
+                                <div class="stage-card-name">${cleanHODTitle}</div>
+                                <div class="stage-card-role">Attendance Verification (≥ 75%), Lab Practicals & Departmental Sign-off</div>
+                            </div>
+                        </div>
+                        <div>${s3StatusBadge}</div>
+                    </div>
+                    <div class="stage-card-body">
+                        ${s3BodyHtml}
+                    </div>
+                </div>
+            `;
+
+            // ── STAGE 4 CARD (EXAMINATION DEPARTMENT & ADMIT CARD) ──
+            const s4CardCls = stage4Approved ? 'cleared' : (stage4Rejected ? 'rejected' : (stage4Active ? 'active' : 'locked'));
+            let s4StatusBadge = '';
+            if (stage4Locked) {
+                s4StatusBadge = `<span class="badge badge-secondary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">🔒 LOCKED (AWAITING HOD)</span>`;
+            } else if (stage4Approved) {
+                s4StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">🎓 HALL TICKET GENERATED</span>`;
+            } else if (stage4Rejected) {
+                s4StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ EXAMINATION HOLD</span>`;
+            } else {
+                s4StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ CONTROLLER REVIEWING</span>`;
+            }
+
+            const s4ProcDate = examDept?.processed_at ? new Date(examDept.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+            const finalCardNum = ac ? ac.card_number : 'AC-' + app.application_number;
+
+            let s4BodyHtml = '';
+            if (stage4Locked) {
+                s4BodyHtml = `
+                    <div class="stage-lock-notice">
+                        <span style="font-size: 1.4rem;">🔒</span>
+                        <div>
+                            <strong>Sequential Lock Active:</strong> The Examination Department only processes applications that have achieved 100% verified sign-off from both Accounts and Academic HOD. Once Stage 3 clears, the Examination Controller issues your Hall Ticket.
+                        </div>
+                    </div>
+                `;
+            } else if (stage4Approved) {
+                s4BodyHtml = `
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%); border: 1.5px solid var(--emerald); border-radius: 16px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <div style="font-weight: 800; font-size: 1rem; color: #10b981; display: flex; align-items: center; gap: 0.5rem;">
+                                <span>🎉</span> Official Term Examination Hall Ticket Issued
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 3px;">
+                                Card Number: <strong style="font-family: var(--font-mono); color: var(--text-primary); font-size: 0.95rem;">${finalCardNum}</strong>
+                                ${s4ProcDate ? ` • Certified on ${s4ProcDate}` : ''}
+                            </div>
+                        </div>
+                        <a href="/student/api/admit-card/${finalCardNum}/pdf" target="_blank" class="btn btn-success" style="font-weight: 700; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);">
+                            📥 Download PDF Hall Ticket
+                        </a>
+                    </div>
+                    ${examDept?.remarks ? `
+                        <div class="stage-remark-box">
+                            💬 <strong>Examination Office Remarks:</strong> "${examDept.remarks}"
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                s4BodyHtml = `
+                    <div style="padding: 1.1rem 1.25rem; border-radius: 14px; background: rgba(99, 102, 241, 0.08); border: 1.5px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; gap: 0.85rem;">
+                        <span style="font-size: 1.6rem;">⚡</span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">All preceding clearances (Facilities, Accounts, HOD) are successfully verified!</div>
+                            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">
+                                The Controller of Examinations is generating your official digital Hall Ticket with cryptographic security stamp.
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const stage4CardHtml = `
+                <div class="stage-journey-card ${s4CardCls}" id="stageCard4">
+                    <div class="stage-card-header">
+                        <div class="stage-card-title-group">
+                            <div class="stage-card-icon-bubble">🎓</div>
+                            <div>
+                                <div class="stage-card-phase-tag">STAGE 04 • EXAMINATION CONTROLLER</div>
+                                <div class="stage-card-name">Examination Department & Admit Card Release</div>
+                                <div class="stage-card-role">Office of the Controller of Examinations (Final Verification & Digital Hall Ticket)</div>
+                            </div>
+                        </div>
+                        <div>${s4StatusBadge}</div>
+                    </div>
+                    <div class="stage-card-body">
+                        ${s4BodyHtml}
+                    </div>
+                </div>
+            `;
+
+            // 4. ATTACHED DOCUMENTS CAROUSEL / GRID
             const docs = d.documents || [];
             const docsHtml = `
-                <div style="margin-top: 1rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
-                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">
-                            📎 Uploaded Verification Receipts (${docs.length})
+                <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
+                        <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📎</span> Attached Clearance Documents & Receipts (${docs.length})
                         </div>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="showUploadModal()">
                             + Upload Another Document
@@ -2075,19 +2505,24 @@
                             }).join('')}
                         </div>
                     ` : `
-                        <div style="padding: 1rem; border-radius: 12px; background: var(--bg-secondary); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-                            No receipts uploaded yet. Both Examination Fee Receipt and Next Semester Fee Receipt are required.
-                            <button type="button" class="btn btn-primary btn-sm" onclick="showUploadModal()" style="margin-left: 0.5rem;">Upload Now</button>
+                        <div style="padding: 1.25rem; border-radius: 14px; background: var(--bg-secondary); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+                            No receipts attached to this application yet. Both Examination Fee Receipt and Semester Fee Receipt are required.
+                            <button type="button" class="btn btn-primary btn-sm" onclick="showUploadModal()" style="margin-left: 0.6rem;">Upload Now</button>
                         </div>
                     `}
                 </div>
             `;
 
-            // Combine all in the Active Clearance Section
+            // Combine into the Hero Status Section
             bodyEl.innerHTML = `
-                ${admitCardBannerHtml}
-                ${pipelineHtml}
-                ${deptCardsHtml}
+                ${celebrationBannerHtml}
+                ${stepperHtml}
+                <div class="clearance-stages-container">
+                    ${stage1CardHtml}
+                    ${stage2CardHtml}
+                    ${stage3CardHtml}
+                    ${stage4CardHtml}
+                </div>
                 ${docsHtml}
             `;
         }
@@ -2255,6 +2690,48 @@
                 const docs = d.data.documents || [];
                 const admitCard = d.data.admit_card;
                 const pct = app.progress_percentage || 0;
+                const studentInfo = cachedStudentData || {};
+
+                // 4-Stage calculations for modal deep-dive
+                const facilityRoles = ['hostel', 'mess', 'transport', 'scholarship'];
+                const stage1Depts = depts.filter(ad => {
+                    const r = (ad.department_role || '').toLowerCase();
+                    const n = (ad.department_name || '').toLowerCase();
+                    return facilityRoles.some(fr => r.includes(fr) || n.includes(fr));
+                });
+                const isDayScholar = stage1Depts.length === 0;
+                const stage1HasRejection = stage1Depts.some(ad => ad.status === 'rejected');
+                const stage1AllApproved = isDayScholar || (stage1Depts.length > 0 && stage1Depts.every(ad => ad.status === 'approved'));
+
+                const accountsDept = depts.find(ad => {
+                    const r = (ad.department_role || '').toLowerCase();
+                    const n = (ad.department_name || '').toLowerCase();
+                    return r.includes('account') || r.includes('finance') || n.includes('account') || n.includes('finance');
+                });
+                const stage2Locked = !stage1AllApproved;
+                const stage2Approved = accountsDept ? accountsDept.status === 'approved' : false;
+                const stage2Rejected = accountsDept ? accountsDept.status === 'rejected' : false;
+                const stage2Active = !stage2Locked && !stage2Approved && !stage2Rejected;
+
+                const hodDept = depts.find(ad => {
+                    const r = (ad.department_role || '').toLowerCase();
+                    const n = (ad.department_name || '').toLowerCase();
+                    return r.includes('hod') || n.includes('head of department') || n.includes('hod') || n.includes('academic');
+                });
+                const stage3Locked = !stage2Approved;
+                const stage3Approved = hodDept ? hodDept.status === 'approved' : false;
+                const stage3Rejected = hodDept ? hodDept.status === 'rejected' : false;
+                const stage3Active = !stage3Locked && !stage3Approved && !stage3Rejected;
+
+                const examDept = depts.find(ad => {
+                    const r = (ad.department_role || '').toLowerCase();
+                    const n = (ad.department_name || '').toLowerCase();
+                    return r.includes('exam') || n.includes('exam');
+                });
+                const stage4Locked = !stage3Approved;
+                const stage4Approved = (examDept && examDept.status === 'approved') || app.status === 'approved' || !!admitCard;
+                const stage4Rejected = examDept ? examDept.status === 'rejected' : false;
+                const stage4Active = !stage4Locked && !stage4Approved && !stage4Rejected;
 
                 title.textContent = `Clearance Application #${app.application_number}`;
                 sub.textContent = `SUBMITTED: ${app.submitted_at ? new Date(app.submitted_at).toLocaleString() : 'DRAFT'} • CATEGORY: ${(app.category || 'Day Scholar').toUpperCase()}`;
@@ -2290,42 +2767,111 @@
                         </div>
                     </div>
 
-                    <!-- Sequential Audit Timeline -->
+                    <!-- 4-Stage Sequential Audit Timeline -->
                     <div style="margin-bottom: 1.5rem;">
-                        <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.2rem; margin: 0 0 0.85rem 0;">
-                            🏛️ Sequential Department Approval Trail
+                        <h4 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; margin: 0 0 0.85rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🏛️</span> 4-Stage Institutional Clearance Audit
                         </h4>
                         
                         <div class="inspector-timeline">
-                            ${depts.map((ad, idx) => {
-                                const st = ad.status;
-                                let dotCls = 'waiting';
-                                let bColor = 'badge-secondary';
-                                if (st === 'approved') { dotCls = 'approved'; bColor = 'badge-success'; }
-                                else if (st === 'rejected') { dotCls = 'rejected'; bColor = 'badge-danger'; }
-                                else if (st === 'in_review' || st === 'pending') { dotCls = 'in-review'; bColor = 'badge-primary'; }
-
-                                return `
-                                    <div class="inspector-timeline-step">
-                                        <div class="inspector-node-dot ${dotCls}">
-                                            ${st === 'approved' ? '✓' : (idx + 1)}
+                            <!-- Phase 1: Facilities -->
+                            <div class="inspector-timeline-step">
+                                <div class="inspector-node-dot ${stage1AllApproved ? 'approved' : (stage1HasRejection ? 'rejected' : 'in-review')}">
+                                    ${stage1AllApproved ? '✓' : '1'}
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 0.95rem 1.15rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>🏢</span>
+                                            <span>Stage 01: Campus Facilities Verification</span>
                                         </div>
-                                        <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; padding: 0.85rem 1rem;">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                                <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
-                                                    <span>${getDeptIcon(ad)}</span>
-                                                    <span>${ad.department_name || 'Department'}</span>
-                                                </div>
-                                                <span class="badge ${bColor}" style="font-size: 0.74rem;">${st.toUpperCase()}</span>
-                                            </div>
-                                            <div style="font-size: 0.78rem; color: var(--text-muted);">
-                                                ${ad.processed_at ? `Verified on ${new Date(ad.processed_at).toLocaleString()}` : 'Awaiting Review'}
-                                            </div>
-                                            ${ad.remarks ? `<div style="background: var(--bg-secondary); border-left: 3px solid var(--accent); padding: 0.4rem 0.65rem; border-radius: 0 6px 6px 0; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-primary);">💬 "${ad.remarks}"</div>` : ''}
-                                        </div>
+                                        <span class="badge ${stage1AllApproved ? 'badge-success' : (stage1HasRejection ? 'badge-danger' : 'badge-primary')}" style="font-size: 0.74rem;">
+                                            ${isDayScholar ? 'EXEMPTED (DAY SCHOLAR)' : (stage1AllApproved ? 'APPROVED' : (stage1HasRejection ? 'ACTION REQUIRED' : 'IN REVIEW'))}
+                                        </span>
                                     </div>
-                                `;
-                            }).join('')}
+                                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                        ${isDayScholar ? 'Day Scholar clearance — no physical campus facilities requested.' : `Evaluates ${stage1Depts.length} selected facility units (Hostel, Mess, Transport, Scholarship).`}
+                                    </div>
+                                    ${stage1Depts.length > 0 ? `
+                                        <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem;">
+                                            ${stage1Depts.map(ad => `
+                                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding: 0.35rem 0.65rem; background: var(--bg-secondary); border-radius: 8px;">
+                                                    <span style="font-weight: 600;">${getDeptIcon(ad)} ${ad.department_name || 'Facility'}</span>
+                                                    <span style="font-size: 0.72rem; font-weight: 700; color: ${ad.status === 'approved' ? '#10b981' : (ad.status === 'rejected' ? '#ef4444' : 'var(--accent)')};">
+                                                        ${ad.status.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Phase 2: Accounts -->
+                            <div class="inspector-timeline-step">
+                                <div class="inspector-node-dot ${stage2Approved ? 'approved' : (stage2Rejected ? 'rejected' : (stage2Active ? 'in-review' : 'waiting'))}">
+                                    ${stage2Approved ? '✓' : '2'}
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 0.95rem 1.15rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>💳</span>
+                                            <span>Stage 02: Accounts & Finance Review</span>
+                                        </div>
+                                        <span class="badge ${stage2Approved ? 'badge-success' : (stage2Rejected ? 'badge-danger' : (stage2Active ? 'badge-primary' : 'badge-secondary'))}" style="font-size: 0.74rem;">
+                                            ${stage2Locked ? 'LOCKED' : (stage2Approved ? 'APPROVED' : (stage2Rejected ? 'ACTION REQUIRED' : 'IN REVIEW'))}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                        ${stage2Locked ? 'Locked until Stage 1 Facilities clearance completes.' : (accountsDept?.processed_at ? `Verified on ${new Date(accountsDept.processed_at).toLocaleString()}` : 'Accountant auditing fee receipts and semester tuition ledger.')}
+                                    </div>
+                                    ${accountsDept?.remarks ? `<div style="background: var(--bg-secondary); border-left: 3px solid var(--accent); padding: 0.4rem 0.65rem; border-radius: 0 6px 6px 0; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-primary);">💬 "${accountsDept.remarks}"</div>` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Phase 3: Academic HOD -->
+                            <div class="inspector-timeline-step">
+                                <div class="inspector-node-dot ${stage3Approved ? 'approved' : (stage3Rejected ? 'rejected' : (stage3Active ? 'in-review' : 'waiting'))}">
+                                    ${stage3Approved ? '✓' : '3'}
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 0.95rem 1.15rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>👨‍🏫</span>
+                                            <span>Stage 03: ${getCleanHODTitle(hodDept, studentInfo)}</span>
+                                        </div>
+                                        <span class="badge ${stage3Approved ? 'badge-success' : (stage3Rejected ? 'badge-danger' : (stage3Active ? 'badge-primary' : 'badge-secondary'))}" style="font-size: 0.74rem;">
+                                            ${stage3Locked ? 'LOCKED' : (stage3Approved ? 'APPROVED' : (stage3Rejected ? 'ACTION REQUIRED' : 'IN REVIEW'))}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                        ${stage3Locked ? 'Locked until Stage 2 Accounts & Finance clearance completes.' : (hodDept?.processed_at ? `Academic sign-off completed on ${new Date(hodDept.processed_at).toLocaleString()}` : 'HOD evaluating attendance registers (≥ 75%) and laboratory sign-off.')}
+                                    </div>
+                                    ${hodDept?.remarks ? `<div style="background: var(--bg-secondary); border-left: 3px solid var(--accent); padding: 0.4rem 0.65rem; border-radius: 0 6px 6px 0; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-primary);">💬 "${hodDept.remarks}"</div>` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Phase 4: Examination Controller -->
+                            <div class="inspector-timeline-step">
+                                <div class="inspector-node-dot ${stage4Approved ? 'approved' : (stage4Rejected ? 'rejected' : (stage4Active ? 'in-review' : 'waiting'))}">
+                                    ${stage4Approved ? '✓' : '4'}
+                                </div>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 14px; padding: 0.95rem 1.15rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>🎓</span>
+                                            <span>Stage 04: Examination Department & Hall Ticket</span>
+                                        </div>
+                                        <span class="badge ${stage4Approved ? 'badge-success' : (stage4Rejected ? 'badge-danger' : (stage4Active ? 'badge-primary' : 'badge-secondary'))}" style="font-size: 0.74rem;">
+                                            ${stage4Locked ? 'LOCKED' : (stage4Approved ? 'HALL TICKET ISSUED' : (stage4Rejected ? 'HOLD' : 'IN REVIEW'))}
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                        ${stage4Locked ? 'Locked until Stage 3 Academic HOD sign-off completes.' : (examDept?.processed_at ? `Exam clearance certified on ${new Date(examDept.processed_at).toLocaleString()}` : 'Controller of Examinations issuing digital Hall Ticket upon final clearance.')}
+                                    </div>
+                                    ${examDept?.remarks ? `<div style="background: var(--bg-secondary); border-left: 3px solid var(--accent); padding: 0.4rem 0.65rem; border-radius: 0 6px 6px 0; margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-primary);">💬 "${examDept.remarks}"</div>` : ''}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
