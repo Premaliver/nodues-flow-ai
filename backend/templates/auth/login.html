@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — Smart NoDues AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <style>
         .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; position: relative; }
         .login-card { width: 100%; max-width: 420px; }
@@ -109,15 +109,16 @@
                 <div class="animate-in del-1" style="text-align: center; margin-bottom: 1.5rem;">
                     <div style="width: 52px; height: 52px; border-radius: 14px; background: white; border: 1.5px solid var(--border-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; overflow: hidden; box-shadow: var(--shadow-sm); padding: 3px;">
                         {% if university and university.logo_url %}
-                        <img src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:100%; height:100%; border-radius:10px; background:var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:1.5rem; font-family:\\'DM Serif Display\\', serif;\'>🏛️</div>';">
+                        <img id="brandLogo" src="{{ university.logo_url }}" alt="{{ university.name }}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.style.display='none'; document.getElementById('brandLogoFallback').style.display='flex';">
+                        <div id="brandLogoFallback" style="display: none; width: 100%; height: 100%; border-radius: 10px; background: var(--gradient-primary); align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; font-family: 'DM Serif Display', serif;">🏛️</div>
                         {% else %}
-                        <div style="width: 100%; height: 100%; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; font-family: 'DM Serif Display', serif;">S</div>
+                        <div id="brandLogo" style="width: 100%; height: 100%; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; font-family: 'DM Serif Display', serif;">S</div>
                         {% endif %}
                     </div>
                     {% if university and university.name %}
                     <div style="font-size: 0.8rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem;">{{ university.name }}</div>
                     {% endif %}
-                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Student & Staff Portal</h1>
+                    <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 0.35rem;">Student &amp; Staff Portal</h1>
                     <p style="color: var(--text-muted); font-size: 0.875rem;">Sign in to access clearance workflows</p>
                 </div>
 
@@ -208,7 +209,7 @@
         <div class="modal-dialog">
             <button type="button" class="modal-close-btn" onclick="closeForgotModal()" title="Close">&times;</button>
             
-            <!-- STEP 1: Enter Email & Request OTP -->
+            <!-- STEP 1: Enter Email and Request OTP -->
             <div id="fpStep1">
                 <div style="text-align: center; margin-bottom: 1.25rem;">
                     <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
@@ -235,7 +236,7 @@
                 </form>
             </div>
 
-            <!-- STEP 2: Enter & Verify 6-Digit OTP ONLY -->
+            <!-- STEP 2: Enter and Verify 6-Digit OTP ONLY -->
             <div id="fpStep2" style="display: none;">
                 <div style="text-align: center; margin-bottom: 1.25rem;">
                     <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin: 0 auto 0.75rem;">
@@ -272,7 +273,7 @@
                     </div>
 
                     <button type="submit" id="fpVerifyOtpBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
-                        Verify OTP & Continue ➔
+                        Verify OTP &amp; Continue &rarr;
                     </button>
                 </form>
             </div>
@@ -313,7 +314,7 @@
                     </div>
 
                     <button type="submit" id="fpResetSubmitBtn" class="btn btn-primary btn-lg" style="width: 100%; padding: 0.8rem; font-size: 0.95rem;">
-                        Save Password & Log In
+                        Save Password &amp; Log In
                     </button>
                 </form>
             </div>
@@ -466,16 +467,26 @@
             openMasterAdminModal();
         }
 
-        document.getElementById('roleSelect').addEventListener('change', function() {
-            const isSuperAdmin = this.value === 'super_admin';
-            document.getElementById('emailField').style.display = isSuperAdmin ? 'none' : 'block';
-            document.getElementById('usernameField').style.display = isSuperAdmin ? 'block' : 'none';
-            document.getElementById('email').required = !isSuperAdmin;
-            document.getElementById('username').required = isSuperAdmin;
-            if (!isSuperAdmin) document.getElementById('username').value = '';
-            if (isSuperAdmin) document.getElementById('email').value = '';
-            if (this.value) { document.getElementById('errorMsg').style.display = 'none'; }
-        });
+        const roleSelectEl = document.getElementById('roleSelect');
+        if (roleSelectEl) {
+            roleSelectEl.addEventListener('change', function() {
+                const isSuperAdmin = this.value === 'super_admin';
+                const emailField = document.getElementById('emailField');
+                const usernameField = document.getElementById('usernameField');
+                const emailInput = document.getElementById('email');
+                const usernameInput = document.getElementById('username');
+                if (emailField) emailField.style.display = isSuperAdmin ? 'none' : 'block';
+                if (usernameField) usernameField.style.display = isSuperAdmin ? 'block' : 'none';
+                if (emailInput) emailInput.required = !isSuperAdmin;
+                if (usernameInput) usernameInput.required = isSuperAdmin;
+                if (!isSuperAdmin && usernameInput) usernameInput.value = '';
+                if (isSuperAdmin && emailInput) emailInput.value = '';
+                if (this.value) {
+                    const err = document.getElementById('errorMsg');
+                    if (err) err.style.display = 'none';
+                }
+            });
+        }
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -500,8 +511,13 @@
                     role: role,
                     remember: document.getElementById('remember').checked
                 };
-                if (isSuperAdmin) { payload.username = document.getElementById('username').value; }
-                else { payload.email = document.getElementById('email').value; }
+                if (isSuperAdmin) {
+                    const unEl = document.getElementById('username');
+                    payload.username = unEl ? unEl.value : '';
+                } else {
+                    const emEl = document.getElementById('email');
+                    payload.email = emEl ? emEl.value : '';
+                }
 
                 const res = await fetch(this.action, {
                     method: 'POST',
