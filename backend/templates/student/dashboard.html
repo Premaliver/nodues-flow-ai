@@ -2014,25 +2014,39 @@
 
             // Progress Calculations
             let clearedStages = 0;
-            if (stage1AllApproved) clearedStages++;
-            if (stage2Approved) clearedStages++;
-            if (stage3Approved) clearedStages++;
-            if (stage4Approved) clearedStages++;
+            let totalStages = isDayScholar ? 3 : 4;
 
-            const overallStagePct = Math.round((clearedStages / 4) * 100);
+            if (isDayScholar) {
+                if (stage2Approved) clearedStages++;
+                if (stage3Approved) clearedStages++;
+                if (stage4Approved) clearedStages++;
+            } else {
+                if (stage1AllApproved) clearedStages++;
+                if (stage2Approved) clearedStages++;
+                if (stage3Approved) clearedStages++;
+                if (stage4Approved) clearedStages++;
+            }
+
+            const overallStagePct = Math.round((clearedStages / totalStages) * 100);
             updateGauge(overallStagePct);
 
             // Active Step Number
             let currentActiveStep = 1;
-            if (stage4Approved) currentActiveStep = 4;
-            else if (stage4Active) currentActiveStep = 4;
-            else if (stage3Active) currentActiveStep = 3;
-            else if (stage2Active) currentActiveStep = 2;
-            else currentActiveStep = 1;
+            if (isDayScholar) {
+                if (stage4Approved || stage4Active) currentActiveStep = 3;
+                else if (stage3Active) currentActiveStep = 2;
+                else currentActiveStep = 1;
+            } else {
+                if (stage4Approved || stage4Active) currentActiveStep = 4;
+                else if (stage3Active) currentActiveStep = 3;
+                else if (stage2Active) currentActiveStep = 2;
+                else currentActiveStep = 1;
+            }
 
-            // Track Fill Width: 0% -> 33% -> 66% -> 88% -> 100%
-            const fillWidths = [0, 33, 66, 88, 100];
-            const trackFillWidth = fillWidths[clearedStages] || 0;
+            // Track Fill Width
+            const fillWidths4 = [0, 33, 66, 88, 100];
+            const fillWidths3 = [0, 50, 85, 100];
+            const trackFillWidth = isDayScholar ? (fillWidths3[clearedStages] || 0) : (fillWidths4[clearedStages] || 0);
 
             // Header Live Badge
             badgeSlot.innerHTML = `
@@ -2051,25 +2065,102 @@
             `;
 
             // 1. STEPPER MILESTONES HTML
-            // Milestone 1 State
+            // Milestone 1 (Campus Facilities for Hosteller)
             let m1Cls = stage1AllApproved ? 'cleared' : (stage1HasRejection ? 'rejected' : 'active');
-            let m1Pill = isDayScholar ? '✓ Exempted' : (stage1AllApproved ? '✓ Cleared' : (stage1HasRejection ? '✕ Action' : '⏳ Reviewing'));
-            let m1Icon = isDayScholar ? '🚶' : '🏢';
+            let m1Pill = stage1AllApproved ? '✓ Cleared' : (stage1HasRejection ? '✕ Action' : '⏳ Reviewing');
+            let m1Icon = '🏢';
 
-            // Milestone 2 State
+            // Milestone Accounts & Finance
             let m2Cls = stage2Approved ? 'cleared' : (stage2Rejected ? 'rejected' : (stage2Active ? 'active' : 'locked'));
             let m2Pill = stage2Approved ? '✓ Cleared' : (stage2Rejected ? '✕ Dues Query' : (stage2Active ? '⚡ Reviewing' : '🔒 Locked'));
             let m2Icon = stage2Approved ? '✓' : (stage2Locked ? '🔒' : '💳');
 
-            // Milestone 3 State
+            // Milestone Academic HOD
             let m3Cls = stage3Approved ? 'cleared' : (stage3Rejected ? 'rejected' : (stage3Active ? 'active' : 'locked'));
             let m3Pill = stage3Approved ? '✓ Cleared' : (stage3Rejected ? '✕ Attendance' : (stage3Active ? '⚡ Reviewing' : '🔒 Locked'));
             let m3Icon = stage3Approved ? '✓' : (stage3Locked ? '🔒' : '👨‍🏫');
 
-            // Milestone 4 State
+            // Milestone Examination Controller
             let m4Cls = stage4Approved ? 'cleared' : (stage4Rejected ? 'rejected' : (stage4Active ? 'active' : 'locked'));
             let m4Pill = stage4Approved ? '🎉 Issued' : (stage4Rejected ? '✕ Hold' : (stage4Active ? '⚡ Reviewing' : '🔒 Locked'));
             let m4Icon = stage4Approved ? '🎓' : (stage4Locked ? '🔒' : '📄');
+
+            let milestonesHtml = '';
+            if (isDayScholar) {
+                milestonesHtml = `
+                    <!-- Day Scholar Step 1: Accounts & Finance -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardAccounts')?.scrollIntoView({behavior:'smooth'})" title="Stage 1: Accounts & Finance Review">
+                        <div class="milestone-step-tag">STAGE 01</div>
+                        <div class="milestone-bubble ${m2Cls}">
+                            ${m2Icon}
+                        </div>
+                        <div class="milestone-name">Accounts & Finance</div>
+                        <span class="milestone-status-pill ${m2Cls}">${m2Pill}</span>
+                    </div>
+
+                    <!-- Day Scholar Step 2: Academic HOD -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardHOD')?.scrollIntoView({behavior:'smooth'})" title="Stage 2: Academic Department Clearance (HOD)">
+                        <div class="milestone-step-tag">STAGE 02</div>
+                        <div class="milestone-bubble ${m3Cls}">
+                            ${m3Icon}
+                        </div>
+                        <div class="milestone-name">Academic HOD</div>
+                        <span class="milestone-status-pill ${m3Cls}">${m3Pill}</span>
+                    </div>
+
+                    <!-- Day Scholar Step 3: Examination Department & Hall Ticket -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardExam')?.scrollIntoView({behavior:'smooth'})" title="Stage 3: Examination Department & Hall Ticket">
+                        <div class="milestone-step-tag">STAGE 03</div>
+                        <div class="milestone-bubble ${m4Cls}">
+                            ${m4Icon}
+                        </div>
+                        <div class="milestone-name">Hall Ticket Release</div>
+                        <span class="milestone-status-pill ${m4Cls}">${m4Pill}</span>
+                    </div>
+                `;
+            } else {
+                milestonesHtml = `
+                    <!-- Hosteller Step 1: Campus Facilities -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardFacilities')?.scrollIntoView({behavior:'smooth'})" title="Stage 1: Campus Facilities Verification">
+                        <div class="milestone-step-tag">STAGE 01</div>
+                        <div class="milestone-bubble ${m1Cls}">
+                            ${stage1AllApproved ? '✓' : m1Icon}
+                        </div>
+                        <div class="milestone-name">Campus Facilities</div>
+                        <span class="milestone-status-pill ${m1Cls}">${m1Pill}</span>
+                    </div>
+
+                    <!-- Hosteller Step 2: Accounts & Finance -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardAccounts')?.scrollIntoView({behavior:'smooth'})" title="Stage 2: Accounts & Finance Review">
+                        <div class="milestone-step-tag">STAGE 02</div>
+                        <div class="milestone-bubble ${m2Cls}">
+                            ${m2Icon}
+                        </div>
+                        <div class="milestone-name">Accounts & Finance</div>
+                        <span class="milestone-status-pill ${m2Cls}">${m2Pill}</span>
+                    </div>
+
+                    <!-- Hosteller Step 3: Academic HOD -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardHOD')?.scrollIntoView({behavior:'smooth'})" title="Stage 3: Academic Department Clearance (HOD)">
+                        <div class="milestone-step-tag">STAGE 03</div>
+                        <div class="milestone-bubble ${m3Cls}">
+                            ${m3Icon}
+                        </div>
+                        <div class="milestone-name">Academic HOD</div>
+                        <span class="milestone-status-pill ${m3Cls}">${m3Pill}</span>
+                    </div>
+
+                    <!-- Hosteller Step 4: Examination Department -->
+                    <div class="pipeline-milestone-col" onclick="document.getElementById('stageCardExam')?.scrollIntoView({behavior:'smooth'})" title="Stage 4: Examination Department & Hall Ticket">
+                        <div class="milestone-step-tag">STAGE 04</div>
+                        <div class="milestone-bubble ${m4Cls}">
+                            ${m4Icon}
+                        </div>
+                        <div class="milestone-name">Hall Ticket Release</div>
+                        <span class="milestone-status-pill ${m4Cls}">${m4Pill}</span>
+                    </div>
+                `;
+            }
 
             const stepperHtml = `
                 <div class="pipeline-tracker-wrap">
@@ -2077,7 +2168,7 @@
                         <div style="display: flex; align-items: center; gap: 0.6rem;">
                             <span style="font-size: 1.1rem;">⚡</span>
                             <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-family: var(--font-mono);">
-                                SEQUENTIAL CLEARANCE PIPELINE • CURRENTLY AT STAGE 0${currentActiveStep} OF 04
+                                SEQUENTIAL CLEARANCE PIPELINE • CURRENTLY AT STAGE 0${currentActiveStep} OF 0${totalStages}
                             </div>
                         </div>
                         <div style="font-size: 0.84rem; font-weight: 800; color: var(--accent); font-family: var(--font-mono); background: rgba(99, 102, 241, 0.1); padding: 0.25rem 0.75rem; border-radius: 9999px;">
@@ -2091,51 +2182,13 @@
                         </div>
 
                         <div class="pipeline-milestones-flex">
-                            <!-- Milestone 1 -->
-                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard1')?.scrollIntoView({behavior:'smooth'})" title="Stage 1: Campus Facilities Verification">
-                                <div class="milestone-step-tag">STAGE 01</div>
-                                <div class="milestone-bubble ${m1Cls}">
-                                    ${stage1AllApproved && !isDayScholar ? '✓' : m1Icon}
-                                </div>
-                                <div class="milestone-name">${isDayScholar ? 'Day Scholar' : 'Campus Facilities'}</div>
-                                <span class="milestone-status-pill ${m1Cls}">${m1Pill}</span>
-                            </div>
-
-                            <!-- Milestone 2 -->
-                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard2')?.scrollIntoView({behavior:'smooth'})" title="Stage 2: Accounts & Finance Review">
-                                <div class="milestone-step-tag">STAGE 02</div>
-                                <div class="milestone-bubble ${m2Cls}">
-                                    ${m2Icon}
-                                </div>
-                                <div class="milestone-name">Accounts & Finance</div>
-                                <span class="milestone-status-pill ${m2Cls}">${m2Pill}</span>
-                            </div>
-
-                            <!-- Milestone 3 -->
-                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard3')?.scrollIntoView({behavior:'smooth'})" title="Stage 3: Academic Department Clearance (HOD)">
-                                <div class="milestone-step-tag">STAGE 03</div>
-                                <div class="milestone-bubble ${m3Cls}">
-                                    ${m3Icon}
-                                </div>
-                                <div class="milestone-name">Academic HOD</div>
-                                <span class="milestone-status-pill ${m3Cls}">${m3Pill}</span>
-                            </div>
-
-                            <!-- Milestone 4 -->
-                            <div class="pipeline-milestone-col" onclick="document.getElementById('stageCard4')?.scrollIntoView({behavior:'smooth'})" title="Stage 4: Examination Department & Hall Ticket">
-                                <div class="milestone-step-tag">STAGE 04</div>
-                                <div class="milestone-bubble ${m4Cls}">
-                                    ${m4Icon}
-                                </div>
-                                <div class="milestone-name">Hall Ticket Release</div>
-                                <span class="milestone-status-pill ${m4Cls}">${m4Pill}</span>
-                            </div>
+                            ${milestonesHtml}
                         </div>
                     </div>
                 </div>
             `;
 
-            // 2. CELEBRATION ADMIT CARD SHOWCASE (IF STAGE 4 CLEARED)
+            // 2. CELEBRATION ADMIT CARD SHOWCASE (IF FINAL STAGE CLEARED)
             let celebrationBannerHtml = '';
             const ac = d.admit_card || (d.admit_cards && d.admit_cards[0]);
             if (stage4Approved || ac) {
@@ -2144,7 +2197,7 @@
                     <div class="admit-card-unlocked-banner">
                         <div style="position: relative; z-index: 2;">
                             <div style="font-size: 0.8rem; font-weight: 800; color: #10b981; letter-spacing: 0.07em; text-transform: uppercase;">
-                                🎉 ALL 4 INSTITUTIONAL STAGES COMPLETED & CERTIFIED
+                                🎉 ALL ${totalStages} INSTITUTIONAL STAGES COMPLETED & CERTIFIED
                             </div>
                             <h3 style="font-family: 'DM Serif Display', Georgia, serif; font-size: 1.85rem; font-weight: 400; margin: 0.25rem 0; color: var(--text-primary);">
                                 Official Term Examination Hall Ticket Ready!
@@ -2162,94 +2215,76 @@
                 `;
             }
 
-            // 3. THE 4 SEQUENTIAL STAGE CARDS
-            // ── STAGE 1 CARD ──
-            const s1CardCls = stage1AllApproved ? 'cleared' : (stage1HasRejection ? 'rejected' : 'active');
-            let s1StatusBadge = '';
-            if (isDayScholar) {
-                s1StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ EXEMPTED (DAY SCHOLAR)</span>`;
-            } else if (stage1AllApproved) {
-                s1StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ CLEARED & SIGNED OFF</span>`;
-            } else if (stage1HasRejection) {
-                s1StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ DUES / ACTION REQUIRED</span>`;
-            } else {
-                s1StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ UNDER ACTIVE REVIEW</span>`;
-            }
+            // 3. THE STAGE CARDS
+            // ── CAMPUS FACILITIES CARD (ONLY FOR HOSTELLER / FACILITIES AVAILED) ──
+            let stageFacilitiesCardHtml = '';
+            if (!isDayScholar) {
+                const s1CardCls = stage1AllApproved ? 'cleared' : (stage1HasRejection ? 'rejected' : 'active');
+                let s1StatusBadge = '';
+                if (stage1AllApproved) {
+                    s1StatusBadge = `<span class="badge badge-success" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">✓ CLEARED & SIGNED OFF</span>`;
+                } else if (stage1HasRejection) {
+                    s1StatusBadge = `<span class="badge badge-danger" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚠️ DUES / ACTION REQUIRED</span>`;
+                } else {
+                    s1StatusBadge = `<span class="badge badge-primary" style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;">⚡ UNDER ACTIVE REVIEW</span>`;
+                }
 
-            let s1ContentHtml = '';
-            if (isDayScholar) {
-                s1ContentHtml = `
-                    <div class="day-scholar-exempt-box">
-                        <span style="font-size: 1.85rem;">📍</span>
-                        <div>
-                            <div style="font-weight: 800; font-size: 0.95rem; color: #10b981;">Day Scholar Clearance — No Campus Facilities Requested</div>
-                            <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 2px;">
-                                You are registered as a Day Scholar with no hostel room, dining mess, or institutional bus transport allocations. Pre-cleared to proceed immediately to Stage 2 Accounts & Finance review.
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                s1ContentHtml = `
-                    <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
-                        <strong>Institutional Sequence Rule:</strong> If any campus facility is selected, its verification must complete first before the Accountant can process fee clearance.
-                    </div>
-                    <div class="facility-chips-grid">
-                        ${stage1Depts.map(ad => {
-                            const isDone = ad.status === 'approved';
-                            const isRej = ad.status === 'rejected';
-                            const badgeCls = isDone ? 'badge-success' : (isRej ? 'badge-danger' : 'badge-primary');
-                            const label = isDone ? '✓ Cleared' : (isRej ? '✕ Dues Flagged' : '⏳ Reviewing');
-                            const procDate = ad.processed_at ? new Date(ad.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : null;
-
-                            return `
-                                <div class="facility-chip-card">
-                                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
-                                        <span style="font-size: 1.3rem;">${getDeptIcon(ad)}</span>
-                                        <div style="min-width: 0; overflow: hidden;">
-                                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                ${ad.department_name || 'Facility'}
-                                            </div>
-                                            <div style="font-size: 0.72rem; color: var(--text-muted);">
-                                                ${procDate ? `Verified ${procDate}` : 'In verification queue'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <span class="badge ${badgeCls}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; flex-shrink: 0;">
-                                        ${label}
-                                    </span>
+                stageFacilitiesCardHtml = `
+                    <div class="stage-journey-card ${s1CardCls}" id="stageCardFacilities">
+                        <div class="stage-card-header">
+                            <div class="stage-card-title-group">
+                                <div class="stage-card-icon-bubble">🏢</div>
+                                <div>
+                                    <div class="stage-card-phase-tag">STAGE 01 • CAMPUS FACILITIES</div>
+                                    <div class="stage-card-name">Campus Facilities Verification</div>
+                                    <div class="stage-card-role">Hostel Administration, Mess & Dining, Transport Logistics, Scholarship Desk</div>
                                 </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    ${stage1Depts.some(ad => ad.remarks) ? `
-                        <div class="stage-remark-box">
-                            💬 <strong>Facility Notes:</strong> "${stage1Depts.filter(ad => ad.remarks).map(ad => ad.remarks).join('; ')}"
+                            </div>
+                            <div>${s1StatusBadge}</div>
                         </div>
-                    ` : ''}
+                        <div class="stage-card-body">
+                            <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                                <strong>Institutional Sequence Rule:</strong> As an availed facilities resident, verification must complete first before the Accountant processes fee clearance.
+                            </div>
+                            <div class="facility-chips-grid">
+                                ${stage1Depts.map(ad => {
+                                    const isDone = ad.status === 'approved';
+                                    const isRej = ad.status === 'rejected';
+                                    const badgeCls = isDone ? 'badge-success' : (isRej ? 'badge-danger' : 'badge-primary');
+                                    const label = isDone ? '✓ Cleared' : (isRej ? '✕ Dues Flagged' : '⏳ Reviewing');
+                                    const procDate = ad.processed_at ? new Date(ad.processed_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : null;
+
+                                    return `
+                                        <div class="facility-chip-card">
+                                            <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+                                                <span style="font-size: 1.3rem;">${getDeptIcon(ad)}</span>
+                                                <div style="min-width: 0; overflow: hidden;">
+                                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                        ${ad.department_name || 'Facility'}
+                                                    </div>
+                                                    <div style="font-size: 0.72rem; color: var(--text-muted);">
+                                                        ${procDate ? `Verified ${procDate}` : 'In verification queue'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="badge ${badgeCls}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; flex-shrink: 0;">
+                                                ${label}
+                                            </span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            ${stage1Depts.some(ad => ad.remarks) ? `
+                                <div class="stage-remark-box">
+                                    💬 <strong>Facility Notes:</strong> "${stage1Depts.filter(ad => ad.remarks).map(ad => ad.remarks).join('; ')}"
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
                 `;
             }
 
-            const stage1CardHtml = `
-                <div class="stage-journey-card ${s1CardCls}" id="stageCard1">
-                    <div class="stage-card-header">
-                        <div class="stage-card-title-group">
-                            <div class="stage-card-icon-bubble">🏢</div>
-                            <div>
-                                <div class="stage-card-phase-tag">STAGE 01 • CAMPUS FACILITIES</div>
-                                <div class="stage-card-name">Campus Facilities Verification</div>
-                                <div class="stage-card-role">Hostel Administration, Mess & Dining, Transport Logistics, Scholarship Desk</div>
-                            </div>
-                        </div>
-                        <div>${s1StatusBadge}</div>
-                    </div>
-                    <div class="stage-card-body">
-                        ${s1ContentHtml}
-                    </div>
-                </div>
-            `;
-
-            // ── STAGE 2 CARD (ACCOUNTS & FINANCE) ──
+            // ── ACCOUNTS & FINANCE CARD (STAGE 01 FOR DAY SCHOLAR, STAGE 02 FOR HOSTELLER) ──
             const s2CardCls = stage2Approved ? 'cleared' : (stage2Rejected ? 'rejected' : (stage2Active ? 'active' : 'locked'));
             let s2StatusBadge = '';
             if (stage2Locked) {
@@ -2270,14 +2305,14 @@
                     <div class="stage-lock-notice">
                         <span style="font-size: 1.4rem;">🔒</span>
                         <div>
-                            <strong>Sequential Lock Active:</strong> Stage 2 is waiting for Stage 1 Campus Facilities to verify room, mess, or transport dues. The Accountant review desk automatically unlocks once all facility approvals are in place.
+                            <strong>Sequential Lock Active:</strong> Waiting for preceding facility clearance (Stage 1). The Accountant review desk automatically unlocks once all facility approvals are in place.
                         </div>
                     </div>
                 `;
             } else {
                 s2BodyHtml = `
                     <div style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
-                        <strong>Accountant Review Scope:</strong> Audits semester tuition receipts, term examination fees, late fines, and scholarship credits in the university ledger.
+                        <strong>Accountant Review Scope:</strong> Audits semester tuition receipts, term examination fees, late fines, and scholarship credits in the university financial ledger.
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; background: var(--bg-secondary); border-radius: 12px; padding: 0.85rem 1.15rem; border: 1px solid var(--border-light);">
                         <div>
@@ -2301,13 +2336,14 @@
                 `;
             }
 
-            const stage2CardHtml = `
-                <div class="stage-journey-card ${s2CardCls}" id="stageCard2">
+            const accountsStageNum = isDayScholar ? '01' : '02';
+            const stageAccountsCardHtml = `
+                <div class="stage-journey-card ${s2CardCls}" id="stageCardAccounts">
                     <div class="stage-card-header">
                         <div class="stage-card-title-group">
                             <div class="stage-card-icon-bubble">💳</div>
                             <div>
-                                <div class="stage-card-phase-tag">STAGE 02 • ACCOUNTS & FINANCE</div>
+                                <div class="stage-card-phase-tag">STAGE ${accountsStageNum} • ACCOUNTS & FINANCE</div>
                                 <div class="stage-card-name">Accounts & Financial Clearance</div>
                                 <div class="stage-card-role">Senior Accountant & Financial Ledger Review Desk</div>
                             </div>
@@ -2320,7 +2356,7 @@
                 </div>
             `;
 
-            // ── STAGE 3 CARD (ACADEMIC HOD CLEARANCE) ──
+            // ── ACADEMIC HOD CLEARANCE CARD (STAGE 02 FOR DAY SCHOLAR, STAGE 03 FOR HOSTELLER) ──
             const s3CardCls = stage3Approved ? 'cleared' : (stage3Rejected ? 'rejected' : (stage3Active ? 'active' : 'locked'));
             let s3StatusBadge = '';
             if (stage3Locked) {
@@ -2338,11 +2374,12 @@
 
             let s3BodyHtml = '';
             if (stage3Locked) {
+                const prevStageNum = isDayScholar ? 'Stage 1 Accounts' : 'Stage 2 Accounts';
                 s3BodyHtml = `
                     <div class="stage-lock-notice">
                         <span style="font-size: 1.4rem;">🔒</span>
                         <div>
-                            <strong>Sequential Lock Active:</strong> Stage 3 Academic HOD sign-off requires preceding financial clearance. As soon as the Accountant verifies tuition dues (Stage 2), your application unlocks on your department HOD's desk.
+                            <strong>Sequential Lock Active:</strong> Academic HOD sign-off requires preceding financial clearance. As soon as the Accountant verifies tuition dues (${prevStageNum}), your application automatically unlocks on your department HOD's desk.
                         </div>
                     </div>
                 `;
@@ -2368,13 +2405,14 @@
                 `;
             }
 
-            const stage3CardHtml = `
-                <div class="stage-journey-card ${s3CardCls}" id="stageCard3">
+            const hodStageNum = isDayScholar ? '02' : '03';
+            const stageHODCardHtml = `
+                <div class="stage-journey-card ${s3CardCls}" id="stageCardHOD">
                     <div class="stage-card-header">
                         <div class="stage-card-title-group">
                             <div class="stage-card-icon-bubble">👨‍🏫</div>
                             <div>
-                                <div class="stage-card-phase-tag">STAGE 03 • ACADEMIC CLEARANCE</div>
+                                <div class="stage-card-phase-tag">STAGE ${hodStageNum} • ACADEMIC CLEARANCE</div>
                                 <div class="stage-card-name">${cleanHODTitle}</div>
                                 <div class="stage-card-role">Attendance Verification (≥ 75%), Lab Practicals & Departmental Sign-off</div>
                             </div>
@@ -2387,7 +2425,7 @@
                 </div>
             `;
 
-            // ── STAGE 4 CARD (EXAMINATION DEPARTMENT & ADMIT CARD) ──
+            // ── EXAMINATION DEPARTMENT & ADMIT CARD (STAGE 03 FOR DAY SCHOLAR, STAGE 04 FOR HOSTELLER) ──
             const s4CardCls = stage4Approved ? 'cleared' : (stage4Rejected ? 'rejected' : (stage4Active ? 'active' : 'locked'));
             let s4StatusBadge = '';
             if (stage4Locked) {
@@ -2409,7 +2447,7 @@
                     <div class="stage-lock-notice">
                         <span style="font-size: 1.4rem;">🔒</span>
                         <div>
-                            <strong>Sequential Lock Active:</strong> The Examination Department only processes applications that have achieved 100% verified sign-off from both Accounts and Academic HOD. Once Stage 3 clears, the Examination Controller issues your Hall Ticket.
+                            <strong>Sequential Lock Active:</strong> The Examination Department only processes applications that have achieved verified sign-off from both Accounts and Academic HOD. Once all preceding steps clear, the Examination Controller generates your Hall Ticket.
                         </div>
                     </div>
                 `;
@@ -2440,7 +2478,7 @@
                     <div style="padding: 1.1rem 1.25rem; border-radius: 14px; background: rgba(99, 102, 241, 0.08); border: 1.5px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; gap: 0.85rem;">
                         <span style="font-size: 1.6rem;">⚡</span>
                         <div>
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">All preceding clearances (Facilities, Accounts, HOD) are successfully verified!</div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary);">All preceding clearances are successfully verified!</div>
                             <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">
                                 The Controller of Examinations is generating your official digital Hall Ticket with cryptographic security stamp.
                             </div>
@@ -2449,13 +2487,14 @@
                 `;
             }
 
-            const stage4CardHtml = `
-                <div class="stage-journey-card ${s4CardCls}" id="stageCard4">
+            const examStageNum = isDayScholar ? '03' : '04';
+            const stageExamCardHtml = `
+                <div class="stage-journey-card ${s4CardCls}" id="stageCardExam">
                     <div class="stage-card-header">
                         <div class="stage-card-title-group">
                             <div class="stage-card-icon-bubble">🎓</div>
                             <div>
-                                <div class="stage-card-phase-tag">STAGE 04 • EXAMINATION CONTROLLER</div>
+                                <div class="stage-card-phase-tag">STAGE ${examStageNum} • EXAMINATION CONTROLLER</div>
                                 <div class="stage-card-name">Examination Department & Admit Card Release</div>
                                 <div class="stage-card-role">Office of the Controller of Examinations (Final Verification & Digital Hall Ticket)</div>
                             </div>
@@ -2473,10 +2512,10 @@
                 ${celebrationBannerHtml}
                 ${stepperHtml}
                 <div class="clearance-stages-container">
-                    ${stage1CardHtml}
-                    ${stage2CardHtml}
-                    ${stage3CardHtml}
-                    ${stage4CardHtml}
+                    ${!isDayScholar ? stageFacilitiesCardHtml : ''}
+                    ${stageAccountsCardHtml}
+                    ${stageHODCardHtml}
+                    ${stageExamCardHtml}
                 </div>
             `;
         }

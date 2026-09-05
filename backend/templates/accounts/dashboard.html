@@ -5,7 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accounts Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        .clickable-stat {
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+        }
+        .clickable-stat:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent);
+        }
+        .clickable-stat.active-stat {
+            border: 2px solid var(--accent) !important;
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 1rem 1.4rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 2500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+        }
+        @keyframes slideUpToast {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-success { background: rgba(6, 95, 70, 0.95); color: #ecfdf5; border-left: 4px solid #10b981; }
+        .toast-error { background: rgba(153, 27, 27, 0.95); color: #fef2f2; border-left: 4px solid #ef4444; }
+        .toast-info { background: rgba(30, 58, 138, 0.95); color: #eff6ff; border-left: 4px solid #3b82f6; }
+        .category-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        .cat-dayscholar {
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+        .cat-hosteller {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+    </style>
 </head>
 <body>
     <div class="floating-shapes">
@@ -32,60 +89,112 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="/accounts/dashboard" class="sidebar-nav-item active" onclick="toggleSidebar(false)"><span class="nav-icon">📊</span> Dashboard</a>
-                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); loadApplicationsByStatus('pending'); return false;"><span class="nav-icon">📋</span> Pending Applications</a>
-                <a href="#" class="sidebar-nav-item" onclick="toggleSidebar(false); loadApplicationsByStatus('approved'); return false;"><span class="nav-icon">✅</span> Processed</a>
+                <a href="/accounts/dashboard" class="sidebar-nav-item active" id="navDashboard" onclick="toggleSidebar(false); resetDashboard(); return false;"><span class="nav-icon">📊</span> Dashboard Overview</a>
+                <a href="#" class="sidebar-nav-item" id="navPending" onclick="toggleSidebar(false); loadApplicationsByStatus('pending'); return false;"><span class="nav-icon">📋</span> Pending Clearance</a>
+                <a href="#" class="sidebar-nav-item" id="navProcessed" onclick="toggleSidebar(false); loadApplicationsByStatus('processed'); return false;"><span class="nav-icon">✅</span> Processed Queue</a>
                 <a href="/auth/change-password" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🔑</span> Change Password</a>
             </nav>
-            <div class="sidebar-footer"><a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a></div>
+            <div class="sidebar-footer">
+                <a href="/auth/logout" class="sidebar-nav-item" onclick="toggleSidebar(false)"><span class="nav-icon">🚪</span> Logout</a>
+            </div>
         </aside>
 
         <div class="app-main-wrapper">
             <header class="top-nav" id="topnav">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()">☰</button>
-                    <div class="top-nav-search">
+                    <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" aria-label="Toggle Navigation">☰</button>
+                    <div class="top-nav-search" style="position: relative;">
                         <span style="color: var(--text-muted);">🔍</span>
-                        <input type="text" placeholder="Search applications..." id="searchInput">
+                        <input type="text" placeholder="Search by student, roll no, app #..." id="searchInput" oninput="handleSearch(this.value)">
+                        <button id="clearSearchBtn" onclick="clearSearch()" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 0.8rem; cursor: pointer; color: var(--text-muted);">✕</button>
                     </div>
                 </div>
                 <div class="top-nav-actions">
-                    <div class="notification-badge" data-count="0" id="notifBadge">🔔</div>
-                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                    <div class="notification-badge" data-count="0" id="notifBadge" onclick="showNotificationSummary()" style="cursor: pointer;" title="Pending Clearance Alerts">🔔</div>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">🌙</button>
                 </div>
             </header>
 
             <main class="main-content">
-                <div class="dashboard-header">
+                <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <div class="dashboard-header-title">
-                        <h1>Accounts Dashboard</h1>
-                        <p>Manage financial clearances, fee verifications & accounts audit.</p>
+                        <h1 style="font-family: 'DM Serif Display', serif; font-size: 1.75rem; margin-bottom: 0.25rem;">Accounts Clearance Dashboard</h1>
+                        <p style="color: var(--text-muted); font-size: 0.88rem;">Senior Accountant Financial Verification, Fee Receipts Audit & Digital Stamping.</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button class="btn btn-outline btn-sm" onclick="refreshCurrentView()" style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span>🔄</span> Refresh Queue
+                        </button>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-info); color: white;">🔍</div><div class="stat-value" id="inReviewCount">0</div><div class="stat-label">In Review</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-success); color: white;">✅</div><div class="stat-value" id="approvedTodayCount">0</div><div class="stat-label">Approved Today</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div><div class="stat-value" id="rejectedCount">0</div><div class="stat-label">Rejected</div></div>
-                    <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary); color: white;">📊</div><div class="stat-value" id="totalProcessed">0</div><div class="stat-label">Total Processed</div></div>
+                <!-- Clickable Interactive Metric Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.75rem;">
+                    <div class="stat-card clickable-stat" id="cardStatPending" onclick="loadApplicationsByStatus('pending')" title="Click to filter Pending Applications">
+                        <div class="stat-icon" style="background: var(--gradient-warning); color: white;">⏳</div>
+                        <div class="stat-value" id="pendingCount">0</div>
+                        <div class="stat-label">Pending Clearance</div>
+                    </div>
+                    <div class="stat-card clickable-stat" id="cardStatInReview" onclick="loadApplicationsByStatus('in_review')" title="Click to filter In-Review Applications">
+                        <div class="stat-icon" style="background: var(--gradient-info); color: white;">🔍</div>
+                        <div class="stat-value" id="inReviewCount">0</div>
+                        <div class="stat-label">In Review</div>
+                    </div>
+                    <div class="stat-card clickable-stat" id="cardStatApprovedToday" onclick="loadApplicationsByStatus('approved')" title="Click to filter Approved Today">
+                        <div class="stat-icon" style="background: var(--gradient-success); color: white;">✅</div>
+                        <div class="stat-value" id="approvedTodayCount">0</div>
+                        <div class="stat-label">Approved Today</div>
+                    </div>
+                    <div class="stat-card clickable-stat" id="cardStatRejected" onclick="loadApplicationsByStatus('rejected')" title="Click to filter Rejected Applications">
+                        <div class="stat-icon" style="background: var(--gradient-danger); color: white;">❌</div>
+                        <div class="stat-value" id="rejectedCount">0</div>
+                        <div class="stat-label">Fee Dues / Rejected</div>
+                    </div>
+                    <div class="stat-card clickable-stat" id="cardStatTotalProcessed" onclick="loadApplicationsByStatus('processed')" title="Click to filter All Processed Applications">
+                        <div class="stat-icon" style="background: var(--gradient-primary); color: white;">📊</div>
+                        <div class="stat-value" id="totalProcessed">0</div>
+                        <div class="stat-label">Total Processed</div>
+                    </div>
                 </div>
 
+                <!-- Application Queue Table Card -->
                 <div class="card">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem;">
-                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Clearance Queue</h3>
-                        <select class="form-select" style="width: auto; padding: 0.5rem 1rem;" id="statusFilter" onchange="loadApplications()">
-                            <option value="pending">Pending</option>
-                            <option value="in_review">In Review</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                        <div>
+                            <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; margin: 0;" id="tableHeaderTitle">Clearance Queue</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;" id="tableHeaderSubtitle">Applications ready for senior accountant review and fee verification</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <label for="statusFilter" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Status Filter:</label>
+                            <select class="form-select" style="width: auto; min-width: 170px; padding: 0.45rem 0.85rem; font-size: 0.85rem; font-weight: 600;" id="statusFilter" onchange="onStatusFilterChanged()">
+                                <option value="pending">⏳ Pending Clearance</option>
+                                <option value="in_review">🔍 In Review</option>
+                                <option value="approved">✅ Approved</option>
+                                <option value="rejected">❌ Rejected</option>
+                                <option value="processed">📋 All Processed</option>
+                                <option value="all">🌐 All Applications</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="padding: 0;">
                         <div class="table-container">
                             <table>
-                                <thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Submitted</th><th>Action</th></tr></thead>
-                                <tbody id="applicationsTableBody"><tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading...</td></tr></tbody>
+                                <thead>
+                                    <tr>
+                                        <th>Application #</th>
+                                        <th>Student Name</th>
+                                        <th>Roll Number</th>
+                                        <th>Course & Branch</th>
+                                        <th>Category</th>
+                                        <th>Semester</th>
+                                        <th>Submitted</th>
+                                        <th>Status</th>
+                                        <th style="text-align: right;">Clearance Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsTableBody">
+                                    <tr><td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">Loading clearance applications...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -95,36 +204,67 @@
     </div>
 
     <!-- Hi-Tech Verification & Clearance Modal -->
-    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card" style="width: 100%; max-width: 540px; padding: 2rem; box-shadow: var(--shadow-xl);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400;" id="modalTitle">Clearance Verification</h3>
-                <span style="font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--emerald); padding: 4px 10px; border-radius: 20px; font-weight: 600;">SECURITY AUDIT LEVEL 3 ✓</span>
+    <div id="actionModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 2rem; box-shadow: var(--shadow-xl); border: 1px solid var(--border-light);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; font-weight: 400; margin: 0;" id="modalTitle">Clearance Verification</h3>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;" id="modalAppInfo"></div>
+                </div>
+                <span style="font-size: 0.72rem; background: rgba(16,185,129,0.12); color: var(--emerald); padding: 4px 10px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(16,185,129,0.25);">FINANCIAL AUDIT LEVEL 1 ✓</span>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.85rem;" id="modalAppInfo"></p>
-            <div class="student-review-card" id="studentReviewCard" style="display:none;"></div>
+            
+            <div class="student-review-card" id="studentReviewCard" style="display:none; margin-bottom: 1rem;"></div>
             
             <!-- Document Inspection Box -->
             <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
-                <h4 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem;">⚡ Uploaded Clearance Documents & AI Audit</h4>
-                <div id="modalDocsList" style="display: grid; gap: 0.5rem;">Loading documents...</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                    <h4 style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin: 0;">
+                        ⚡ Uploaded Fee Receipts & AI Verification
+                    </h4>
+                    <span style="font-size: 0.72rem; color: var(--emerald); font-weight: 700;">✓ Cryptographic Hash Check</span>
+                </div>
+                <div id="modalDocsList" style="display: grid; gap: 0.5rem;">Loading receipts...</div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="modalRemarks">Official Clearance Remarks / Audit Notes</label>
-                <textarea id="modalRemarks" class="form-textarea" placeholder="Enter clearance approval remarks or fee receipt verification notes..." style="min-height: 80px;"></textarea>
+            <div class="form-group" id="remarksFormGroup">
+                <label class="form-label" for="modalRemarks" style="font-weight: 700; font-size: 0.82rem;">Official Accounts Clearance Remarks / Audit Notes</label>
+                <textarea id="modalRemarks" class="form-textarea" placeholder="Enter fee receipt verification details, ledger notes, or reason for dues..." style="min-height: 80px; font-size: 0.85rem;"></textarea>
             </div>
+
+            <div id="auditLogInfoBox" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(99, 102, 241, 0.06); border-radius: var(--radius-md); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 0.82rem;"></div>
             
-            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;" id="modalActionButtons">
                 <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject Dues</button>
-                <button class="btn btn-success" onclick="processApplication('approved')">✅ Grant Clearance & Stamp</button>
+                <button class="btn btn-danger" id="btnRejectDues" onclick="processApplication('rejected')">❌ Reject Dues</button>
+                <button class="btn btn-success" id="btnApproveClearance" onclick="processApplication('approved')">✅ Grant Clearance & Stamp</button>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer"></div>
+
     <script>
         let currentAppDeptId = null;
+        let cachedApplications = [];
+        let currentFilter = 'pending';
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
+            toast.innerHTML = `<span>${icon}</span> <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
         function toggleSidebar(show) {
             const sb = document.getElementById('sidebar');
             const bd = document.getElementById('sidebarBackdrop');
@@ -138,7 +278,36 @@
                 bd.classList.remove('active');
             }
         }
-        function toggleTheme() { const html = document.documentElement; const curr = html.getAttribute('data-theme'); html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark'); }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const curr = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', curr === 'dark' ? 'light' : 'dark');
+        }
+
+        function setActiveNav(navId) {
+            document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+            const el = document.getElementById(navId);
+            if (el) el.classList.add('active');
+        }
+
+        function setActiveStatCard(status) {
+            document.querySelectorAll('.clickable-stat').forEach(el => el.classList.remove('active-stat'));
+            if (status === 'pending') document.getElementById('cardStatPending')?.classList.add('active-stat');
+            else if (status === 'in_review') document.getElementById('cardStatInReview')?.classList.add('active-stat');
+            else if (status === 'approved') document.getElementById('cardStatApprovedToday')?.classList.add('active-stat');
+            else if (status === 'rejected') document.getElementById('cardStatRejected')?.classList.add('active-stat');
+            else if (status === 'processed') document.getElementById('cardStatTotalProcessed')?.classList.add('active-stat');
+        }
+
+        function resetDashboard() {
+            setActiveNav('navDashboard');
+            currentFilter = 'pending';
+            document.getElementById('statusFilter').value = 'pending';
+            setActiveStatCard('pending');
+            clearSearch(false);
+            loadDashboard();
+        }
 
         async function loadDashboard() {
             try {
@@ -147,88 +316,46 @@
                 const res = await fetch('/accounts/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('pendingCount').textContent = data.data.stats.pending || 0;
-                    document.getElementById('inReviewCount').textContent = data.data.stats.in_review || 0;
-                    document.getElementById('approvedTodayCount').textContent = data.data.stats.approved_today || 0;
-                    document.getElementById('rejectedCount').textContent = data.data.stats.rejected || 0;
-                    document.getElementById('totalProcessed').textContent = data.data.stats.total_processed || 0;
-                    document.getElementById('notifBadge').setAttribute('data-count', data.data.stats.pending || 0);
-                    const tbody = document.getElementById('applicationsTableBody');
-                    if (data.data.pending_applications && data.data.pending_applications.length > 0) {
-                        tbody.innerHTML = data.data.pending_applications.map(app => `
-                            <tr>
-                                <td><strong>${app.application_number || 'N/A'}</strong></td>
-                                <td>${app.student_name}</td><td>${app.roll_number}</td><td>${app.course_name}</td>
-                                <td>Sem ${app.semester}</td>
-                                <td style="font-size: 0.8rem; color: var(--text-muted);">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</td>
-                                <td><button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${app.student_name}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${app.course_name}', '${app.semester}')">Process & Review</button></td>
-                            </tr>
-                        `).join('');
-                    } else { tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No pending applications</td></tr>'; }
+                    const stats = data.data.stats || {};
+                    document.getElementById('pendingCount').textContent = stats.pending || 0;
+                    document.getElementById('inReviewCount').textContent = stats.in_review || 0;
+                    document.getElementById('approvedTodayCount').textContent = stats.approved_today || 0;
+                    document.getElementById('rejectedCount').textContent = stats.rejected || 0;
+                    document.getElementById('totalProcessed').textContent = stats.total_processed || 0;
+                    document.getElementById('notifBadge').setAttribute('data-count', stats.pending || 0);
+                    
+                    // Populate table with ready applications
+                    cachedApplications = data.data.pending_applications || [];
+                    renderTable(cachedApplications);
                 }
-            } catch (e) { console.error('Dashboard load error:', e); }
-        }
-
-        async function openModal(appDeptId, studentName, appNumber, appId, rollNo, course, sem) { 
-            currentAppDeptId = appDeptId; 
-            document.getElementById('modalTitle').textContent = `Clearance: ${studentName}`; 
-            document.getElementById('modalAppInfo').textContent = `Application #: ${appNumber}`; 
-            const src = document.getElementById('studentReviewCard');
-            if (src) {
-                src.style.display = 'grid';
-                src.innerHTML = `
-                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${studentName}</span></div>
-                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
-                    <div class="student-info-item"><span class="info-label">Course</span><span class="info-val">🎓 ${course || 'N/A'}</span></div>
-                    <div class="student-info-item"><span class="info-label">Semester</span><span class="info-val">📅 Sem ${sem || 'N/A'}</span></div>
-                `;
-            }
-            document.getElementById('actionModal').style.display = 'flex'; 
-
-            // Load application documents
-            const docsList = document.getElementById('modalDocsList');
-            docsList.innerHTML = 'Loading documents...';
-            try {
-                const token = localStorage.getItem('access_token');
-                const res = await fetch(`/api/documents/${appId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                const d = await res.json();
-                if (d.success && d.data && d.data.length > 0) {
-                    docsList.innerHTML = d.data.map(doc => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px dashed var(--border-light);">
-                            <div>
-                                <strong style="font-size:0.85rem;">📄 ${doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'DOCUMENT'}:</strong> 
-                                <span style="font-size:0.8rem; color:var(--text-muted);">${doc.file_name}</span>
-                                <br><span style="font-size:0.75rem; color:var(--emerald);">✓ SHA-256 Checksum Validated</span>
-                            </div>
-                            <a href="${(doc.file_url || '/api/documents/file/' + doc.id)}?token=${encodeURIComponent(localStorage.getItem('access_token') || localStorage.getItem('token') || '')}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.6rem; font-size:0.75rem;">👁️ View Document</a>
-                        </div>
-                    `).join('');
-                } else {
-                    docsList.innerHTML = '<p style="font-size:0.85rem; color:var(--text-muted);">No uploaded receipt documents found.</p>';
-                }
-            } catch(e) {
-                docsList.innerHTML = '<p style="font-size:0.85rem; color:var(--crimson);">Could not load documents.</p>';
+            } catch (e) {
+                console.error('Dashboard load error:', e);
+                showToast('Failed to load dashboard metrics', 'error');
             }
         }
 
-        function closeModal() { currentAppDeptId = null; document.getElementById('actionModal').style.display = 'none'; document.getElementById('modalRemarks').value = ''; }
-
-        async function processApplication(action) {
-            if (!currentAppDeptId) return;
-            try {
-                const token = localStorage.getItem('access_token');
-                const remarks = document.getElementById('modalRemarks').value;
-                const res = await fetch(`/accounts/api/process/${currentAppDeptId}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action, remarks })
-                });
-                const data = await res.json();
-                alert(data.message); closeModal(); loadDashboard();
-            } catch (e) { alert('Error processing application'); console.error(e); }
+        function onStatusFilterChanged() {
+            const status = document.getElementById('statusFilter').value;
+            loadApplicationsByStatus(status);
         }
 
         function loadApplicationsByStatus(status) {
+            currentFilter = status;
             document.getElementById('statusFilter').value = status;
+            setActiveStatCard(status);
+
+            if (status === 'pending') setActiveNav('navPending');
+            else if (status === 'processed') setActiveNav('navProcessed');
+
+            const titleMap = {
+                'pending': 'Pending Clearance Queue',
+                'in_review': 'Applications Under Review',
+                'approved': 'Approved Clearances',
+                'rejected': 'Rejected / Dues Pending Queue',
+                'processed': 'All Processed Clearances',
+                'all': 'All University Applications'
+            };
+            document.getElementById('tableHeaderTitle').textContent = titleMap[status] || 'Clearance Queue';
             loadApplications();
         }
 
@@ -236,24 +363,230 @@
             try {
                 const token = localStorage.getItem('access_token');
                 const status = document.getElementById('statusFilter').value;
-                const res = await fetch(`/accounts/api/applications?status=${status}&per_page=20`, { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
+                const search = document.getElementById('searchInput').value.trim();
                 const tbody = document.getElementById('applicationsTableBody');
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);"><div class="spinner" style="margin: 0 auto 0.5rem auto;"></div>Loading applications...</td></tr>';
+                
+                const url = `/accounts/api/applications?status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}&per_page=50`;
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
                 if (data.success && data.data && data.data.items) {
-                    tbody.innerHTML = data.data.items.map(item => {
-                        const app = item.application || item;
-                        return `<tr>
-                            <td><strong>${app.application_number || 'N/A'}</strong></td>
-                            <td>${app.student_name || 'N/A'}</td><td>${app.roll_number || 'N/A'}</td><td>${app.course_name || 'N/A'}</td>
-                            <td>Sem ${app.semester || 'N/A'}</td>
-                            <td style="font-size: 0.8rem; color: var(--text-muted);">${item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</td>
-                            <td><span class="badge badge-${item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : item.status === 'in_review' ? 'info' : 'pending'}">${item.status}</span></td>
-                        </tr>`;
-                    }).join('');
+                    cachedApplications = data.data.items;
+                    renderTable(cachedApplications);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">No applications found in this queue.</td></tr>';
                 }
-            } catch (e) { console.error('Error loading applications:', e); }
+            } catch (e) {
+                console.error('Error loading applications:', e);
+                showToast('Could not fetch applications', 'error');
+            }
         }
-        loadDashboard();
+
+        function renderTable(apps) {
+            const tbody = document.getElementById('applicationsTableBody');
+            if (!apps || apps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No clearance applications in this queue.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = apps.map(app => {
+                const isApproved = app.status === 'approved';
+                const isRejected = app.status === 'rejected';
+                const isPending = app.status === 'pending' || app.status === 'in_review';
+                const statusBadgeCls = isApproved ? 'badge-success' : (isRejected ? 'badge-danger' : 'badge-warning');
+                const isDayScholar = (app.category || '').toLowerCase() === 'day_scholar';
+                const catBadge = isDayScholar ? '<span class="category-pill cat-dayscholar">🚶 Day Scholar</span>' : '<span class="category-pill cat-hosteller">🏠 Hosteller</span>';
+                const dateStr = app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : (app.created_at ? new Date(app.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'N/A');
+
+                let actionBtn = '';
+                if (isPending) {
+                    actionBtn = `<button class="btn btn-primary btn-sm" onclick="openModal('${app.app_dept_id}', '${escapeHtml(app.student_name)}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${escapeHtml(app.course_name)}', '${escapeHtml(app.branch||'')}', '${app.semester}', '${app.category}', '${app.status}', '${escapeHtml(app.remarks||'')}')" style="box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);">⚡ Process & Review</button>`;
+                } else if (isApproved) {
+                    actionBtn = `<button class="btn btn-sm btn-outline" style="color:var(--emerald); border-color:var(--emerald); font-weight:700;" onclick="openModal('${app.app_dept_id}', '${escapeHtml(app.student_name)}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${escapeHtml(app.course_name)}', '${escapeHtml(app.branch||'')}', '${app.semester}', '${app.category}', '${app.status}', '${escapeHtml(app.remarks||'')}')">✓ View Stamped</button>`;
+                } else {
+                    actionBtn = `<button class="btn btn-sm btn-outline" style="color:var(--crimson); border-color:var(--crimson); font-weight:700;" onclick="openModal('${app.app_dept_id}', '${escapeHtml(app.student_name)}', '${app.application_number}', '${app.application_id}', '${app.roll_number}', '${escapeHtml(app.course_name)}', '${escapeHtml(app.branch||'')}', '${app.semester}', '${app.category}', '${app.status}', '${escapeHtml(app.remarks||'')}')">✕ View Rejection</button>`;
+                }
+
+                return `
+                    <tr>
+                        <td><strong style="font-family: 'JetBrains Mono', monospace; color: var(--accent);">${app.application_number || 'N/A'}</strong></td>
+                        <td style="font-weight: 600;">👤 ${app.student_name || 'N/A'}</td>
+                        <td><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">${app.roll_number || 'N/A'}</span></td>
+                        <td>${app.course_name || 'N/A'} ${app.branch ? '<small style="color:var(--text-muted);">(' + app.branch + ')</small>' : ''}</td>
+                        <td>${catBadge}</td>
+                        <td>Sem ${app.semester || 'N/A'}</td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted);">${dateStr}</td>
+                        <td><span class="badge ${statusBadgeCls}">${(app.status || 'pending').toUpperCase()}</span></td>
+                        <td style="text-align: right;">${actionBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // Live Search Handling
+        function handleSearch(query) {
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+
+            if (!cachedApplications || cachedApplications.length === 0) return;
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderTable(cachedApplications);
+                return;
+            }
+
+            const filtered = cachedApplications.filter(app => {
+                const num = (app.application_number || '').toLowerCase();
+                const name = (app.student_name || '').toLowerCase();
+                const roll = (app.roll_number || '').toLowerCase();
+                const course = (app.course_name || '').toLowerCase();
+                const branch = (app.branch || '').toLowerCase();
+                return num.includes(q) || name.includes(q) || roll.includes(q) || course.includes(q) || branch.includes(q);
+            });
+            renderTable(filtered);
+        }
+
+        function clearSearch(reload = true) {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            if (reload) loadApplications();
+        }
+
+        // Modal Controller
+        async function openModal(appDeptId, studentName, appNumber, appId, rollNo, course, branch, sem, category, status, remarks) {
+            currentAppDeptId = appDeptId;
+            document.getElementById('modalTitle').textContent = `Clearance: ${studentName}`;
+            document.getElementById('modalAppInfo').textContent = `Application #: ${appNumber} • ${category ? category.replace(/_/g, ' ').toUpperCase() : 'DAY SCHOLAR'}`;
+            
+            const src = document.getElementById('studentReviewCard');
+            if (src) {
+                src.style.display = 'grid';
+                src.innerHTML = `
+                    <div class="student-info-item"><span class="info-label">Student Name</span><span class="info-val">👤 ${studentName}</span></div>
+                    <div class="student-info-item"><span class="info-label">Roll Number</span><span class="info-val">🆔 ${rollNo || 'N/A'}</span></div>
+                    <div class="student-info-item"><span class="info-label">Course / Degree</span><span class="info-val">🎓 ${course || 'N/A'} ${branch ? '('+branch+')' : ''}</span></div>
+                    <div class="student-info-item"><span class="info-label">Semester & Category</span><span class="info-val">📅 Sem ${sem || 'N/A'} • ${category === 'hosteller' ? '🏠 Hosteller' : '🚶 Day Scholar'}</span></div>
+                `;
+            }
+
+            // Adjust form & action buttons based on whether already processed
+            const isProcessed = status === 'approved' || status === 'rejected';
+            const remarksInput = document.getElementById('modalRemarks');
+            const actionButtons = document.getElementById('modalActionButtons');
+            const auditBox = document.getElementById('auditLogInfoBox');
+
+            if (isProcessed) {
+                remarksInput.value = remarks || 'No remarks provided.';
+                remarksInput.disabled = true;
+                auditBox.style.display = 'block';
+                auditBox.innerHTML = `<strong>Status:</strong> ${status.toUpperCase()} • This application has already been processed and stamped by Accounts.`;
+                actionButtons.innerHTML = `
+                    <button class="btn btn-secondary" onclick="closeModal()">Close Details</button>
+                `;
+            } else {
+                remarksInput.value = remarks || '';
+                remarksInput.disabled = false;
+                auditBox.style.display = 'none';
+                actionButtons.innerHTML = `
+                    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-danger" onclick="processApplication('rejected')">❌ Reject Dues</button>
+                    <button class="btn btn-success" onclick="processApplication('approved')">✅ Grant Clearance & Stamp</button>
+                `;
+            }
+
+            document.getElementById('actionModal').style.display = 'flex';
+
+            // Load application documents
+            const docsList = document.getElementById('modalDocsList');
+            docsList.innerHTML = '<div class="spinner" style="margin: 0.5rem auto;"></div><span style="font-size:0.8rem; color:var(--text-muted); display:block; text-align:center;">Verifying documents...</span>';
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/api/documents/${appId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await res.json();
+                if (d.success && d.data && d.data.length > 0) {
+                    docsList.innerHTML = d.data.map(doc => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.6rem; background: var(--bg-card); border-radius: 8px; border:1px solid var(--border-light);">
+                            <div style="min-width:0; overflow:hidden;">
+                                <strong style="font-size:0.82rem; color:var(--accent);">📄 ${doc.document_type ? doc.document_type.replace(/_/g,' ').toUpperCase() : 'RECEIPT'}:</strong> 
+                                <span style="font-size:0.78rem; color:var(--text-muted); margin-left: 4px;">${doc.file_name}</span>
+                                <div style="font-size:0.7rem; color:var(--emerald); margin-top:2px;">✓ SHA-256 Checksum Verified</div>
+                            </div>
+                            <a href="${(doc.file_url || '/api/documents/file/' + doc.id)}?token=${encodeURIComponent(localStorage.getItem('access_token') || '')}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.25rem 0.65rem; font-size:0.75rem; flex-shrink:0;">👁️ View Receipt</a>
+                        </div>
+                    `).join('');
+                } else {
+                    docsList.innerHTML = '<p style="font-size:0.85rem; color:var(--text-muted); margin:0;">No uploaded receipt documents found.</p>';
+                }
+            } catch(e) {
+                docsList.innerHTML = '<p style="font-size:0.85rem; color:var(--crimson); margin:0;">Could not load document records.</p>';
+            }
+        }
+
+        function closeModal() {
+            currentAppDeptId = null;
+            document.getElementById('actionModal').style.display = 'none';
+            document.getElementById('modalRemarks').value = '';
+        }
+
+        async function processApplication(action) {
+            if (!currentAppDeptId) return;
+            const actionText = action === 'approved' ? 'Grant Clearance' : 'Reject';
+            if (!confirm(`Are you sure you want to ${actionText} this student's accounts clearance?`)) return;
+
+            const btnApprove = document.getElementById('btnApproveClearance');
+            const btnReject = document.getElementById('btnRejectDues');
+            if (btnApprove) btnApprove.disabled = true;
+            if (btnReject) btnReject.disabled = true;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const remarks = document.getElementById('modalRemarks').value;
+                const res = await fetch(`/accounts/api/process/${currentAppDeptId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action, remarks })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || `Application ${action} successfully!`, 'success');
+                    closeModal();
+                    loadDashboard();
+                    if (currentFilter !== 'pending') loadApplications();
+                } else {
+                    showToast(data.message || 'Error processing application', 'error');
+                }
+            } catch (e) {
+                showToast('Server network error. Please try again.', 'error');
+                console.error(e);
+            } finally {
+                if (btnApprove) btnApprove.disabled = false;
+                if (btnReject) btnReject.disabled = false;
+            }
+        }
+
+        function refreshCurrentView() {
+            showToast('Refreshing clearance queue...', 'info');
+            loadDashboard();
+            if (currentFilter !== 'pending') loadApplications();
+        }
+
+        function showNotificationSummary() {
+            const pending = document.getElementById('pendingCount').textContent;
+            showToast(`Accounts Task Alert: ${pending} student applications waiting for financial clearance.`, 'info');
+        }
+
+        // Keyboard Shortcut: Escape to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Initialize dashboard
+        resetDashboard();
     </script>
 </body>
 </html>

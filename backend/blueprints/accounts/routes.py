@@ -150,9 +150,13 @@ def dashboard_data():
                 "student_name": stu_user.full_name,
                 "roll_number": student.roll_number,
                 "course_name": student.course_name,
+                "branch": student.branch or "",
                 "semester": student.current_semester,
                 "submitted_at": app.submitted_at.isoformat() if app.submitted_at else (app.created_at.isoformat() if app.created_at else None),
+                "created_at": app_dept.created_at.isoformat() if app_dept.created_at else None,
                 "category": student.category,
+                "status": app_dept.status,
+                "remarks": app_dept.remarks or "",
             })
 
     in_review_count = ApplicationDepartment.query.filter(
@@ -194,15 +198,16 @@ def dashboard_data():
 @accounts_bp.route("/api/applications")
 @jwt_required(optional=True)
 def list_applications():
-    """List applications for accounts clearance."""
+    """List applications for accounts clearance with search and multi-status support."""
     user = _get_authenticated_accounts_user()
     u_id = user.university_id if user else None
     accounts_depts = _get_accounts_depts(u_id)
     accounts_dept_ids = [d.id for d in accounts_depts]
 
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
     status_filter = request.args.get("status", "pending")
+    search_term = request.args.get("search", "").strip()
 
     q = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
@@ -211,16 +216,42 @@ def list_applications():
         .join(User, Student.user_id == User.id)
         .filter(
             ApplicationDepartment.department_id.in_(accounts_dept_ids),
-            ApplicationDepartment.status == status_filter,
             NoDuesApplication.deleted_at.is_(None),
         )
     )
+
     if status_filter == "pending":
-        q = q.filter(NoDuesApplication.status.in_(["submitted", "in_review", "partially_approved"]))
+        q = q.filter(
+            ApplicationDepartment.status == "pending",
+            NoDuesApplication.status.in_(["submitted", "in_review", "partially_approved"])
+        )
+    elif status_filter == "in_review":
+        q = q.filter(ApplicationDepartment.status == "in_review")
+    elif status_filter == "approved":
+        q = q.filter(ApplicationDepartment.status == "approved")
+    elif status_filter == "rejected":
+        q = q.filter(ApplicationDepartment.status == "rejected")
+    elif status_filter in ("processed", "completed"):
+        q = q.filter(ApplicationDepartment.status.in_(["approved", "rejected"]))
+    elif status_filter != "all":
+        q = q.filter(ApplicationDepartment.status == status_filter)
 
     if u_id:
         q = q.filter(
             (NoDuesApplication.university_id == u_id) | (NoDuesApplication.university_id == str(u_id))
+        )
+
+    if search_term:
+        term = f"%{search_term}%"
+        q = q.filter(
+            db.or_(
+                NoDuesApplication.application_number.ilike(term),
+                User.first_name.ilike(term),
+                User.last_name.ilike(term),
+                Student.roll_number.ilike(term),
+                Student.course_name.ilike(term),
+                Student.branch.ilike(term),
+            )
         )
 
     all_items = q.order_by(ApplicationDepartment.created_at.desc()).all()
@@ -245,10 +276,14 @@ def list_applications():
             "student_name": stu_user.full_name,
             "roll_number": student.roll_number,
             "course_name": student.course_name,
+            "branch": student.branch or "",
             "semester": student.current_semester,
             "created_at": app_dept.created_at.isoformat() if app_dept.created_at else None,
+            "submitted_at": app.submitted_at.isoformat() if app.submitted_at else (app.created_at.isoformat() if app.created_at else None),
             "status": app_dept.status,
             "category": student.category,
+            "remarks": app_dept.remarks or "",
+            "processed_at": app_dept.processed_at.isoformat() if app_dept.processed_at else None,
         })
 
     total = len(filtered_items)

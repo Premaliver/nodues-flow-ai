@@ -360,6 +360,21 @@ def ensure_application_department_approvals(application):
         application_id=application.id
     ).order_by(ApplicationDepartment.display_order).all()
 
+    # Pure Day Scholar Safeguard:
+    # If application is a day scholar or has no facilities selected, ensure NO campus facilities (hostel, mess, transport, scholarship) exist!
+    is_pure_day_scholar = (application.category == "day_scholar") or not (application.selected_departments)
+    if is_pure_day_scholar and existing:
+        facility_roles = {"hostel", "mess", "transport", "scholarship"}
+        stray = [ad for ad in existing if ad.department and ad.department.role in facility_roles]
+        if stray:
+            for s in stray:
+                db.session.delete(s)
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            existing = [ad for ad in existing if ad not in stray]
+
     if existing and len(existing) >= 3:
         roles = [a.department.role if a.department else None for a in existing]
         if "accounts" in roles and "hod" in roles and "examination" in roles:
@@ -811,12 +826,15 @@ def create_application():
             }), 409
 
         data = request.get_json(silent=True) or {}
-        selected_depts = data.get("selected_departments", [])
+        raw_selected = data.get("selected_departments", [])
+        selected_depts = [d for d in raw_selected if d and str(d).lower() not in ("none", "null", "undefined")]
         signature_data = data.get("signature", "") or ""
 
         # Hosteller default facilities if none passed
         if student.category == "hosteller" and not selected_depts:
             selected_depts = ["hostel", "mess"]
+        elif student.category == "day_scholar" and not selected_depts:
+            selected_depts = []
 
         u_id = student.university_id
         if u_id:
