@@ -340,12 +340,164 @@ def get_canonical_department_rank(ad):
     return 80
 
 
+def ensure_application_department_approvals(application):
+    """
+    Ensures sequential clearance approval records exist for an application according to category & facilities.
+    Sequential Order:
+      1..N. Selected Facilities (Hostel, Mess, Transport, Scholarship)
+      N+1. Accounts & Finance (Accountant)
+      N+2. Head of Department (HOD)
+      N+3. Examination Department
+    For Day Scholar without facilities:
+      Step 1: Accounts & Finance
+      Step 2: Head of Department (HOD)
+      Step 3: Examination Department
+    """
+    if not application:
+        return []
+
+    existing = ApplicationDepartment.query.filter_by(
+        application_id=application.id
+    ).order_by(ApplicationDepartment.display_order).all()
+
+    if existing and len(existing) >= 3:
+        roles = [a.department.role if a.department else None for a in existing]
+        if "accounts" in roles and "hod" in roles and "examination" in roles:
+            # Verify if display_order strictly matches canonical rank
+            sorted_by_rank = sorted(
+                existing,
+                key=lambda x: (get_canonical_department_rank(x), x.display_order or 0)
+            )
+            ranks = [get_canonical_department_rank(a) for a in existing]
+            is_sorted = all(ranks[i] <= ranks[i+1] for i in range(len(ranks) - 1))
+            has_correct_indices = all(a.display_order == idx for idx, a in enumerate(existing, 1))
+
+            if is_sorted and has_correct_indices:
+                return existing
+
+            # Re-index existing approvals according to canonical rank
+            for idx, a in enumerate(sorted_by_rank, 1):
+                a.display_order = idx
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return sorted_by_rank
+
+    u_id = application.university_id
+    if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        try:
+            ensure_university_departments(u_id)
+        except Exception:
+            pass
+
+    selected_depts = application.selected_departments or []
+    facility_order = ["hostel", "mess", "transport", "scholarship"]
+    active_workflow = []
+    step_order = 1
+
+    # 1. Facility departments (if availed)
+    for dept_role in facility_order:
+        if dept_role in selected_depts:
+            dept = Department.query.filter(
+                Department.role == dept_role,
+                (Department.university_id == u_id) | (Department.university_id == str(u_id)) if u_id else True,
+                Department.is_active == True,
+            ).first()
+            if not dept:
+                dept = Department.query.filter_by(role=dept_role, is_active=True).first()
+            if not dept:
+                dept = Department.query.filter_by(role=dept_role).first()
+            if dept:
+                active_workflow.append({"department": dept, "step_order": step_order, "is_required": True})
+                step_order += 1
+
+    # 2. Accounts Department (First step for Day Scholar, or right after facilities)
+    accounts_dept = Department.query.filter(
+        Department.role == "accounts",
+        (Department.university_id == u_id) | (Department.university_id == str(u_id)) if u_id else True,
+        Department.is_active == True,
+    ).first()
+    if not accounts_dept:
+        accounts_dept = Department.query.filter_by(role="accounts", is_active=True).first()
+    if not accounts_dept:
+        accounts_dept = Department.query.filter_by(role="accounts").first()
+    if accounts_dept:
+        active_workflow.append({"department": accounts_dept, "step_order": step_order, "is_required": True})
+        step_order += 1
+
+    # 3. Academic HOD Department
+    hod_dept = None
+    if application.hod_department_id:
+        hod_dept = Department.query.get(application.hod_department_id)
+    if not hod_dept and u_id:
+        hod_dept = Department.query.filter(
+            Department.role == "hod",
+            (Department.university_id == u_id) | (Department.university_id == str(u_id)),
+            Department.is_active == True,
+        ).first()
+    if not hod_dept:
+        hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
+    if not hod_dept:
+        hod_dept = Department.query.filter_by(role="hod").first()
+    if hod_dept:
+        active_workflow.append({"department": hod_dept, "step_order": step_order, "is_required": True})
+        step_order += 1
+
+    # 4. Examination Department
+    exam_dept = Department.query.filter(
+        Department.role == "examination",
+        (Department.university_id == u_id) | (Department.university_id == str(u_id)) if u_id else True,
+        Department.is_active == True,
+    ).first()
+    if not exam_dept:
+        exam_dept = Department.query.filter_by(role="examination", is_active=True).first()
+    if not exam_dept:
+        exam_dept = Department.query.filter_by(role="examination").first()
+    if exam_dept:
+        active_workflow.append({"department": exam_dept, "step_order": step_order, "is_required": True})
+        step_order += 1
+
+    # Remove invalid approvals and add new sequential ones
+    ApplicationDepartment.query.filter_by(application_id=application.id).delete()
+    new_approvals = []
+    for step in active_workflow:
+        ad = ApplicationDepartment(
+            application_id=application.id,
+            department_id=step["department"].id,
+            display_order=step["step_order"],
+            is_required=step["is_required"],
+            status="pending",
+        )
+        db.session.add(ad)
+        new_approvals.append(ad)
+
+    application.total_steps = len(active_workflow)
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return new_approvals
+
+
 def normalize_application_department_approvals(app_record):
     """
     Sorts department approvals by canonical rank (Facilities -> Accounts -> HOD -> Exam)
     and re-indexes display_order (1, 2, 3, 4) in database if needed.
     """
-    if not app_record or not app_record.department_approvals:
+    if not app_record:
+        return []
+
+    if not app_record.department_approvals or len(app_record.department_approvals) == 0:
+        ensure_application_department_approvals(app_record)
+        try:
+            db.session.refresh(app_record)
+        except Exception:
+            pass
+
+    if not app_record.department_approvals:
         return []
     
     sorted_approvals = sorted(
@@ -781,6 +933,11 @@ def create_application():
                     Department.university_id == u_id
                 ).first()
 
+        if not accounts_dept:
+            accounts_dept = Department.query.filter_by(role="accounts", is_active=True).first()
+        if not accounts_dept:
+            accounts_dept = Department.query.filter_by(role="accounts").first()
+
         if accounts_dept:
             active_workflow.append({
                 "department": accounts_dept,
@@ -790,6 +947,11 @@ def create_application():
             step_order += 1
 
         # 3. Add Academic HOD Department
+        if not hod_dept:
+            hod_dept = Department.query.filter_by(role="hod", is_active=True).first()
+        if not hod_dept:
+            hod_dept = Department.query.filter_by(role="hod").first()
+
         if hod_dept:
             active_workflow.append({
                 "department": hod_dept,
@@ -824,6 +986,11 @@ def create_application():
                     Department.role == "examination",
                     Department.university_id == u_id
                 ).first()
+        if not exam_dept:
+            exam_dept = Department.query.filter_by(role="examination", is_active=True).first()
+        if not exam_dept:
+            exam_dept = Department.query.filter_by(role="examination").first()
+
         if exam_dept:
             active_workflow.append({
                 "department": exam_dept,
@@ -1039,6 +1206,44 @@ def submit_application(app_id):
         application.status = "submitted"
         application.submitted_at = datetime.now(timezone.utc)
 
+        # Enforce canonical department clearance approvals
+        approvals = ensure_application_department_approvals(application)
+        if approvals:
+            application.total_steps = len(approvals)
+        application.current_step = 0
+
+        # Dispatch notification to first clearance department staff
+        try:
+            if approvals and len(approvals) > 0:
+                first_approval = approvals[0]
+                first_dept = first_approval.department
+                if first_dept:
+                    u_id = application.university_id
+                    staff_members = []
+                    if u_id:
+                        staff_members = User.query.filter_by(
+                            role=first_dept.role,
+                            university_id=u_id,
+                            is_active=True
+                        ).all()
+                    if not staff_members:
+                        staff_members = User.query.filter_by(
+                            role=first_dept.role,
+                            is_active=True
+                        ).all()
+
+                    for staff in staff_members:
+                        notif = Notification(
+                            user_id=staff.id,
+                            type="application_submitted",
+                            title=f"New clearance application from {student.student_name}",
+                            message=f"Application #{application.application_number} ({student.category}) is waiting for {first_dept.name} verification.",
+                            application_id=application.id,
+                        )
+                        db.session.add(notif)
+        except Exception as notif_err:
+            current_app.logger.warning(f"Submission notification dispatch warning: {notif_err}")
+
         # Create audit log
         try:
             audit = AuditLog(
@@ -1064,6 +1269,7 @@ def submit_application(app_id):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error submitting application: {e}")
+        return jsonify({"success": False, "message": f"Failed to submit application: {str(e)}"}), 500
 @student_bp.route("/api/notifications")
 @jwt_required()
 def get_notifications():

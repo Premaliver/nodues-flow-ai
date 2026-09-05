@@ -2468,51 +2468,6 @@
                 </div>
             `;
 
-            // 4. ATTACHED DOCUMENTS CAROUSEL / GRID
-            const docs = d.documents || [];
-            const docsHtml = `
-                <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
-                        <div style="font-size: 0.92rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                            <span>📎</span> Attached Clearance Documents & Receipts (${docs.length})
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="showUploadModal()">
-                            + Upload Another Document
-                        </button>
-                    </div>
-
-                    ${docs.length > 0 ? `
-                        <div class="docs-drawer-grid">
-                            ${docs.map(doc => {
-                                const token = localStorage.getItem('access_token');
-                                const viewUrl = `/api/documents/file/${doc.id}?token=${token}`;
-                                const typeLabel = (doc.document_type || 'Receipt').replace(/_/g, ' ').toUpperCase();
-                                return `
-                                    <div class="doc-tile">
-                                        <div style="min-width: 0; overflow: hidden;">
-                                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                📄 ${typeLabel}
-                                            </div>
-                                            <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                ${doc.file_name || 'receipt.pdf'}
-                                            </div>
-                                        </div>
-                                        <a href="${viewUrl}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 0.72rem; padding: 0.25rem 0.55rem; flex-shrink: 0;">
-                                            View ↗
-                                        </a>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    ` : `
-                        <div style="padding: 1.25rem; border-radius: 14px; background: var(--bg-secondary); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-                            No receipts attached to this application yet. Both Examination Fee Receipt and Semester Fee Receipt are required.
-                            <button type="button" class="btn btn-primary btn-sm" onclick="showUploadModal()" style="margin-left: 0.6rem;">Upload Now</button>
-                        </div>
-                    `}
-                </div>
-            `;
-
             // Combine into the Hero Status Section
             bodyEl.innerHTML = `
                 ${celebrationBannerHtml}
@@ -2523,7 +2478,6 @@
                     ${stage3CardHtml}
                     ${stage4CardHtml}
                 </div>
-                ${docsHtml}
             `;
         }
 

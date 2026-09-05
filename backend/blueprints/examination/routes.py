@@ -34,8 +34,14 @@ def _get_exam_dept(university_id=None):
     """Helper to fetch the examination department scoped to university."""
     from flask_login import current_user
     u_id = university_id
-    if not u_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id"):
-        u_id = current_user.university_id
+    if not u_id:
+        try:
+            if current_user and current_user.is_authenticated:
+                u = db.session.get(User, current_user.id)
+                if u:
+                    u_id = u.university_id
+        except Exception:
+            pass
     if u_id:
         dept = Department.query.filter_by(role="examination", university_id=u_id).first()
         if dept:
@@ -84,18 +90,37 @@ def dashboard():
     return render_template("examination/dashboard.html", university=univ)
 
 
+def _get_authenticated_exam_user():
+    """Helper to authenticate examination staff via session cookie or JWT."""
+    from flask_login import current_user
+    try:
+        if current_user and current_user.is_authenticated:
+            u = db.session.get(User, current_user.id)
+            if u and u.role in ("examination", "super_admin"):
+                return u
+    except Exception:
+        pass
+
+    try:
+        user_id = get_jwt_identity()
+        if user_id:
+            import uuid as _uuid
+            try:
+                user = db.session.get(User, _uuid.UUID(str(user_id)))
+            except Exception:
+                user = db.session.get(User, user_id)
+            if user and user.role in ("examination", "super_admin"):
+                return user
+    except Exception:
+        pass
+    return None
+
+
 @exam_bp.route("/api/dashboard")
-@jwt_required()
+@jwt_required(optional=True)
 def dashboard_data():
     """Get examination dashboard data — applications ready for admit cards."""
-    user_id = get_jwt_identity()
-    user = None
-    if user_id:
-        try:
-            import uuid as _uuid
-            user = User.query.get(_uuid.UUID(str(user_id)))
-        except Exception:
-            user = User.query.get(user_id)
+    user = _get_authenticated_exam_user()
     u_id = user.university_id if user else None
 
     if u_id:

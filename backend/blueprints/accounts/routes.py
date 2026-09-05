@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 from flask import request, jsonify, render_template
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from . import accounts_bp
 from models import db
@@ -21,6 +21,57 @@ from utils.decorators import department_access, validate_json
 from utils.helpers import paginate_query, get_client_ip, get_user_agent
 
 
+def _get_authenticated_accounts_user():
+    """Strictly resolve active accounts user from Flask-Login session or JWT."""
+    try:
+        if current_user and current_user.is_authenticated:
+            u = db.session.get(User, current_user.id)
+            if u and u.role in ("accounts", "super_admin"):
+                return u
+    except Exception:
+        pass
+    try:
+        jwt_id = get_jwt_identity()
+        if jwt_id:
+            import uuid as _uuid
+            try:
+                uid = _uuid.UUID(str(jwt_id))
+            except Exception:
+                uid = jwt_id
+            u = db.session.get(User, uid)
+            if u and u.role == "accounts":
+                return u
+    except Exception:
+        pass
+    return None
+
+
+def _get_accounts_depts(u_id=None):
+    """Retrieve all accounts departments for this university with fallback."""
+    accounts_depts = []
+    if u_id:
+        from utils.tenant_helpers import ensure_university_departments
+        try:
+            ensure_university_departments(u_id)
+        except Exception:
+            pass
+        try:
+            import uuid as _uuid
+            u_uuid = _uuid.UUID(str(u_id))
+        except Exception:
+            u_uuid = u_id
+        accounts_depts = Department.query.filter(
+            Department.role == "accounts",
+            (Department.university_id == u_uuid) | (Department.university_id == str(u_id)),
+            Department.is_active == True,
+        ).all()
+    if not accounts_depts:
+        accounts_depts = Department.query.filter_by(role="accounts", is_active=True).all()
+    if not accounts_depts:
+        accounts_depts = Department.query.filter_by(role="accounts").all()
+    return accounts_depts
+
+
 @accounts_bp.route("/dashboard")
 @login_required
 @department_access("accounts")
@@ -32,152 +83,206 @@ def dashboard():
 
 
 @accounts_bp.route("/api/dashboard")
-@jwt_required()
+@jwt_required(optional=True)
 def dashboard_data():
     """Get accounts dashboard analytics data."""
-    user_id = get_jwt_identity()
-    user = None
-    if user_id:
-        try:
-            import uuid as _uuid
-            user = User.query.get(_uuid.UUID(str(user_id)))
-        except Exception:
-            user = User.query.get(user_id)
+    user = _get_authenticated_accounts_user()
     u_id = user.university_id if user else None
     
-    accounts_dept = None
-    if u_id:
-        from utils.tenant_helpers import ensure_university_departments
-        ensure_university_departments(u_id)
-        accounts_dept = Department.query.filter_by(role="accounts", university_id=u_id).first()
+    accounts_depts = _get_accounts_depts(u_id)
+    accounts_dept_ids = [d.id for d in accounts_depts]
 
-    if not accounts_dept:
+    if not accounts_dept_ids:
         return jsonify({
             "success": True,
             "data": {
-                "pending_count": 0, "in_review_count": 0,
-                "approved_today": 0, "rejected_count": 0,
-                "total_processed": 0, "pending_applications": []
+                "stats": {
+                    "pending": 0, "in_review": 0,
+                    "approved_today": 0, "rejected": 0,
+                    "total_processed": 0,
+                },
+                "pending_applications": []
             }
         })
 
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Statistics
-    pending_count = ApplicationDepartment.query.filter_by(
-        department_id=accounts_dept.id,
-        status="pending",
-    ).count()
-
-    in_review_count = ApplicationDepartment.query.filter_by(
-        department_id=accounts_dept.id,
-        status="in_review",
-    ).count()
-
-    approved_today = ApplicationDepartment.query.filter(
-        ApplicationDepartment.department_id == accounts_dept.id,
-        ApplicationDepartment.status == "approved",
-        ApplicationDepartment.processed_at >= today_start,
-    ).count()
-
-    rejected_count = ApplicationDepartment.query.filter_by(
-        department_id=accounts_dept.id,
-        status="rejected",
-    ).count()
-
-    total_processed = ApplicationDepartment.query.filter(
-        ApplicationDepartment.department_id == accounts_dept.id,
-        ApplicationDepartment.status.in_(["approved", "rejected"]),
-    ).count()
-
-    # Pending applications with full details strictly isolated by university
-    query = (
+    # Fetch submitted applications with pending accounts approval
+    q = (
         db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
         .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
         .join(Student, NoDuesApplication.student_id == Student.id)
         .join(User, Student.user_id == User.id)
         .filter(
-            ApplicationDepartment.department_id == accounts_dept.id,
+            ApplicationDepartment.department_id.in_(accounts_dept_ids),
             ApplicationDepartment.status == "pending",
+            NoDuesApplication.status.in_(["submitted", "in_review", "partially_approved"]),
+            NoDuesApplication.deleted_at.is_(None),
         )
     )
     if u_id:
-        query = query.filter(NoDuesApplication.university_id == u_id)
+        q = q.filter(
+            (NoDuesApplication.university_id == u_id) | (NoDuesApplication.university_id == str(u_id))
+        )
 
-    pending_apps = (
-        query
-        .order_by(NoDuesApplication.created_at.desc())
-        .limit(10)
-        .all()
-    )
+    all_pending = q.order_by(NoDuesApplication.created_at.desc()).all()
 
-    pending_list = []
-    for app_dept, app, student, user in pending_apps:
-        pending_list.append({
-            "app_dept_id": str(app_dept.id),
-            "application_id": str(app.id),
-            "application_number": app.application_number,
-            "student_name": user.full_name,
-            "roll_number": student.roll_number,
-            "course_name": student.course_name,
-            "semester": student.current_semester,
-            "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
-            "category": student.category,
-        })
+    # Sequential Gate for Accounts:
+    # An application is ready for the Accountant if all prior required steps
+    # (i.e. Campus Facilities with display_order < accounts.display_order) have already been approved!
+    # For a Day Scholar (no campus facilities), display_order == 1, so prior_unapproved is None.
+    # Therefore, Day Scholar applications appear IMMEDIATELY on the Accountant's dashboard!
+    ready_applications = []
+    for app_dept, app, student, stu_user in all_pending:
+        prior_unapproved = ApplicationDepartment.query.filter(
+            ApplicationDepartment.application_id == app.id,
+            ApplicationDepartment.display_order < app_dept.display_order,
+            ApplicationDepartment.is_required == True,
+            ApplicationDepartment.status != "approved"
+        ).first()
+
+        if not prior_unapproved:
+            ready_applications.append({
+                "app_dept_id": str(app_dept.id),
+                "application_id": str(app.id),
+                "application_number": app.application_number,
+                "student_name": stu_user.full_name,
+                "roll_number": student.roll_number,
+                "course_name": student.course_name,
+                "semester": student.current_semester,
+                "submitted_at": app.submitted_at.isoformat() if app.submitted_at else (app.created_at.isoformat() if app.created_at else None),
+                "category": student.category,
+            })
+
+    in_review_count = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(accounts_dept_ids),
+        ApplicationDepartment.status == "in_review",
+    ).count()
+
+    approved_today = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(accounts_dept_ids),
+        ApplicationDepartment.status == "approved",
+        ApplicationDepartment.processed_at >= today_start,
+    ).count()
+
+    rejected_count = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(accounts_dept_ids),
+        ApplicationDepartment.status == "rejected",
+    ).count()
+
+    total_processed = ApplicationDepartment.query.filter(
+        ApplicationDepartment.department_id.in_(accounts_dept_ids),
+        ApplicationDepartment.status.in_(["approved", "rejected"]),
+    ).count()
 
     return jsonify({
         "success": True,
         "data": {
             "stats": {
-                "pending": pending_count,
+                "pending": len(ready_applications),
                 "in_review": in_review_count,
                 "approved_today": approved_today,
                 "rejected": rejected_count,
                 "total_processed": total_processed,
             },
-            "pending_applications": pending_list,
+            "pending_applications": ready_applications,
         },
     })
 
 
 @accounts_bp.route("/api/applications")
-@jwt_required()
+@jwt_required(optional=True)
 def list_applications():
-    """List applications pending accounts clearance."""
-    accounts_dept = Department.query.filter_by(role="accounts").first()
+    """List applications for accounts clearance."""
+    user = _get_authenticated_accounts_user()
+    u_id = user.university_id if user else None
+    accounts_depts = _get_accounts_depts(u_id)
+    accounts_dept_ids = [d.id for d in accounts_depts]
+
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     status_filter = request.args.get("status", "pending")
 
-    query = (
-        db.session.query(ApplicationDepartment)
+    q = (
+        db.session.query(ApplicationDepartment, NoDuesApplication, Student, User)
+        .join(NoDuesApplication, ApplicationDepartment.application_id == NoDuesApplication.id)
+        .join(Student, NoDuesApplication.student_id == Student.id)
+        .join(User, Student.user_id == User.id)
         .filter(
-            ApplicationDepartment.department_id == accounts_dept.id,
+            ApplicationDepartment.department_id.in_(accounts_dept_ids),
             ApplicationDepartment.status == status_filter,
+            NoDuesApplication.deleted_at.is_(None),
         )
-        .order_by(ApplicationDepartment.created_at.desc())
     )
+    if status_filter == "pending":
+        q = q.filter(NoDuesApplication.status.in_(["submitted", "in_review", "partially_approved"]))
+
+    if u_id:
+        q = q.filter(
+            (NoDuesApplication.university_id == u_id) | (NoDuesApplication.university_id == str(u_id))
+        )
+
+    all_items = q.order_by(ApplicationDepartment.created_at.desc()).all()
+
+    filtered_items = []
+    for app_dept, app, student, stu_user in all_items:
+        if status_filter == "pending":
+            prior_unapproved = ApplicationDepartment.query.filter(
+                ApplicationDepartment.application_id == app.id,
+                ApplicationDepartment.display_order < app_dept.display_order,
+                ApplicationDepartment.is_required == True,
+                ApplicationDepartment.status != "approved"
+            ).first()
+            if prior_unapproved:
+                continue
+
+        filtered_items.append({
+            "id": str(app_dept.id),
+            "app_dept_id": str(app_dept.id),
+            "application_id": str(app.id),
+            "application_number": app.application_number,
+            "student_name": stu_user.full_name,
+            "roll_number": student.roll_number,
+            "course_name": student.course_name,
+            "semester": student.current_semester,
+            "created_at": app_dept.created_at.isoformat() if app_dept.created_at else None,
+            "status": app_dept.status,
+            "category": student.category,
+        })
+
+    total = len(filtered_items)
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_items = filtered_items[start:end]
 
     return jsonify({
         "success": True,
-        "data": paginate_query(query, page=page, per_page=per_page),
+        "data": {
+            "items": paginated_items,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "pages": (total + per_page - 1) // per_page if per_page else 1,
+        },
     })
 
 
 @accounts_bp.route("/api/process/<app_dept_id>", methods=["POST"])
-@jwt_required()
+@jwt_required(optional=True)
 @validate_json("action")
 def process_application(app_dept_id):
     """Approve or reject an application."""
-    user_id = get_jwt_identity()
-    user = None
-    if user_id:
-        try:
+    user = _get_authenticated_accounts_user()
+    user_id = user.id if user else None
+    if not user_id:
+        jwt_id = get_jwt_identity()
+        if jwt_id:
             import uuid as _uuid
-            user = User.query.get(_uuid.UUID(str(user_id)))
-        except Exception:
-            user = User.query.get(user_id)
+            try:
+                user_id = _uuid.UUID(str(jwt_id))
+            except Exception:
+                user_id = jwt_id
 
     app_dept = ApplicationDepartment.query.get(app_dept_id)
     if not app_dept:
@@ -191,7 +296,11 @@ def process_application(app_dept_id):
     action = data.get("action")
     remarks = data.get("remarks", "")
 
-    if action not in ("approved", "rejected"):
+    if action in ("approved", "approve"):
+        action = "approved"
+    elif action in ("rejected", "reject"):
+        action = "rejected"
+    else:
         return jsonify({"success": False, "message": "Invalid action"}), 400
 
     if action == "approved":
@@ -220,44 +329,76 @@ def process_application(app_dept_id):
 
     if action == "approved":
         app_dept.status = "approved"
-        application.current_step += 1
+        application.accounts_verified = True
+        application.accounts_verified_at = datetime.now(timezone.utc)
+        application.current_step = ApplicationDepartment.query.filter_by(
+            application_id=application.id,
+            status="approved",
+        ).count()
         if application.status == "submitted":
             application.status = "in_review"
+
+        # Sequential Workflow Progression:
+        # Notify HOD department staff that financial clearance is complete and the application is now ready for HOD review!
+        try:
+            hod_users = []
+            if application.university_id:
+                hod_users = User.query.filter_by(role="hod", university_id=application.university_id).all()
+            if not hod_users:
+                hod_users = User.query.filter_by(role="hod").all()
+            for hod_u in hod_users:
+                notif = Notification(
+                    user_id=hod_u.id,
+                    type="application_submitted",
+                    title=f"Application #{application.application_number} ready for HOD sign-off",
+                    message=f"Financial clearance has been approved by Accounts. Academic verification is now pending on your desk.",
+                    application_id=application.id,
+                )
+                db.session.add(notif)
+        except Exception:
+            pass
     else:
         app_dept.status = "rejected"
         application.status = "rejected"
 
     # Create notification for student
-    notification = Notification(
-        user_id=application.student.user_id,
-        type="department_approved" if action == "approved" else "department_rejected",
-        title=f"Accounts department {action} your application",
-        message=remarks or f"Your application has been {action} by Accounts.",
-        application_id=application.id,
-        data={
-            "department": "accounts",
-            "action": action,
-            "remarks": remarks,
-        },
-    )
-    db.session.add(notification)
+    try:
+        notification = Notification(
+            user_id=application.student.user_id,
+            type="department_approved" if action == "approved" else "department_rejected",
+            title=f"Accounts department {action} your application",
+            message=remarks or f"Your application has been {action} by Accounts.",
+            application_id=application.id,
+            data={
+                "department": "accounts",
+                "action": action,
+                "remarks": remarks,
+            },
+        )
+        db.session.add(notification)
+    except Exception:
+        pass
 
     # Create audit log
-    audit = AuditLog(
-        user_id=user_id,
-        action="approve" if action == "approved" else "reject",
-        resource_type="application_department",
-        resource_id=app_dept.id,
-        details={
-            "application_id": str(application.id),
-            "department": "accounts",
-            "action": action,
-            "remarks": remarks,
-        },
-        ip_address=get_client_ip(),
-        user_agent=get_user_agent(),
-    )
-    db.session.add(audit)
+    try:
+        audit = AuditLog(
+            user_id=user_id,
+            action="approve" if action == "approved" else "reject",
+            resource_type="application_department",
+            resource_id=app_dept.id,
+            details={
+                "application_id": str(application.id),
+                "department": "accounts",
+                "action": action,
+                "remarks": remarks,
+            },
+            ip_address=get_client_ip(),
+            user_agent=get_user_agent(),
+        )
+        db.session.add(audit)
+    except Exception:
+        pass
+
     db.session.commit()
 
     return jsonify({
