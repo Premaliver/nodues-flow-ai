@@ -25,7 +25,7 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from flask import Flask
+from flask import Flask, request, session, redirect, url_for, g
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
@@ -123,6 +123,14 @@ def create_app(config_name: str = "default") -> Flask:
     # Register blueprints
     register_blueprints(app)
 
+    @app.before_request
+    def resolve_role_session_hook():
+        """Route-aware role session activation to isolate multi-dashboard tabs."""
+        from utils.auth_helpers import get_target_role_for_path, activate_role_for_request
+        target_role = get_target_role_for_path(request.path)
+        if target_role:
+            activate_role_for_request(target_role)
+
     # Initialize multi-tenant context resolution
     from utils.tenant_resolver import init_tenant_resolver
     init_tenant_resolver(app)
@@ -138,6 +146,7 @@ def create_app(config_name: str = "default") -> Flask:
     def root_verify_clearance(card_number):
         from blueprints.examination.routes import public_verify_clearance
         return public_verify_clearance(card_number)
+
 
     @app.before_request
     def ensure_clean_db_session():
@@ -395,7 +404,17 @@ def register_login_callbacks(login_manager: LoginManager) -> None:
 
         try:
             from models import db
-            return db.session.get(User, uuid.UUID(str(user_id)))
+            user = db.session.get(User, uuid.UUID(str(user_id)))
+            if user and user.role == "super_admin" and not user.university_id and user.email:
+                from models.university import UniversityTenant
+                matched = UniversityTenant.query.filter_by(official_email=user.email.strip().lower()).first()
+                if matched:
+                    user.university_id = matched.id
+                    try:
+                        db.session.commit()
+                    except Exception:
+                        pass
+            return user
         except Exception:
             return None
 

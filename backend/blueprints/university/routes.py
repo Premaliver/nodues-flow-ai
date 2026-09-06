@@ -25,12 +25,34 @@ from licensing.crypto import LicenseCrypto
 
 
 def get_current_university():
-    """Helper to fetch logged-in university from session, current_user, or JWT."""
+    """Helper to fetch logged-in university from current_user, session, or JWT."""
     from flask_login import current_user
-    univ_id = session.get("university_id")
-    if not univ_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id") and current_user.university_id:
-        univ_id = current_user.university_id
+    
+    # 1. Check current_user first if authenticated (Highest source of truth)
+    if current_user and current_user.is_authenticated:
+        if getattr(current_user, "university_id", None):
+            try:
+                u_uuid = uuid.UUID(str(current_user.university_id)) if isinstance(current_user.university_id, str) else current_user.university_id
+                univ = db.session.get(UniversityTenant, u_uuid)
+                if univ:
+                    return univ
+            except Exception:
+                pass
+        # Auto-heal super_admin missing university_id by matching official_email
+        if getattr(current_user, "role", "") == "super_admin" and getattr(current_user, "email", None):
+            try:
+                matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+                if matched:
+                    current_user.university_id = matched.id
+                    db.session.commit()
+                    return matched
+            except Exception:
+                pass
 
+    # 2. Check session university_id
+    univ_id = session.get("university_id")
+
+    # 3. Check JWT claims
     if not univ_id:
         try:
             from flask_jwt_extended import verify_jwt_in_request, get_jwt
@@ -44,7 +66,7 @@ def get_current_university():
     if univ_id:
         try:
             u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
-            univ = UniversityTenant.query.get(u_uuid)
+            univ = db.session.get(UniversityTenant, u_uuid)
             if univ:
                 return univ
         except Exception:
@@ -102,7 +124,9 @@ def register():
             slug = f"{base_slug}-{counter}"
             counter += 1
 
+        tenant_id = uuid.uuid4()
         tenant = UniversityTenant(
+            id=tenant_id,
             name=name,
             slug=slug,
             official_email=official_email,
@@ -117,6 +141,8 @@ def register():
         )
         tenant.set_password(password)
         db.session.add(tenant)
+        db.session.flush()
+
         # Create dedicated SuperAdmin User account for this university tenant
         sa_user = User(
             email=official_email,
@@ -125,21 +151,16 @@ def register():
             last_name="SuperAdmin",
             status="active",
             is_email_verified=True,
-            university_id=tenant.id,
+            university_id=tenant_id,
         )
         sa_user.set_password(password)
         db.session.add(sa_user)
         db.session.commit()
 
-        # Log into session
+        # Log into session and store role session isolation
         login_user(sa_user)
-        session["university_id"] = str(tenant.id)
-        session["university_name"] = tenant.name
-        session["university_slug"] = tenant.slug
-        session["portal_slug"] = tenant.slug
-        session["user_role"] = "super_admin"
-        if tenant.logo_url:
-            session["university_logo"] = tenant.logo_url
+        from utils.auth_helpers import save_role_session
+        save_role_session(sa_user, tenant)
 
         if request.is_json:
             return jsonify({
@@ -206,14 +227,8 @@ def login():
             db.session.commit()
 
         login_user(sa_user)
-
-        session["university_id"] = str(tenant.id)
-        session["university_name"] = tenant.name
-        session["university_slug"] = tenant.slug
-        session["portal_slug"] = tenant.slug
-        session["user_role"] = "super_admin"
-        if tenant.logo_url:
-            session["university_logo"] = tenant.logo_url
+        from utils.auth_helpers import save_role_session
+        save_role_session(sa_user, tenant)
 
         redirect_target = "/superadmin/dashboard" if tenant.has_active_subscription else "/university/pov"
 
@@ -239,11 +254,8 @@ def login():
 # ─────────────────────────────────────────────────────────────
 @university_bp.route("/logout")
 def logout():
-    session.pop("university_id", None)
-    session.pop("university_name", None)
-    session.pop("university_slug", None)
-    from flask_login import logout_user
-    logout_user()
+    from utils.auth_helpers import remove_role_session
+    remove_role_session("super_admin")
     return redirect("/university/login")
 
 
@@ -442,24 +454,17 @@ def launch_superadmin():
             db.session.commit()
 
     login_user(sa_user)
-    session["university_id"] = str(univ.id)
-    session["university_name"] = univ.name
-    session["university_slug"] = univ.slug
-    session["portal_slug"] = univ.slug
-    session["user_role"] = "super_admin"
-    if univ.logo_url:
-        session["university_logo"] = univ.logo_url
+    from utils.auth_helpers import save_role_session
+    save_role_session(sa_user, univ)
 
     return redirect("/superadmin/dashboard")
 
 
-@university_bp.route("/logout")
+@university_bp.route("/univ-logout")
 def university_logout():
     """Logout of university portal session and return to university login."""
-    session.pop("university_id", None)
-    session.pop("university_slug", None)
-    session.pop("university_name", None)
-    logout_user()
+    from utils.auth_helpers import remove_role_session
+    remove_role_session("super_admin")
     return redirect("/university/login")
 
 
@@ -694,11 +699,8 @@ def portal_student_login(slug):
 
     login_user(user)
     session["login_source"] = "university_portal"
-    session["portal_slug"] = univ.slug
-    session["university_id"] = str(univ.id)
-    session["university_name"] = univ.name
-    session["university_slug"] = univ.slug
-    session["user_role"] = user.role
+    from utils.auth_helpers import save_role_session
+    save_role_session(user, univ)
 
     from flask_jwt_extended import create_access_token, create_refresh_token
     access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "university_id": str(univ.id)})
@@ -769,11 +771,8 @@ def portal_staff_login(slug):
 
     login_user(user)
     session["login_source"] = "university_portal"
-    session["portal_slug"] = univ.slug
-    session["university_id"] = str(univ.id)
-    session["university_name"] = univ.name
-    session["university_slug"] = univ.slug
-    session["user_role"] = user.role
+    from utils.auth_helpers import save_role_session
+    save_role_session(user, univ)
 
     from flask_jwt_extended import create_access_token, create_refresh_token
     access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role, "university_id": str(univ.id)})
@@ -837,6 +836,10 @@ def upload_branding_logo():
         logo_url = f"/static/uploads/logos/{unique_filename}"
         univ.logo_url = logo_url
         session["university_logo"] = logo_url
+        role_logos = dict(session.get("role_tenant_logos", {}))
+        role_logos["super_admin"] = logo_url
+        session["role_tenant_logos"] = role_logos
+        session.modified = True
         db.session.commit()
 
         return jsonify({
@@ -868,8 +871,14 @@ def update_branding():
 
     if logo_url:
         from utils.helpers import normalize_logo_url
-        univ.logo_url = normalize_logo_url(logo_url)
-        session["university_logo"] = univ.logo_url
+        norm_logo = normalize_logo_url(logo_url)
+        if norm_logo:
+            univ.logo_url = norm_logo
+            session["university_logo"] = norm_logo
+            role_logos = dict(session.get("role_tenant_logos", {}))
+            role_logos["super_admin"] = norm_logo
+            session["role_tenant_logos"] = role_logos
+            session.modified = True
 
     if primary_color and primary_color.startswith("#"):
         univ.primary_color = primary_color

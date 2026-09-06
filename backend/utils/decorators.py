@@ -54,6 +54,15 @@ def role_required(*roles: str):
             # Try session auth (Flask-Login)
             from flask_login import current_user
             from flask import session, redirect
+            from utils.auth_helpers import activate_role_for_request
+
+            # Check if any required role exists in role_sessions and activate it
+            role_sessions = session.get("role_sessions", {})
+            for r in roles:
+                if r in role_sessions:
+                    activate_role_for_request(r)
+                    break
+
             if current_user and current_user.is_authenticated:
                 active_user = current_user
                 try:
@@ -67,28 +76,23 @@ def role_required(*roles: str):
                         active_user = db.session.get(User, uid_obj)
                     role_val = active_user.role if active_user else None
 
-                if not active_user or role_val not in roles:
-                    if is_browser_request:
-                        # Redirect user safely to their authorized dashboard
-                        role_dashboards = {
-                            "student": "/student/dashboard",
-                            "accounts": "/accounts/dashboard",
-                            "hostel": "/hostel/dashboard",
-                            "mess": "/mess/dashboard",
-                            "transport": "/transport/dashboard",
-                            "scholarship": "/scholarship/dashboard",
-                            "hod": "/hod/dashboard",
-                            "examination": "/examination/dashboard",
-                            "super_admin": "/superadmin/dashboard",
-                        }
-                        target = role_dashboards.get(role_val, "/auth/login")
-                        return redirect(target)
-                    return jsonify({
-                        "success": False,
-                        "message": f"Access denied. Required roles: {', '.join(roles)}",
-                    }), 403
-                request.current_user = active_user
-                return f(*args, **kwargs)
+                if active_user and role_val in roles:
+                    request.current_user = active_user
+                    return f(*args, **kwargs)
+
+                # Unauthorized role access attempt
+                if is_browser_request:
+                    # Redirect to appropriate login page, never to an unauthorized dashboard
+                    if "super_admin" in roles:
+                        return redirect("/university/login")
+                    portal_slug = session.get("portal_slug") or session.get("university_slug")
+                    if portal_slug:
+                        return redirect(f"/u/{portal_slug}")
+                    return redirect("/auth/login")
+                return jsonify({
+                    "success": False,
+                    "message": f"Access denied. Required roles: {', '.join(roles)}",
+                }), 403
 
             # Unauthenticated access attempt
             if is_browser_request:
@@ -165,22 +169,22 @@ def department_access(department_role: str):
                     except Exception as e:
                         current_app.logger.debug(f"JWT verify in department_access: {e}")
 
+            from utils.auth_helpers import activate_role_for_request
+            # Check if department_role or super_admin exists in role_sessions and activate it
+            role_sessions = session.get("role_sessions", {})
+            if department_role in role_sessions:
+                activate_role_for_request(department_role)
+            elif "super_admin" in role_sessions:
+                activate_role_for_request("super_admin")
+
             if current_user and current_user.is_authenticated:
                 if current_user.role in (department_role, "super_admin"):
                     return f(*args, **kwargs)
                 if is_browser_request:
-                    role_dashboards = {
-                        "student": "/student/dashboard",
-                        "accounts": "/accounts/dashboard",
-                        "hostel": "/hostel/dashboard",
-                        "mess": "/mess/dashboard",
-                        "transport": "/transport/dashboard",
-                        "scholarship": "/scholarship/dashboard",
-                        "hod": "/hod/dashboard",
-                        "examination": "/examination/dashboard",
-                        "super_admin": "/superadmin/dashboard",
-                    }
-                    return redirect(role_dashboards.get(current_user.role, "/auth/login"))
+                    portal_slug = session.get("portal_slug") or session.get("university_slug")
+                    if portal_slug:
+                        return redirect(f"/u/{portal_slug}")
+                    return redirect("/auth/login")
                 return jsonify({
                     "success": False,
                     "message": f"Access denied. {department_role} access required",

@@ -41,7 +41,28 @@ def _resolve_tenant_from_request() -> Optional[UniversityTenant]:
     from models import db
 
     try:
-        # 1. Session state (Explicitly active University session takes priority for logged-in sessions)
+        # 1. Authenticated User's university link (Highest priority for logged-in sessions)
+        from flask_login import current_user
+        if current_user and current_user.is_authenticated:
+            if hasattr(current_user, "university_id") and current_user.university_id:
+                try:
+                    user_tenant = db.session.get(UniversityTenant, current_user.university_id)
+                    if user_tenant:
+                        return user_tenant
+                except Exception:
+                    db.session.rollback()
+            # Auto-heal missing university_id for super_admin
+            if getattr(current_user, "role", "") == "super_admin" and getattr(current_user, "email", None):
+                try:
+                    matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+                    if matched:
+                        current_user.university_id = matched.id
+                        db.session.commit()
+                        return matched
+                except Exception:
+                    db.session.rollback()
+
+        # 2. Session state (Explicitly active University session)
         univ_id = session.get("university_id")
         if univ_id:
             try:

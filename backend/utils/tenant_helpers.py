@@ -61,19 +61,36 @@ def ensure_university_departments(university_id) -> None:
 
 def get_current_context_university() -> Optional[UniversityTenant]:
     """Resolve the active university tenant object from session, logged-in user, JWT, or query params."""
-    # 1. From request query params (e.g. ?u=slug or ?university=slug)
+    # 1. From authenticated user directly (Highest priority for logged-in sessions)
+    if current_user and current_user.is_authenticated:
+        if hasattr(current_user, "university_id") and current_user.university_id:
+            try:
+                u_uuid = uuid.UUID(str(current_user.university_id)) if isinstance(current_user.university_id, str) else current_user.university_id
+                univ = db.session.get(UniversityTenant, u_uuid)
+                if univ:
+                    return univ
+            except Exception:
+                pass
+        # Auto-heal super_admin missing university_id by matching official_email
+        if getattr(current_user, "role", "") == "super_admin" and getattr(current_user, "email", None):
+            try:
+                matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+                if matched:
+                    current_user.university_id = matched.id
+                    db.session.commit()
+                    return matched
+            except Exception:
+                pass
+
+    # 2. From request query params (e.g. ?u=slug or ?university=slug)
     query_slug = request.args.get("u") or request.args.get("university") or request.args.get("slug")
     if query_slug:
         univ = UniversityTenant.query.filter_by(slug=query_slug.strip().lower()).first()
         if univ:
             return univ
 
-    # 2. From session university_id
+    # 3. From session university_id
     univ_id = session.get("university_id")
-
-    # 3. From current_user
-    if not univ_id and current_user and current_user.is_authenticated and hasattr(current_user, "university_id"):
-        univ_id = current_user.university_id
 
     # 4. From JWT token claims
     if not univ_id:
@@ -88,8 +105,8 @@ def get_current_context_university() -> Optional[UniversityTenant]:
 
     if univ_id:
         try:
-            u_uuid = uuid.UUID(str(university_id)) if isinstance(univ_id, str) else univ_id
-            univ = UniversityTenant.query.get(u_uuid)
+            u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
+            univ = db.session.get(UniversityTenant, u_uuid)
             if univ:
                 return univ
         except Exception:
@@ -107,3 +124,4 @@ def get_current_context_university() -> Optional[UniversityTenant]:
         return UniversityTenant.query.first()
     except Exception:
         return None
+

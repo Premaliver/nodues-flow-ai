@@ -98,27 +98,27 @@ def dashboard():
     except Exception:
         pass
 
+    # Multi-Role Tab Session Isolation:
+    # Activate super_admin role session if active in this browser
+    from utils.auth_helpers import activate_role_for_request
+    activate_role_for_request("super_admin")
+
     # Strict Authentication & Role Protection:
-    # Non-authenticated users or non-superadmin roles MUST NOT access this dashboard.
-    if not current_user or not current_user.is_authenticated:
+    if not current_user or not current_user.is_authenticated or current_user.role != "super_admin":
         portal_slug = session.get("portal_slug") or session.get("university_slug")
         if portal_slug:
             return redirect(f"/u/{portal_slug}")
-        return redirect("/auth/login")
+        return redirect("/university/login")
 
-    if current_user.role != "super_admin":
-        # Redirect unauthorized role to their respective authorized dashboard
-        role_dashboards = {
-            "student": "/student/dashboard",
-            "accounts": "/accounts/dashboard",
-            "hostel": "/hostel/dashboard",
-            "mess": "/mess/dashboard",
-            "transport": "/transport/dashboard",
-            "scholarship": "/scholarship/dashboard",
-            "hod": "/hod/dashboard",
-            "examination": "/examination/dashboard",
-        }
-        return redirect(role_dashboards.get(current_user.role, "/auth/login"))
+    # Auto-heal missing university_id for super_admin
+    if not current_user.university_id and current_user.email:
+        try:
+            matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+            if matched:
+                current_user.university_id = matched.id
+                db.session.commit()
+        except Exception:
+            pass
 
     try:
         token = create_access_token(
@@ -139,7 +139,7 @@ def dashboard():
         except Exception:
             univ = None
 
-    # 2. Check session university_id
+    # 2. Check session university_id (only if no assigned university)
     if not univ and session.get("university_id"):
         try:
             univ = UniversityTenant.query.get(uuid.UUID(str(session["university_id"])))
@@ -151,13 +151,17 @@ def dashboard():
         univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
 
     # 4. If platform master admin without tenant, fallback to first tenant for preview
-    if not univ:
+    if not univ and getattr(current_user, "email", "") in ("premk@smartnodues.com", "kprem@rayatbahra.edu"):
         univ = UniversityTenant.query.first()
 
     if univ:
         session["university_id"] = str(univ.id)
         session["university_name"] = univ.name
         session["university_slug"] = univ.slug
+        if univ.logo_url:
+            session["university_logo"] = univ.logo_url
+        from utils.auth_helpers import save_role_session
+        save_role_session(current_user, univ)
 
     univ_name = univ.name if univ else "University Command Center"
     univ_slug = univ.slug if univ else "campus"
@@ -1566,7 +1570,8 @@ def manage_branding():
     if "logo_url" in data:
         from utils.helpers import normalize_logo_url
         raw_logo = data.get("logo_url")
-        tenant.logo_url = normalize_logo_url(raw_logo) if raw_logo else None
+        if raw_logo and str(raw_logo).strip():
+            tenant.logo_url = normalize_logo_url(str(raw_logo).strip())
     if "primary_color" in data:
         tenant.primary_color = data.get("primary_color")
     if "accent_color" in data:

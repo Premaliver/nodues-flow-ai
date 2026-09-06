@@ -130,16 +130,19 @@ def login():
 
     # Bind university context into session if user belongs to a university
     from models.university import UniversityTenant
+    from utils.auth_helpers import save_role_session
+
+    if not user.university_id and user.role == "super_admin" and user.email:
+        matched = UniversityTenant.query.filter_by(official_email=user.email.strip().lower()).first()
+        if matched:
+            user.university_id = matched.id
+            db.session.commit()
+
+    user_univ = None
     if user.university_id:
         user_univ = db.session.get(UniversityTenant, user.university_id)
-        if user_univ:
-            session["university_id"] = str(user_univ.id)
-            session["university_slug"] = user_univ.slug
-            session["university_name"] = user_univ.name
-            session["portal_slug"] = user_univ.slug
-            session["user_role"] = user.role
-            if user_univ.logo_url:
-                session["university_logo"] = user_univ.logo_url
+
+    save_role_session(user, user_univ)
 
     # Generate JWT tokens
     access_token = create_access_token(
@@ -425,15 +428,11 @@ def logout():
     else:
         redirect_target = "/auth/login"
 
+    from utils.auth_helpers import remove_role_session
+    remove_role_session(user_role)
     session.pop("is_platform_master", None)
     session.pop("master_username", None)
-    session.pop("university_id", None)
-    session.pop("university_slug", None)
-    session.pop("portal_slug", None)
-    session.pop("university_name", None)
     session.pop("login_source", None)
-    session.pop("user_role", None)
-    logout_user()
 
     # Context-aware browser redirect
     if request.method == "GET":
