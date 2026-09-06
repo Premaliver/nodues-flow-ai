@@ -673,73 +673,70 @@
             const container = document.getElementById('deptCheckboxes');
             const badge = document.getElementById('studentCategoryBadge');
             const subtitle = document.getElementById('step2Subtitle');
-            const isHosteller = (studentData.category || '').toLowerCase() === 'hosteller';
+            const cat = (studentData.category || '').toLowerCase();
+            const isHosteller = cat === 'hosteller' || cat.includes('hostel');
+            const isTransport = cat === 'transport_user' || cat.includes('transport');
+            const isScholarship = cat === 'scholarship' || cat.includes('scholarship');
 
-            badge.textContent = isHosteller ? '🏠 Hosteller' : '🚶 Day Scholar';
+            badge.textContent = isHosteller ? '🏠 Hosteller' : (isTransport ? '🚌 Transport User' : (isScholarship ? '🎓 Scholarship' : '🚶 Day Scholar'));
+            subtitle.textContent = 'Select all institutional facilities you availed during your course of study (or select "Nothing" for standard core academic clearance only):';
 
-            if (isHosteller) {
-                subtitle.textContent = 'As a registered Hosteller, select your hostel accommodation, mess, and any scholarship clearance:';
-                container.innerHTML = `
-                    <div class="checkbox-card selected" data-dept="hostel" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="hostel" id="dept-hostel" checked onchange="updateCardState(this)">
-                        <label for="dept-hostel" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">🏠 Hostel Department</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel room clearance & inventory audit</span>
-                        </label>
-                    </div>
-                    <div class="checkbox-card selected" data-dept="mess" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="mess" id="dept-mess" checked onchange="updateCardState(this)">
-                        <label for="dept-mess" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">🍽️ Mess Department</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues & cafeteria billing clearance</span>
-                        </label>
-                    </div>
-                    <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="updateCardState(this)">
-                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">🎓 Scholarship Department</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
-                        </label>
-                    </div>
-                `;
-            } else {
-                // Day Scholar Options: Transport, Scholarship, None
-                subtitle.textContent = 'As a Day Scholar, select if you availed Transport or Scholarship, or select "Nothing":';
-                container.innerHTML = `
-                    <div class="checkbox-card" data-dept="transport" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="transport" id="dept-transport" onchange="handleDayScholarSelection(this)">
-                        <label for="dept-transport" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">🚌 Transport Clearance</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">College bus route fee & transport pass clearance</span>
-                        </label>
-                    </div>
-                    <div class="checkbox-card" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="scholarship" id="dept-scholarship" onchange="handleDayScholarSelection(this)">
-                        <label for="dept-scholarship" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">🎓 Scholarship Clearance</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
-                        </label>
-                    </div>
-                    <div class="checkbox-card selected" data-dept="none" onclick="toggleDeptCard(this, event)">
-                        <input type="checkbox" value="none" id="dept-none" checked onchange="handleDayScholarSelection(this)">
-                        <label for="dept-none" style="cursor: pointer; flex:1;">
-                            <strong style="color: var(--text-primary);">⚪ Nothing / None (Standard Day Scholar)</strong>
-                            <br><span style="font-size:0.75rem;color:var(--text-muted);">No transport or scholarship clearance needed (Core academic clearance only)</span>
-                        </label>
-                    </div>
-                `;
-            }
+            const hostelChecked = isHosteller ? 'checked' : '';
+            const messChecked = isHosteller ? 'checked' : '';
+            const transportChecked = isTransport ? 'checked' : '';
+            const scholarshipChecked = isScholarship ? 'checked' : '';
+            const noneChecked = (!isHosteller && !isTransport && !isScholarship) ? 'checked' : '';
+
+            container.innerHTML = `
+                <div class="checkbox-card ${hostelChecked ? 'selected' : ''}" data-dept="hostel" onclick="toggleDeptCard(this, event)">
+                    <input type="checkbox" value="hostel" id="dept-hostel" ${hostelChecked} onchange="handleFacilitySelection(this)">
+                    <label for="dept-hostel" style="cursor: pointer; flex:1;">
+                        <strong style="color: var(--text-primary);">🏠 Hostel Department</strong>
+                        <br><span style="font-size:0.75rem;color:var(--text-muted);">Hostel room clearance & inventory audit</span>
+                    </label>
+                </div>
+                <div class="checkbox-card ${messChecked ? 'selected' : ''}" data-dept="mess" onclick="toggleDeptCard(this, event)">
+                    <input type="checkbox" value="mess" id="dept-mess" ${messChecked} onchange="handleFacilitySelection(this)">
+                    <label for="dept-mess" style="cursor: pointer; flex:1;">
+                        <strong style="color: var(--text-primary);">🍽️ Mess Department</strong>
+                        <br><span style="font-size:0.75rem;color:var(--text-muted);">Mess dues & cafeteria billing clearance</span>
+                    </label>
+                </div>
+                <div class="checkbox-card ${transportChecked ? 'selected' : ''}" data-dept="transport" onclick="toggleDeptCard(this, event)">
+                    <input type="checkbox" value="transport" id="dept-transport" ${transportChecked} onchange="handleFacilitySelection(this)">
+                    <label for="dept-transport" style="cursor: pointer; flex:1;">
+                        <strong style="color: var(--text-primary);">🚌 Transport Clearance</strong>
+                        <br><span style="font-size:0.75rem;color:var(--text-muted);">College bus route fee & transport pass clearance</span>
+                    </label>
+                </div>
+                <div class="checkbox-card ${scholarshipChecked ? 'selected' : ''}" data-dept="scholarship" onclick="toggleDeptCard(this, event)">
+                    <input type="checkbox" value="scholarship" id="dept-scholarship" ${scholarshipChecked} onchange="handleFacilitySelection(this)">
+                    <label for="dept-scholarship" style="cursor: pointer; flex:1;">
+                        <strong style="color: var(--text-primary);">🎓 Scholarship Clearance</strong>
+                        <br><span style="font-size:0.75rem;color:var(--text-muted);">Scholarship & fee concession verification</span>
+                    </label>
+                </div>
+                <div class="checkbox-card ${noneChecked ? 'selected' : ''}" data-dept="none" onclick="toggleDeptCard(this, event)">
+                    <input type="checkbox" value="none" id="dept-none" ${noneChecked} onchange="handleFacilitySelection(this)">
+                    <label for="dept-none" style="cursor: pointer; flex:1;">
+                        <strong style="color: var(--text-primary);">⚪ Nothing / None (Standard Day Scholar)</strong>
+                        <br><span style="font-size:0.75rem;color:var(--text-muted);">No hostel, mess, bus, or scholarship dues (Core academic clearance only)</span>
+                    </label>
+                </div>
+            `;
         }
 
-        function handleDayScholarSelection(checkbox) {
+        function handleFacilitySelection(checkbox) {
             const noneCb = document.getElementById('dept-none');
-            const transportCb = document.getElementById('dept-transport');
-            const scholarshipCb = document.getElementById('dept-scholarship');
+            const facilityIds = ['dept-hostel', 'dept-mess', 'dept-transport', 'dept-scholarship'];
+            const facilityCbs = facilityIds.map(id => document.getElementById(id)).filter(Boolean);
 
             if (checkbox.id === 'dept-none') {
                 if (checkbox.checked) {
-                    if (transportCb) { transportCb.checked = false; updateCardState(transportCb); }
-                    if (scholarshipCb) { scholarshipCb.checked = false; updateCardState(scholarshipCb); }
+                    facilityCbs.forEach(cb => {
+                        cb.checked = false;
+                        updateCardState(cb);
+                    });
                 }
             } else {
                 if (checkbox.checked && noneCb) {
@@ -749,12 +746,14 @@
             }
             updateCardState(checkbox);
 
-            // If neither transport nor scholarship is checked, auto-select "none"
-            if (!transportCb?.checked && !scholarshipCb?.checked && noneCb) {
+            // If none of the facilities are checked, auto-select "none"
+            const anyFacilityChecked = facilityCbs.some(cb => cb.checked);
+            if (!anyFacilityChecked && noneCb) {
                 noneCb.checked = true;
                 updateCardState(noneCb);
             }
         }
+
 
         function updateCardState(checkbox) {
             checkbox.closest('.checkbox-card').classList.toggle('selected', checkbox.checked);
