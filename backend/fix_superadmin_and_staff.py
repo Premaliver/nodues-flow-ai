@@ -42,8 +42,10 @@ with app.app_context():
     db.session.commit()
 
     # Create missing default users
+    admin_email = os.environ.get("DEMO_ADMIN_EMAIL", "superadmin@rayatbahra.edu")
+    admin_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
     users_data = [
-        ("kprem@rayatbahra.edu", "super_admin", "Prem", "Kumar", "+91-9876543210"),
+        (admin_email, "super_admin", "Campus", "Admin", "+91-9876543210"),
         ("accounts@rayatbahra.edu", "accounts", "Priya", "Sharma", "+91-9876543211"),
         ("hostel@rayatbahra.edu", "hostel", "Rajesh", "Kumar", "+91-9876543212"),
         ("mess@rayatbahra.edu", "mess", "Amit", "Verma", "+91-9876543213"),
@@ -55,7 +57,7 @@ with app.app_context():
     ]
     for email, role, fname, lname, phone in users_data:
         if not User.query.filter_by(email=email).first():
-            password = "Prem@2004" if role == "super_admin" else "123456"
+            password = admin_pw if role == "super_admin" else "123456"
             user = User(email=email, role=role, first_name=fname, last_name=lname, phone=phone, is_email_verified=True, status="active")
             user.set_password(password)
             db.session.add(user)

@@ -53,7 +53,8 @@ def seed_data() -> None:
             subscription_status="unsubscribed",
             subscription_plan="none",
         )
-        demo_univ.set_password("Prem@2004")
+        demo_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
+        demo_univ.set_password(demo_pw)
         db.session.add(demo_univ)
         db.session.commit()
         print("[OK] Demo university tenant seeded (registrar@rayatbahra.edu)!")
@@ -87,16 +88,17 @@ def seed_data() -> None:
     db.session.commit()
 
     # 2. Create Master Super Admin User (Campus Controller)
+    sa_email = os.environ.get("DEMO_ADMIN_EMAIL", "superadmin@rayatbahra.edu")
     sa_user = User(
-        email="kprem@rayatbahra.edu",
+        email=sa_email,
         role="super_admin",
-        first_name="Prem",
+        first_name="Super",
         last_name="Admin",
         phone="+91-9876543210",
         is_email_verified=True,
         status="active",
     )
-    sa_user.set_password("Prem@2004")
+    sa_user.set_password(os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345"))
     db.session.add(sa_user)
     db.session.flush()
 
@@ -140,7 +142,7 @@ def seed_data() -> None:
             subscription_status="unsubscribed",
             subscription_plan="none",
         )
-        demo_univ.set_password("Prem@2004")
+        demo_univ.set_password(os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345"))
         db.session.add(demo_univ)
 
     db.session.commit()

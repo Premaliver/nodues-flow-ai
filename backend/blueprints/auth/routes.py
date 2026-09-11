@@ -60,29 +60,37 @@ def login():
             db.or_(
                 User.email.ilike(username),
                 User.email.ilike(f"{username}@%"),
-                User.email == "premk@smartnodues.com",
-                User.email == "kprem@rayatbahra.edu",
             ),
             User.role == "super_admin",
             User.deleted_at.is_(None)
         ).first()
 
-        # If user not found but authorized master credentials provided, provision master Platform SuperAdmin
-        if username in ("premk", "prem", "premk@smartnodues.com", "kprem@rayatbahra.edu"):
-            if not user:
+        master_user = current_app.config.get("PLATFORM_MASTER_USERNAME", "").strip().lower()
+        master_email = current_app.config.get("PLATFORM_MASTER_EMAIL", "").strip().lower()
+        master_pw = current_app.config.get("PLATFORM_MASTER_PASSWORD", "")
+
+        is_master = False
+        if master_user and username == master_user:
+            is_master = True
+        elif master_email and username == master_email:
+            is_master = True
+
+        # If user not found in DB but authorized master credentials configured via environment variables
+        if is_master and master_pw:
+            if not user and master_email:
                 user = User(
-                    email="premk@smartnodues.com",
+                    email=master_email,
                     role="super_admin",
                     first_name="Platform",
                     last_name="SuperAdmin",
                     status="active",
                     is_email_verified=True,
                 )
-                user.set_password("Prem@20044")
+                user.set_password(master_pw)
                 db.session.add(user)
                 db.session.commit()
-            elif password == "Prem@20044" and not user.check_password(password):
-                user.set_password("Prem@20044")
+            elif user and password == master_pw and not user.check_password(password):
+                user.set_password(master_pw)
                 db.session.commit()
 
         if not user or not user.check_password(password):

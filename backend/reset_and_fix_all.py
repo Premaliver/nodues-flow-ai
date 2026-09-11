@@ -48,8 +48,10 @@ with app.app_context():
     print("✓ 7 Departments created")
 
     # Create users — using User.set_password() which is compatible with User.check_password()
+    admin_email = os.environ.get("DEMO_ADMIN_EMAIL", "superadmin@rayatbahra.edu")
+    admin_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
     users_data = [
-        ("kprem@rayatbahra.edu", "super_admin", "Prem", "Kumar", "+91-9876543210"),
+        (admin_email, "super_admin", "Campus", "Admin", "+91-9876543210"),
         ("accounts@rayatbahra.edu", "accounts", "Priya", "Sharma", "+91-9876543211"),
         ("hostel@rayatbahra.edu", "hostel", "Rajesh", "Kumar", "+91-9876543212"),
         ("mess@rayatbahra.edu", "mess", "Amit", "Verma", "+91-9876543213"),
@@ -58,12 +60,10 @@ with app.app_context():
         ("hod.cse@rayatbahra.edu", "hod", "Dr. Arvind", "Gupta", "+91-9876543216"),
         ("examination@rayatbahra.edu", "examination", "Neha", "Mehta", "+91-9876543217"),
         ("student@rayatbahra.edu", "student", "Aditi", "Sharma", "+91-9876543218"),
-        ("premkumar.officia0@gmail.com", "student", "Prem", "Kumar", "+91-9876543210"),
-        ("premkumar78142@gmail.com", "student", "Prem", "Kumar", "+91-9876543210"),
     ]
     created_users = []
     for email, role, fname, lname, phone in users_data:
-        password = "Prem@2004" if role == "super_admin" else "123456"
+        password = admin_pw if role == "super_admin" else "123456"
         user = User(
             email=email,
             role=role,
@@ -135,7 +135,7 @@ with app.app_context():
     # VERIFY ALL PASSWORDS
     print("\n=== PASSWORD VERIFICATION ===")
     for u in User.query.all():
-        expected_pw = "Prem@2004" if u.role == "super_admin" else "123456"
+        expected_pw = admin_pw if u.role == "super_admin" else "123456"
         ok = u.check_password(expected_pw)
         status = "✓ OK" if ok else "✗ FAIL"
         print(f"  {u.email} ({u.role}): {status}")
@@ -146,9 +146,9 @@ with app.app_context():
     print("\n  Login credentials:")
     print("  ┌─────────────────────────────────────────────────────┐")
     print("  │ SUPER ADMIN                                        │")
-    print("  │   Role: ⚙️ Super Admin                             │")
-    print("  │   Username: KPrem                                  │")
-    print("  │   Password: Prem@2004                               │")
+    print(f"  │   Role: Super Admin                                │")
+    print(f"  │   Email: {admin_email:<40} │")
+    print(f"  │   Password: {admin_pw:<37} │")
     print("  ├─────────────────────────────────────────────────────┤")
     print("  │ OTHERS (login via email)                           │")
     print("  │   student@rayatbahra.edu / 123456                  │")

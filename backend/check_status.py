@@ -14,8 +14,9 @@ with app.app_context():
     print(f"Users: {users}")
     print(f"Depts: {depts}")
     if sa:
+        check_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
         print(f"Super admin: {sa.email} / {sa.first_name} {sa.last_name}")
-        print(f"PW check (Prem@2004): {sa.check_password('Prem@2004')}")
+        print(f"PW check: {sa.check_password(check_pw)}")
         print(f"Status: {sa.status}")
         print(f"Is active: {sa.is_active_user}")
     else:

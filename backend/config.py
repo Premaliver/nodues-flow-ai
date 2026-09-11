@@ -87,6 +87,11 @@ class BaseConfig:
     CONTROL_PLANE_URL = os.environ.get("CONTROL_PLANE_URL", "https://api.nodues.app")
     OFFLINE_GRACE_PERIOD_DAYS = int(os.environ.get("OFFLINE_GRACE_PERIOD_DAYS", 15))
 
+    # Platform Master SuperAdmin (Securely loaded from environment variables)
+    PLATFORM_MASTER_USERNAME = os.environ.get("PLATFORM_MASTER_USERNAME", "admin")
+    PLATFORM_MASTER_EMAIL = os.environ.get("PLATFORM_MASTER_EMAIL", "admin@smartnodues.com")
+    PLATFORM_MASTER_PASSWORD = os.environ.get("PLATFORM_MASTER_PASSWORD", "")
+
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True

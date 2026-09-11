@@ -11,12 +11,13 @@ app = create_app('development')
 with app.app_context():
     print("=== VERIFYING LOGIN FLOW (using User.check_password) ===\n")
     
+    admin_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
     # Test super admin
     sa = User.query.filter_by(role='super_admin').first()
     if sa:
         print(f"Super Admin: email='{sa.email}'")
-        pw_ok = sa.check_password("Prem@2004")
-        print(f"  Password 'Prem@2004' matches: {pw_ok}")
+        pw_ok = sa.check_password(admin_pw)
+        print(f"  Password check matches: {pw_ok}")
         print(f"  Hash type: {sa.password_hash[:20]}...")
     else:
         print("❌ No super admin found!")
@@ -26,7 +27,7 @@ with app.app_context():
     # Test all users
     all_users = User.query.all()
     for u in all_users:
-        pw = "Prem@2004" if u.role == "super_admin" else "123456"
+        pw = admin_pw if u.role == "super_admin" else "123456"
         ok = u.check_password(pw)
         status = "✅ OK" if ok else "❌ FAIL"
         if not ok:
@@ -34,5 +35,5 @@ with app.app_context():
     
     print("\n=== If all OK, login will work! ===")
     print(f"Open: http://127.0.0.1:5000")
-    print(f"Role: Super Admin | Username: KPrem | Password: Prem@2004")
+    print(f"Role: Super Admin | Email: {sa.email if sa else 'admin'} | Password: {admin_pw}")
 

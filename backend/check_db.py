@@ -11,10 +11,11 @@ with app.app_context():
     sus = User.query.filter_by(role='super_admin').all()
     print("=== SUPER ADMINS ===")
     print(f"Count: {len(sus)}")
+    check_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
     for u in sus:
         print(f"  email='{u.email}', status='{u.status}', pw_hash={u.password_hash[:40] if u.password_hash else 'NONE'}...")
-        result = check_password_hash(u.password_hash, "Prem@2004")
-        print(f"  Password 'Prem@2004' matches: {result}")
+        result = check_password_hash(u.password_hash, check_pw)
+        print(f"  Password matches check_pw: {result}")
     
     print("\n=== ALL USERS ===")
     all_users = User.query.all()

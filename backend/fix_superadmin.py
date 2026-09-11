@@ -13,6 +13,9 @@ from models.user import User
 app = create_app('development')
 
 with app.app_context():
+    admin_email = os.environ.get("DEMO_ADMIN_EMAIL", "superadmin@rayatbahra.edu")
+    admin_pw = os.environ.get("DEMO_ADMIN_PASSWORD", "Admin@12345")
+
     # Find super admin
     sa = User.query.filter_by(role='super_admin').first()
     if sa:
@@ -20,17 +23,17 @@ with app.app_context():
         
         # Fix email to have proper domain
         if '@' not in sa.email:
-            sa.email = 'kprem@rayatbahra.edu'
+            sa.email = admin_email
             print(f"Fixed email to: {sa.email}")
         
         # Re-set password using the model's werkzeug-based method
-        sa.set_password("Prem@2004")
+        sa.set_password(admin_pw)
         
         db.session.commit()
         print(f"Password re-set using werkzeug.security")
         
         # Verify it works
-        if sa.check_password("Prem@2004"):
+        if sa.check_password(admin_pw):
             print("✓ Password verification successful!")
         else:
             print("✗ Password verification FAILED!")
@@ -38,25 +41,25 @@ with app.app_context():
         print("No super admin found in database!")
         print("Creating super admin user...")
         sa = User(
-            email='kprem@rayatbahra.edu',
+            email=admin_email,
             role='super_admin',
-            first_name='Prem',
-            last_name='Kumar',
+            first_name='Campus',
+            last_name='Admin',
             phone='+91-9876543210',
             is_email_verified=True,
             status='active',
         )
-        sa.set_password("Prem@2004")
+        sa.set_password(admin_pw)
         db.session.add(sa)
         db.session.commit()
         print("✓ Super admin created")
-        if sa.check_password("Prem@2004"):
+        if sa.check_password(admin_pw):
             print("✓ Password verification successful!")
     
     print("\n=== Final state ===")
     users = User.query.filter_by(role='super_admin').all()
     for u in users:
         print(f"  email='{u.email}', status='{u.status}'")
-        pw_ok = u.check_password("Prem@2004")
-        print(f"  Password 'Prem@2004' works: {pw_ok}")
+        pw_ok = u.check_password(admin_pw)
+        print(f"  Password check works: {pw_ok}")
 

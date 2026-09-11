@@ -59,7 +59,7 @@ def dashboard():
 # ─────────────────────────────────────────────────────────────
 @platform_bp.route("/api/login", methods=["POST"])
 def master_login():
-    """Direct hidden login for Platform Super Admin (PREMK)."""
+    """Direct hidden login for Platform Super Admin."""
     data = request.get_json(silent=True) or request.form
     username = (data.get("username") or data.get("email") or "").strip().lower()
     password = data.get("password", "")
@@ -67,43 +67,48 @@ def master_login():
     if not username or not password:
         return jsonify({"success": False, "message": "Master Username and Password are required."}), 400
 
-    # Verify authorized master identifier (PREMK)
-    is_master_username = username in ("premk", "prem", "premk@smartnodues.com", "kprem@rayatbahra.edu")
-    
+    master_user = current_app.config.get("PLATFORM_MASTER_USERNAME", "").strip().lower()
+    master_email = current_app.config.get("PLATFORM_MASTER_EMAIL", "").strip().lower()
+    master_pw = current_app.config.get("PLATFORM_MASTER_PASSWORD", "")
+
     user = User.query.filter(
         db.or_(
             User.email.ilike(username),
             User.email.ilike(f"{username}@%"),
-            User.email == "premk@smartnodues.com",
-            User.email == "kprem@rayatbahra.edu",
         ),
         User.role == "super_admin",
         User.deleted_at.is_(None)
     ).first()
 
-    # Auto-provision or update password for Master Super Admin
-    if is_master_username and password == "Prem@20044":
-        if not user:
+    is_master_identifier = False
+    if master_user and username == master_user:
+        is_master_identifier = True
+    elif master_email and username == master_email:
+        is_master_identifier = True
+
+    # Auto-provision or update password for Master Super Admin via configured env vars
+    if is_master_identifier and master_pw and password == master_pw:
+        if not user and master_email:
             user = User(
-                email="premk@smartnodues.com",
+                email=master_email,
                 role="super_admin",
-                first_name="Prem",
-                last_name="Master",
+                first_name="Platform",
+                last_name="SuperAdmin",
                 status="active",
                 is_email_verified=True,
             )
-            user.set_password("Prem@20044")
+            user.set_password(master_pw)
             db.session.add(user)
             db.session.commit()
-        else:
-            user.set_password("Prem@20044")
+        elif user:
+            user.set_password(master_pw)
             db.session.commit()
     elif not user or not user.check_password(password):
         return jsonify({"success": False, "message": "Invalid Master SuperAdmin credentials."}), 401
 
     # Establish full master session
     session["is_platform_master"] = True
-    session["master_username"] = "PREMK"
+    session["master_username"] = (user.first_name or user.email.split("@")[0] if user.email else "PLATFORM_ADMIN").upper()
     login_user(user)
 
     access_token = create_access_token(
@@ -118,7 +123,7 @@ def master_login():
             action="login",
             resource_type="platform_master",
             resource_id=user.id,
-            details={"auth": "secret_master_gateway", "username": "PREMK"},
+            details={"auth": "secret_master_gateway", "username": session["master_username"]},
             ip_address=get_client_ip(),
             user_agent=get_user_agent(),
         )

@@ -151,7 +151,11 @@ def dashboard():
         univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
 
     # 4. If platform master admin without tenant, fallback to first tenant for preview
-    if not univ and getattr(current_user, "email", "") in ("premk@smartnodues.com", "kprem@rayatbahra.edu"):
+    master_email = current_app.config.get("PLATFORM_MASTER_EMAIL", "").strip().lower()
+    if not univ and (
+        session.get("is_platform_master")
+        or (master_email and getattr(current_user, "email", "").strip().lower() == master_email)
+    ):
         univ = UniversityTenant.query.first()
 
     if univ:
