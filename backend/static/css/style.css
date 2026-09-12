@@ -6,10 +6,14 @@
    ============================================================ */
 
 /* ============================================================
-   DESIGNER TYPOGRAPHY SYSTEM (Plus Jakarta Sans + Outfit + JetBrains Mono)
-   Award-Winning Aesthetic SaaS Typography
+   MODERN & MINIMALIST DESIGNER TYPOGRAPHY SYSTEM
+   • Cabinet Grotesk: Versatile, geometric yet warm (Headings & Brand)
+   • Space Grotesk: Sleek, tech-forward, digital startup typeface (Subheadings & Metrics)
+   • Poppins: Geometric, clean, friendly, perfectly balanced (Body, UI, Forms)
+   • JetBrains Mono: Developer-grade precision monospace
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,600,700,800,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    CSS CUSTOM PROPERTIES (DESIGN TOKENS)
@@ -79,9 +83,10 @@
     --gradient-danger: linear-gradient(135deg, #ef4444, #f87171);
     --gradient-info: linear-gradient(135deg, #3b82f6, #60a5fa);
 
-    /* Designer Typography Tokens */
-    --font-display: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Modern & Minimalist Designer Typography Tokens */
+    --font-display: 'Cabinet Grotesk', 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-tech: 'Space Grotesk', 'Cabinet Grotesk', sans-serif;
+    --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', Consolas, monospace;
 
     /* Border Radius */
@@ -173,7 +178,7 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
-    letter-spacing: -0.012em;
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -182,8 +187,8 @@ body {
 }
 
 input, button, select, textarea {
-    font-family: inherit;
-    letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    letter-spacing: -0.005em;
 }
 
 h1,
@@ -195,7 +200,21 @@ h6 {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: -0.025em;
-    line-height: 1.2;
+    line-height: 1.22;
+}
+
+.brand-text,
+.card-header h3,
+.modal-box h2,
+.banner-title {
+    font-family: var(--font-display);
+}
+
+.stat-value,
+.super-stat .stat-value,
+.badge,
+.step-num {
+    font-family: var(--font-tech);
 }
 
 /* ============================================================

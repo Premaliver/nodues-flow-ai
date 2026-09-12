@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin — {{ university_name or 'Smart NoDues AI' }}</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,600,700,800,900&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
@@ -85,7 +86,7 @@
                 <div style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: #818CF8; text-transform: uppercase; letter-spacing: 0.05em;">🏛️ University Command Center</div>
-                        <h2 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">{{ university_name or 'Smart NoDues AI University' }}</h2>
+                        <h2 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">{{ university_name or 'Smart NoDues AI University' }}</h2>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                         <button class="btn btn-secondary" onclick="switchSection('campusRollout')" style="text-decoration:none;">🚀 Campus Rollout Hub</button>
@@ -120,7 +121,7 @@
                 <div style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: #6366F1; text-transform: uppercase; letter-spacing: 0.05em;">🏛️ Institutional White-Label Hub</div>
-                        <h2 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">Campus Clearance Portal & Distribution Hub</h2>
+                        <h2 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.85rem; margin: 0.25rem 0 0; color: var(--text-primary);">Campus Clearance Portal & Distribution Hub</h2>
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Deploy your branded clearance link, print notice board QR circulars, and provision department officers.</p>
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
@@ -263,7 +264,7 @@
         <div class="section" id="section-staff">
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-                <div><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">👥 Staff Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create and manage department staff accounts</p></div>
+                <div><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">👥 Staff Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create and manage department staff accounts</p></div>
                 <button class="btn btn-primary" onclick="openCreateStaffModal()">➕ New Staff</button>
             </div>
             <div class="filter-bar">
@@ -276,14 +277,14 @@
         </div>
         <!-- STUDENTS -->
         <div class="section" id="section-students">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">🎓 Students</h2><p style="color:var(--text-muted);font-size:0.85rem;">View and manage student accounts</p></div>
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">🎓 Students</h2><p style="color:var(--text-muted);font-size:0.85rem;">View and manage student accounts</p></div>
             <div class="filter-bar"><input class="form-input" type="text" id="studentSearch" placeholder="Search by name/email/roll..." oninput="debounce(loadStudents,300)()" style="min-width:250px;"><select class="form-select" id="studentStatusFilter" onchange="loadStudents()"><option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option><option value="graduated">Graduated</option></select></div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Name</th><th>Email</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead><tbody id="studentTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
             <div class="pagination" id="studentPagination"></div>
         </div>
         <!-- APPLICATIONS -->
         <div class="section" id="section-applications">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">📋 Applications</h2><p style="color:var(--text-muted);font-size:0.85rem;">Monitor all no-dues applications</p></div>
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">📋 Applications</h2><p style="color:var(--text-muted);font-size:0.85rem;">Monitor all no-dues applications</p></div>
             <div class="filter-bar"><select class="form-select" id="appStatusFilter" onchange="loadApplications()"><option value="">All Status</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select><input class="form-input" type="text" id="appSearch" placeholder="Search by student/roll..." oninput="debounce(loadApplications,300)()" style="min-width:200px;"></div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>App #</th><th>Student</th><th>Roll</th><th>Semester</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="appTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
             <div class="pagination" id="appPagination"></div>
@@ -292,7 +293,7 @@
         <div class="section" id="section-feedbacks">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
                 <div>
-                    <h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">💬 Student Feedbacks & Experience Analytics</h2>
+                    <h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">💬 Student Feedbacks & Experience Analytics</h2>
                     <p style="color:var(--text-muted);font-size:0.85rem;">Student satisfaction scores, Net Promoter Score (NPS), and portal improvement suggestions</p>
                 </div>
                 <button class="btn btn-secondary btn-sm" onclick="loadFeedbacks(1)">🔄 Refresh Feed</button>
@@ -375,7 +376,7 @@
         <!-- DEPARTMENTS -->
         <div class="section" id="section-departments">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-                <div><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">🏢 Department Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create, edit, and maintain permanent department IDs</p></div>
+                <div><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">🏢 Department Management</h2><p style="color:var(--text-muted);font-size:0.85rem;">Create, edit, and maintain permanent department IDs</p></div>
                 <button class="btn btn-primary" onclick="openCreateDeptModal()">➕ New Department ID</button>
             </div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Code</th><th>Name</th><th>Role</th><th>Orders</th><th>Active</th><th>Actions</th></tr></thead><tbody id="deptTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
@@ -383,7 +384,7 @@
         <!-- DATABASE INSPECTOR -->
         <div class="section" id="section-dbInspector">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-                <div><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">🗄️ System Database Inspector</h2><p style="color:var(--text-muted);font-size:0.85rem;">Live inspection of persistent SQLite database records & tables</p></div>
+                <div><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">🗄️ System Database Inspector</h2><p style="color:var(--text-muted);font-size:0.85rem;">Live inspection of persistent SQLite database records & tables</p></div>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
                     <select class="form-select" id="dbTableSelector" onchange="loadDatabaseInspector()" style="padding:0.4rem 0.8rem;font-size:0.85rem;">
                         <option value="users">👤 Users Table</option>
@@ -401,7 +402,7 @@
         <div class="section" id="section-analytics">
             <div style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
                 <div>
-                    <h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">📈 System Analytics & Real-Time Intelligence</h2>
+                    <h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">📈 System Analytics & Real-Time Intelligence</h2>
                     <p style="color:var(--text-muted);font-size:0.85rem;">Live operation metrics, department throughput, and application trends</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -439,30 +440,30 @@
         </div>
         <!-- AUDIT -->
         <div class="section" id="section-audit">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">📜 Audit Logs</h2><p style="color:var(--text-muted);font-size:0.85rem;">Complete system activity trail</p></div>
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">📜 Audit Logs</h2><p style="color:var(--text-muted);font-size:0.85rem;">Complete system activity trail</p></div>
             <div class="filter-bar"><select class="form-select" id="auditActionFilter" onchange="loadAuditLogs()"><option value="">All Actions</option><option value="create">Create</option><option value="update">Update</option><option value="delete">Delete</option><option value="login">Login</option><option value="logout">Logout</option><option value="approve">Approve</option><option value="reject">Reject</option><option value="upload">Upload</option></select><select class="form-select" id="auditResourceFilter" onchange="loadAuditLogs()"><option value="">All Resources</option><option value="user">User</option><option value="application">Application</option><option value="auth">Auth</option><option value="document">Document</option><option value="semester">Semester</option></select></div>
             <div class="glass-panel"><div class="glass-panel-body" style="padding:0;"><table class="glass-table"><thead><tr><th>Action</th><th>User</th><th>Resource</th><th>Details</th><th>Time</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div></div>
             <div class="pagination" id="auditPagination"></div>
         </div>
         <!-- SETTINGS -->
         <div class="section" id="section-settings">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">⚙️ System Settings</h2><p style="color:var(--text-muted);font-size:0.85rem;">Configure global system settings</p></div>
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">⚙️ System Settings</h2><p style="color:var(--text-muted);font-size:0.85rem;">Configure global system settings</p></div>
             <div class="glass-panel"><div class="glass-panel-body" id="settingsBody"></div></div>
             <button class="btn btn-secondary" onclick="initDefaultSettings()" style="margin-top:0.5rem;">📥 Load Default Settings</button>
         </div>
         <!-- PROFILE -->
         <div class="section" id="section-profile">
-            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">👤 My Profile</h2><p style="color:var(--text-muted);font-size:0.85rem;">Your account information</p></div>
+            <div style="margin-bottom:1.5rem;"><h2 style="font-size:1.25rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">👤 My Profile</h2><p style="color:var(--text-muted);font-size:0.85rem;">Your account information</p></div>
             <div class="glass-panel" style="max-width:500px;"><div class="glass-panel-body"><div id="profileInfo" style="text-align:center;padding:1rem;"></div><hr style="border:none;border-top:1px solid var(--border-light);margin:1rem 0;"><a href="/auth/change-password" class="btn btn-outline" style="width:100%;">🔑 Change Password</a></div></div>
         </div>
     </div>
 </div>
 
 <!-- Modals -->
-<div class="modal-overlay" id="createStaffModal"><div class="modal-box"><h2 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">👤 Create Staff Account</h2><p class="sub" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">A temporary password will be auto-generated.</p><div id="staffModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div><form id="createStaffForm" onsubmit="return createStaff(event)"><div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" name="first_name" required></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" name="last_name" required></div></div><div class="form-group"><label class="form-label">Email (Login ID)</label><input class="form-input" type="email" name="email" required></div><div class="form-row"><div class="form-group"><label class="form-label">Role</label><select class="form-select" name="role" required><option value="">Select Role</option><option value="accounts">Accounts</option><option value="hostel">Hostel</option><option value="mess">Mess</option><option value="transport">Transport</option><option value="scholarship">Scholarship</option><option value="hod">HOD</option><option value="examination">Examination</option></select></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" name="phone"></div></div><div class="form-group"><label class="form-label">Designation</label><input class="form-input" name="designation" placeholder="e.g. Senior Accountant"></div><div id="staffResultBox" style="display:none;" class="temp-password-box"></div><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button type="button" class="btn btn-ghost" onclick="closeModal('createStaffModal')">Cancel</button><button type="submit" class="btn btn-primary" id="createStaffBtn">Create Account</button></div></form></div></div>
-<div class="modal-overlay" id="createSemesterModal"><div class="modal-box"><h2 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">📅 Create Semester</h2><p class="sub" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Add a new academic semester.</p><div id="semesterModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div><form id="createSemesterForm" onsubmit="return createSemester(event)"><div class="form-row"><div class="form-group"><label class="form-label">Semester Number</label><input class="form-input" type="number" name="semester_number" min="1" required></div><div class="form-group"><label class="form-label">Semester Name</label><input class="form-input" name="semester_name" required placeholder="e.g. Sixth Semester"></div></div><div class="form-group"><label class="form-label">Academic Year</label><input class="form-input" name="academic_year" required placeholder="e.g. 2025-2026"></div><div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" name="start_date" required></div><div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" name="end_date" required></div></div><div class="form-row"><div class="form-group"><label><input type="checkbox" name="is_current"> Set as Current Semester</label></div><div class="form-group"><label><input type="checkbox" name="is_clearance_open"> Open Clearance</label></div></div><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button type="button" class="btn btn-ghost" onclick="closeModal('createSemesterModal')">Cancel</button><button type="submit" class="btn btn-primary">Create Semester</button></div></form></div></div>
-<div class="modal-overlay" id="appDetailModal"><div class="modal-box"><h2 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">📋 Application Detail</h2><div id="appDetailBody"></div><button class="btn btn-ghost" onclick="closeModal('appDetailModal')" style="margin-top:1rem;">Close</button></div></div>
-<div class="modal-overlay" id="confirmModal"><div class="modal-box" style="max-width:400px;"><h2 id="confirmTitle" style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-weight:400;">Confirm</h2><p id="confirmMessage" style="color:var(--text-muted);margin-bottom:1.5rem;"></p><div style="display:flex;gap:0.5rem;justify-content:flex-end;"><button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button><button class="btn btn-danger" id="confirmBtn" onclick="executeConfirm()">Confirm</button></div></div></div>
+<div class="modal-overlay" id="createStaffModal"><div class="modal-box"><h2 style="font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">👤 Create Staff Account</h2><p class="sub" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">A temporary password will be auto-generated.</p><div id="staffModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div><form id="createStaffForm" onsubmit="return createStaff(event)"><div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" name="first_name" required></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" name="last_name" required></div></div><div class="form-group"><label class="form-label">Email (Login ID)</label><input class="form-input" type="email" name="email" required></div><div class="form-row"><div class="form-group"><label class="form-label">Role</label><select class="form-select" name="role" required><option value="">Select Role</option><option value="accounts">Accounts</option><option value="hostel">Hostel</option><option value="mess">Mess</option><option value="transport">Transport</option><option value="scholarship">Scholarship</option><option value="hod">HOD</option><option value="examination">Examination</option></select></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" name="phone"></div></div><div class="form-group"><label class="form-label">Designation</label><input class="form-input" name="designation" placeholder="e.g. Senior Accountant"></div><div id="staffResultBox" style="display:none;" class="temp-password-box"></div><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button type="button" class="btn btn-ghost" onclick="closeModal('createStaffModal')">Cancel</button><button type="submit" class="btn btn-primary" id="createStaffBtn">Create Account</button></div></form></div></div>
+<div class="modal-overlay" id="createSemesterModal"><div class="modal-box"><h2 style="font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">📅 Create Semester</h2><p class="sub" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Add a new academic semester.</p><div id="semesterModalError" style="display:none;background:rgba(239,68,68,0.1);color:var(--crimson);padding:0.75rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:0.85rem;"></div><form id="createSemesterForm" onsubmit="return createSemester(event)"><div class="form-row"><div class="form-group"><label class="form-label">Semester Number</label><input class="form-input" type="number" name="semester_number" min="1" required></div><div class="form-group"><label class="form-label">Semester Name</label><input class="form-input" name="semester_name" required placeholder="e.g. Sixth Semester"></div></div><div class="form-group"><label class="form-label">Academic Year</label><input class="form-input" name="academic_year" required placeholder="e.g. 2025-2026"></div><div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" name="start_date" required></div><div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" name="end_date" required></div></div><div class="form-row"><div class="form-group"><label><input type="checkbox" name="is_current"> Set as Current Semester</label></div><div class="form-group"><label><input type="checkbox" name="is_clearance_open"> Open Clearance</label></div></div><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button type="button" class="btn btn-ghost" onclick="closeModal('createSemesterModal')">Cancel</button><button type="submit" class="btn btn-primary">Create Semester</button></div></form></div></div>
+<div class="modal-overlay" id="appDetailModal"><div class="modal-box"><h2 style="font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">📋 Application Detail</h2><div id="appDetailBody"></div><button class="btn btn-ghost" onclick="closeModal('appDetailModal')" style="margin-top:1rem;">Close</button></div></div>
+<div class="modal-overlay" id="confirmModal"><div class="modal-box" style="max-width:400px;"><h2 id="confirmTitle" style="font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-weight:400;">Confirm</h2><p id="confirmMessage" style="color:var(--text-muted);margin-bottom:1.5rem;"></p><div style="display:flex;gap:0.5rem;justify-content:flex-end;"><button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button><button class="btn btn-danger" id="confirmBtn" onclick="executeConfirm()">Confirm</button></div></div></div>
 
 <style>
 :root { --sidebar-width: 280px; --accent-gradient: linear-gradient(135deg, #6366f1, #818cf8); }
@@ -470,7 +471,7 @@
 .super-sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-width); background: var(--bg-glass); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-right: 1px solid var(--border-light); z-index: 100; display: flex; flex-direction: column; transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1); }
 .super-sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border-light); }
 .super-sidebar-brand { display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary); text-decoration: none; }
-.super-sidebar-brand .brand-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem; color: white; font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; }
+.super-sidebar-brand .brand-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem; color: white; font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; }
 .super-sidebar-brand .brand-text { font-weight: 600; font-size: 0.9rem; }
 .super-sidebar-brand .brand-sub { font-size: 0.7rem; color: var(--text-muted); }
 .super-sidebar-nav { flex: 1; padding: 1rem; overflow-y: auto; }
@@ -482,7 +483,7 @@
 .super-sidebar-footer { padding: 1rem; border-top: 1px solid var(--border-light); }
 .super-main { margin-left: var(--sidebar-width); min-height: 100vh; }
 .super-topbar { position: sticky; top: 0; z-index: 99; height: 64px; background: var(--bg-glass); backdrop-filter: blur(24px) saturate(180%); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; }
-.super-topbar .page-title { font-size: 1.1rem; font-weight: 600; font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; }
+.super-topbar .page-title { font-size: 1.1rem; font-weight: 600; font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; }
 .super-topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
 .super-content { padding: 1.5rem; }
 .section { display: none; animation: fadeIn 0.4s ease; }
@@ -493,12 +494,12 @@
 .super-stat:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); }
 .super-stat .stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
 .super-stat .stat-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
-.super-stat .stat-value { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem; font-weight: 400; line-height: 1; margin-bottom: 0.15rem; }
+.super-stat .stat-value { font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 400; line-height: 1; margin-bottom: 0.15rem; }
 .super-stat .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
 .super-stat .stat-accent { position: absolute; top: 0; left: 0; width: 4px; height: 100%; border-radius: 0 2px 2px 0; }
 .glass-panel { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 24px; overflow: hidden; margin-bottom: 1.5rem; box-shadow: var(--shadow-card); }
 .glass-panel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
-.glass-panel-header h3 { font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 400; }
+.glass-panel-header h3 { font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 400; }
 .glass-panel-body { padding: 1.5rem; }
 .glass-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .glass-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-light); background: var(--bg-secondary); }
@@ -763,7 +764,7 @@ async function viewAppDetail(appId) {
                 <div class="student-info-item"><span class="info-label">Submitted</span><span class="info-val">${app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'Not submitted'}</span></div>
             </div>
             <hr style="border:none;border-top:1px solid var(--border-light);margin:1.25rem 0;">
-            <h4 style="margin-bottom:0.75rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-size:1.15rem;">Sequential Department Clearance Pipeline</h4>
+            <h4 style="margin-bottom:0.75rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-size:1.15rem;">Sequential Department Clearance Pipeline</h4>
             ${approvals.length ? `
                 <div style="display:flex;flex-direction:column;gap:0.5rem;">
                     ${approvals.map((ad, idx) => `
@@ -778,7 +779,7 @@ async function viewAppDetail(appId) {
                 </div>
             ` : '<p style="color:var(--text-muted);">No approvals yet</p>'}
             <hr style="border:none;border-top:1px solid var(--border-light);margin:1.25rem 0;">
-            <h4 style="margin-bottom:0.75rem;font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-size:1.15rem;">Uploaded Documents (${(d.documents || []).length})</h4>
+            <h4 style="margin-bottom:0.75rem;font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-size:1.15rem;">Uploaded Documents (${(d.documents || []).length})</h4>
             ${(d.documents || []).length ? (d.documents || []).map(doc => `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;font-size:0.85rem;border-bottom:1px dashed var(--border-light);">
                     <div>
@@ -1263,7 +1264,7 @@ async function saveSuperBranding(e) {
 <div class="modal-overlay" id="superCredModal">
     <div class="modal-box" style="max-width: 620px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-            <h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.35rem;">🔑 7 Department Clearance Logins</h3>
+            <h3 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.35rem;">🔑 7 Department Clearance Logins</h3>
             <button class="btn btn-ghost btn-sm" onclick="closeModal('superCredModal')">✕</button>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
@@ -1295,7 +1296,7 @@ async function saveSuperBranding(e) {
 
     <div class="modal-box" style="max-width: 440px; text-align: center;">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔑</div>
-        <h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.35rem; margin-bottom: 0.5rem;">Staff Password Regenerated</h3>
+        <h3 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.35rem; margin-bottom: 0.5rem;">Staff Password Regenerated</h3>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
             Please record this temporary password. This window will remain open until you click Done.
         </p>
@@ -1313,7 +1314,7 @@ async function saveSuperBranding(e) {
 <div class="modal-overlay" id="createDeptModal">
     <div class="modal-box" style="max-width: 480px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
-            <h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem;">🏢 Create New Department ID</h3>
+            <h3 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.25rem;">🏢 Create New Department ID</h3>
             <button class="btn btn-ghost btn-sm" onclick="closeModal('createDeptModal')">✕</button>
         </div>
         <div class="error-msg" id="deptModalError" style="display:none; color:var(--crimson); margin-bottom:1rem;"></div>

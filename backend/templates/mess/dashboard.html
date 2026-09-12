@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mess Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,600,700,800,900&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="floating-shapes">
@@ -26,7 +27,7 @@
                     </div>
                     <div>
                         <div style="font-weight: 800; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;">{{ university.name if university else 'Institutional Campus' }}</div>
-                        <h1 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem; margin: 0;">Mess Dues Clearance Dashboard</h1>
+                        <h1 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.75rem; margin: 0;">Mess Dues Clearance Dashboard</h1>
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Mess dues clearances & food bill audit</p>
                     </div>
                 </div>
@@ -43,7 +44,7 @@
             <div class="stat-card"><div class="stat-value" id="messRejected">0</div><div class="stat-label">Rejected</div></div>
         </div>
         <div class="card">
-            <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 400;">Pending Mess Applications</h3></div>
+            <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 400;">Pending Mess Applications</h3></div>
             <div class="card-body">
                 <div class="table-container"><table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Submitted</th><th>Action</th></tr></thead>
                 <tbody id="messAppsBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody></table></div>
@@ -53,7 +54,7 @@
     <div id="messModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;">
         <div class="card" style="width:100%;max-width:540px;padding:2rem;box-shadow:var(--shadow-xl);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <h3 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-size:1.25rem;font-weight:400;" id="messModalTitle">Mess Clearance Review</h3>
+                <h3 style="font-family:'Cabinet Grotesk', 'Space Grotesk', sans-serif;font-size:1.25rem;font-weight:400;" id="messModalTitle">Mess Clearance Review</h3>
                 <span style="font-size:0.75rem;background:rgba(16,185,129,0.15);color:var(--emerald);padding:4px 10px;border-radius:20px;font-weight:600;">MESS AUDIT ✓</span>
             </div>
 
