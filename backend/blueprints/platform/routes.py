@@ -522,6 +522,11 @@ def impersonate_tenant(univ_id):
     session["university_id"] = str(tenant.id)
     session["university_name"] = tenant.name
     session["university_slug"] = tenant.slug
+    if tenant.logo_url:
+        session["university_logo"] = tenant.logo_url
+    from utils.auth_helpers import save_role_session
+    save_role_session(current_user, tenant)
+    session.modified = True
 
     return jsonify({
         "success": True,

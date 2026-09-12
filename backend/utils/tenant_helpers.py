@@ -59,6 +59,55 @@ def ensure_university_departments(university_id) -> None:
             db.session.rollback()
 
 
+def get_primary_or_default_university() -> Optional[UniversityTenant]:
+    """Resolve the primary configured university tenant using persistent SystemSettings, custom logo, or config."""
+    from flask import current_app
+    from models.system_setting import SystemSetting
+
+    # 1. Check persistent SystemSetting for primary_university_id
+    try:
+        setting = SystemSetting.query.filter_by(setting_key="primary_university_id").first()
+        if setting and setting.setting_value:
+            u_uuid = uuid.UUID(str(setting.setting_value).strip())
+            univ = db.session.get(UniversityTenant, u_uuid)
+            if univ:
+                return univ
+    except Exception:
+        pass
+
+    # 2. Check for tenant with custom uploaded or branded logo (not default placeholder)
+    try:
+        branded_univ = (
+            UniversityTenant.query.filter(
+                UniversityTenant.logo_url.isnot(None),
+                UniversityTenant.logo_url != "",
+                ~UniversityTenant.logo_url.ilike("%smartnodues_logo.svg%"),
+            )
+            .order_by(UniversityTenant.updated_at.desc())
+            .first()
+        )
+        if branded_univ:
+            return branded_univ
+    except Exception:
+        pass
+
+    # 3. Check TENANT_SLUG from app config
+    try:
+        tenant_slug = current_app.config.get("TENANT_SLUG")
+        if tenant_slug and tenant_slug != "default":
+            univ = UniversityTenant.query.filter_by(slug=tenant_slug.strip().lower()).first()
+            if univ:
+                return univ
+    except Exception:
+        pass
+
+    # 4. Fallback to most recently updated or registered university tenant
+    try:
+        return UniversityTenant.query.order_by(UniversityTenant.updated_at.desc()).first() or UniversityTenant.query.first()
+    except Exception:
+        return None
+
+
 def get_current_context_university() -> Optional[UniversityTenant]:
     """Resolve the active university tenant object from session, logged-in user, JWT, or query params."""
     # 1. From authenticated user directly (Highest priority for logged-in sessions)
@@ -71,14 +120,24 @@ def get_current_context_university() -> Optional[UniversityTenant]:
                     return univ
             except Exception:
                 pass
-        # Auto-heal super_admin missing university_id by matching official_email
-        if getattr(current_user, "role", "") == "super_admin" and getattr(current_user, "email", None):
+        # Auto-heal super_admin missing university_id by matching official_email or primary university
+        if getattr(current_user, "role", "") == "super_admin":
+            if getattr(current_user, "email", None):
+                try:
+                    matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+                    if matched:
+                        current_user.university_id = matched.id
+                        db.session.commit()
+                        return matched
+                except Exception:
+                    pass
+            # Resolve primary tenant for platform superadmin without assigned tenant
             try:
-                matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
-                if matched:
-                    current_user.university_id = matched.id
+                primary_univ = get_primary_or_default_university()
+                if primary_univ:
+                    current_user.university_id = primary_univ.id
                     db.session.commit()
-                    return matched
+                    return primary_univ
             except Exception:
                 pass
 
@@ -119,9 +178,7 @@ def get_current_context_university() -> Optional[UniversityTenant]:
         if univ:
             return univ
 
-    # 6. Fallback to default registered university
-    try:
-        return UniversityTenant.query.first()
-    except Exception:
-        return None
+    # 6. Fallback to primary / default configured university
+    return get_primary_or_default_university()
+
 

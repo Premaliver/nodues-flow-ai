@@ -25,8 +25,9 @@ from licensing.crypto import LicenseCrypto
 
 
 def get_current_university():
-    """Helper to fetch logged-in university from current_user, session, or JWT."""
+    """Helper to fetch logged-in university from current_user, session, JWT, or primary tenant."""
     from flask_login import current_user
+    from utils.tenant_helpers import get_primary_or_default_university
     
     # 1. Check current_user first if authenticated (Highest source of truth)
     if current_user and current_user.is_authenticated:
@@ -38,14 +39,23 @@ def get_current_university():
                     return univ
             except Exception:
                 pass
-        # Auto-heal super_admin missing university_id by matching official_email
-        if getattr(current_user, "role", "") == "super_admin" and getattr(current_user, "email", None):
+        # Auto-heal super_admin missing university_id by matching official_email or primary university
+        if getattr(current_user, "role", "") == "super_admin":
+            if getattr(current_user, "email", None):
+                try:
+                    matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
+                    if matched:
+                        current_user.university_id = matched.id
+                        db.session.commit()
+                        return matched
+                except Exception:
+                    pass
             try:
-                matched = UniversityTenant.query.filter_by(official_email=current_user.email.strip().lower()).first()
-                if matched:
-                    current_user.university_id = matched.id
+                primary_u = get_primary_or_default_university()
+                if primary_u:
+                    current_user.university_id = primary_u.id
                     db.session.commit()
-                    return matched
+                    return primary_u
             except Exception:
                 pass
 
@@ -78,7 +88,9 @@ def get_current_university():
         if univ:
             return univ
 
-    return None
+    # 4. Fallback to primary / default configured university
+    return get_primary_or_default_university()
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -797,6 +809,64 @@ def portal_staff_login(slug):
 # 12. UNIVERSITY ADMIN: BRANDING & CUSTOMIZATION API
 # ─────────────────────────────────────────────────────────────
 
+def _persist_tenant_branding_globally(univ, logo_url: str = None):
+    """Permanently persist institutional logo and identity across DB, SystemSetting, current user, and session."""
+    from flask_login import current_user
+    from models.system_setting import SystemSetting
+    
+    # 1. Update timestamp on tenant
+    univ.updated_at = datetime.now(timezone.utc)
+    
+    # 2. Persist to current_user if authenticated
+    if current_user and current_user.is_authenticated:
+        if current_user.university_id != univ.id:
+            current_user.university_id = univ.id
+            db.session.add(current_user)
+            
+    # 3. Persist global primary settings in SystemSetting
+    effective_logo = logo_url or univ.logo_url or ""
+    settings_map = {
+        "primary_university_id": str(univ.id),
+        "primary_university_name": univ.name or "",
+        "primary_university_slug": univ.slug or "",
+        "primary_university_logo": effective_logo,
+    }
+    for key, val in settings_map.items():
+        try:
+            setting = SystemSetting.query.filter_by(setting_key=key).first()
+            if not setting:
+                setting = SystemSetting(setting_key=key, setting_value=str(val), is_public=True)
+                db.session.add(setting)
+            else:
+                setting.setting_value = str(val)
+                setting.updated_at = datetime.now(timezone.utc)
+        except Exception as err:
+            current_app.logger.warning(f"Failed to set SystemSetting {key}: {err}")
+            
+    # 4. Synchronize full session state
+    if effective_logo:
+        session["university_logo"] = effective_logo
+    session["university_id"] = str(univ.id)
+    session["university_name"] = univ.name
+    session["university_slug"] = univ.slug
+    session["portal_slug"] = univ.slug
+
+    role_logos = dict(session.get("role_tenant_logos", {}))
+    if effective_logo:
+        role_logos["super_admin"] = effective_logo
+    session["role_tenant_logos"] = role_logos
+
+    role_univs = dict(session.get("role_universities", {}))
+    role_univs["super_admin"] = str(univ.id)
+    session["role_universities"] = role_univs
+
+    role_names = dict(session.get("role_tenant_names", {}))
+    role_names["super_admin"] = univ.name
+    session["role_tenant_names"] = role_names
+
+    session.modified = True
+
+
 @university_bp.route("/api/branding/upload-logo", methods=["POST"])
 def upload_branding_logo():
     """Handle direct image file upload for university logo and persist locally."""
@@ -835,11 +905,7 @@ def upload_branding_logo():
 
         logo_url = f"/static/uploads/logos/{unique_filename}"
         univ.logo_url = logo_url
-        session["university_logo"] = logo_url
-        role_logos = dict(session.get("role_tenant_logos", {}))
-        role_logos["super_admin"] = logo_url
-        session["role_tenant_logos"] = role_logos
-        session.modified = True
+        _persist_tenant_branding_globally(univ, logo_url)
         db.session.commit()
 
         return jsonify({
@@ -874,11 +940,6 @@ def update_branding():
         norm_logo = normalize_logo_url(logo_url)
         if norm_logo:
             univ.logo_url = norm_logo
-            session["university_logo"] = norm_logo
-            role_logos = dict(session.get("role_tenant_logos", {}))
-            role_logos["super_admin"] = norm_logo
-            session["role_tenant_logos"] = role_logos
-            session.modified = True
 
     if primary_color and primary_color.startswith("#"):
         univ.primary_color = primary_color
@@ -891,6 +952,7 @@ def update_branding():
     if website:
         univ.website = website
 
+    _persist_tenant_branding_globally(univ, univ.logo_url)
     db.session.commit()
     return jsonify({
         "success": True,

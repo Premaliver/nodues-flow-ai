@@ -150,15 +150,18 @@ def dashboard():
     if not univ and session.get("university_slug"):
         univ = UniversityTenant.query.filter_by(slug=session["university_slug"]).first()
 
-    # 4. If platform master admin without tenant, fallback to first tenant for preview
-    master_email = current_app.config.get("PLATFORM_MASTER_EMAIL", "").strip().lower()
-    if not univ and (
-        session.get("is_platform_master")
-        or (master_email and getattr(current_user, "email", "").strip().lower() == master_email)
-    ):
-        univ = UniversityTenant.query.first()
+    # 4. Fallback to primary configured or branded university
+    if not univ:
+        from utils.tenant_helpers import get_primary_or_default_university
+        univ = get_primary_or_default_university()
 
     if univ:
+        if current_user and current_user.is_authenticated and not current_user.university_id:
+            try:
+                current_user.university_id = univ.id
+                db.session.commit()
+            except Exception:
+                pass
         session["university_id"] = str(univ.id)
         session["university_name"] = univ.name
         session["university_slug"] = univ.slug
@@ -166,6 +169,8 @@ def dashboard():
             session["university_logo"] = univ.logo_url
         from utils.auth_helpers import save_role_session
         save_role_session(current_user, univ)
+        session.modified = True
+
 
     univ_name = univ.name if univ else "University Command Center"
     univ_slug = univ.slug if univ else "campus"

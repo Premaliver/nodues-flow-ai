@@ -60,17 +60,33 @@ def save_role_session(user, tenant=None, session_obj=None) -> None:
     if not role:
         return
 
-    # Auto-heal missing university_id for super_admin matching official_email
-    if not user.university_id and role == "super_admin" and getattr(user, "email", None):
+    # Auto-heal missing university_id for super_admin matching official_email or primary university
+    if not user.university_id and role == "super_admin":
         try:
             from models.university import UniversityTenant
             from models import db
-            matched_tenant = UniversityTenant.query.filter_by(official_email=user.email.strip().lower()).first()
+            matched_tenant = None
+            if getattr(user, "email", None):
+                matched_tenant = UniversityTenant.query.filter_by(official_email=user.email.strip().lower()).first()
+            if not matched_tenant and tenant:
+                matched_tenant = tenant
+            if not matched_tenant:
+                from utils.tenant_helpers import get_primary_or_default_university
+                matched_tenant = get_primary_or_default_university()
             if matched_tenant:
                 user.university_id = matched_tenant.id
                 db.session.commit()
                 if not tenant:
                     tenant = matched_tenant
+        except Exception:
+            pass
+
+    # If tenant is explicitly provided and user has no university_id, bind permanently to DB
+    if tenant and not user.university_id:
+        try:
+            from models import db
+            user.university_id = tenant.id
+            db.session.commit()
         except Exception:
             pass
 
@@ -83,6 +99,7 @@ def save_role_session(user, tenant=None, session_obj=None) -> None:
             tenant = db.session.get(UniversityTenant, u_id)
         except Exception:
             tenant = None
+
 
     # 1. Update role_sessions map
     role_sessions = dict(session_obj.get("role_sessions", {}))
