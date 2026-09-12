@@ -76,11 +76,12 @@ def create_app(config_name: str = "default") -> Flask:
         "JWT_SECRET_KEY", app.config["JWT_SECRET_KEY"]
     )
 
-    db_url = os.environ.get("DATABASE_URL")
-    if db_url:
-        if db_url.startswith("postgres://"):
-            db_url = db_url.replace("postgres://", "postgresql://", 1)
-        app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    if config_name != "testing":
+        db_url = os.environ.get("DATABASE_URL")
+        if db_url:
+            if db_url.startswith("postgres://"):
+                db_url = db_url.replace("postgres://", "postgresql://", 1)
+            app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 
     # Populate Mail configuration from environment
     for mail_key in ["MAIL_SERVER", "MAIL_PORT", "MAIL_USE_TLS", "MAIL_USE_SSL", "MAIL_USERNAME", "MAIL_PASSWORD", "MAIL_DEFAULT_SENDER"]:

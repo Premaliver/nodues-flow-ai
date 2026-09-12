@@ -2,7 +2,7 @@
 
 import uuid
 from typing import Optional
-from flask import session, request
+from flask import session, request, has_request_context
 from flask_login import current_user
 from models import db
 from models.department import Department
@@ -141,42 +141,43 @@ def get_current_context_university() -> Optional[UniversityTenant]:
             except Exception:
                 pass
 
-    # 2. From request query params (e.g. ?u=slug or ?university=slug)
-    query_slug = request.args.get("u") or request.args.get("university") or request.args.get("slug")
-    if query_slug:
-        univ = UniversityTenant.query.filter_by(slug=query_slug.strip().lower()).first()
-        if univ:
-            return univ
-
-    # 3. From session university_id
-    univ_id = session.get("university_id")
-
-    # 4. From JWT token claims
-    if not univ_id:
-        try:
-            from flask_jwt_extended import verify_jwt_in_request, get_jwt
-            verify_jwt_in_request(optional=True)
-            claims = get_jwt()
-            if claims and claims.get("university_id"):
-                univ_id = claims.get("university_id")
-        except Exception:
-            pass
-
-    if univ_id:
-        try:
-            u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
-            univ = db.session.get(UniversityTenant, u_uuid)
+    # 2. Check HTTP context (query params, session, JWT) if available
+    if has_request_context():
+        query_slug = request.args.get("u") or request.args.get("university") or request.args.get("slug")
+        if query_slug:
+            univ = UniversityTenant.query.filter_by(slug=query_slug.strip().lower()).first()
             if univ:
                 return univ
-        except Exception:
-            pass
 
-    # 5. From session slug / portal_slug
-    univ_slug = session.get("university_slug") or session.get("portal_slug")
-    if univ_slug:
-        univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
-        if univ:
-            return univ
+        # 3. From session university_id
+        univ_id = session.get("university_id")
+
+        # 4. From JWT token claims
+        if not univ_id:
+            try:
+                from flask_jwt_extended import verify_jwt_in_request, get_jwt
+                verify_jwt_in_request(optional=True)
+                claims = get_jwt()
+                if claims and claims.get("university_id"):
+                    univ_id = claims.get("university_id")
+            except Exception:
+                pass
+
+        if univ_id:
+            try:
+                u_uuid = uuid.UUID(str(univ_id)) if isinstance(univ_id, str) else univ_id
+                univ = db.session.get(UniversityTenant, u_uuid)
+                if univ:
+                    return univ
+            except Exception:
+                pass
+
+        # 5. From session slug / portal_slug
+        univ_slug = session.get("university_slug") or session.get("portal_slug")
+        if univ_slug:
+            univ = UniversityTenant.query.filter_by(slug=univ_slug).first()
+            if univ:
+                return univ
 
     # 6. Fallback to primary / default configured university
     return get_primary_or_default_university()

@@ -1,399 +1,1499 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Leadership Login — Smart NoDues SaaS</title>
+    <title>{{ university.name + ' — Leadership Portal' if university and university.name else 'University Leadership Command Hub — Smart NoDues' }}</title>
+    
+    <!-- Design & Typography Fonts -->
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,600,700,800,900&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Georgia&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
-        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,600,700,800,900&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <script>
         (function() {
-            const saved = localStorage.getItem('theme') || 'light';
+            const saved = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', saved);
         })();
     </script>
+
     <style>
         :root {
-            --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
-            --glass-bg: rgba(255, 255, 255, 0.9);
-            --glass-border: rgba(226, 232, 240, 0.8);
+            --brand-primary: #6366F1;
+            --brand-secondary: #8B5CF6;
+            --brand-accent: #EC4899;
+            --brand-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+            --brand-gradient-hover: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #DB2777 100%);
+            --cyber-cyan: #06B6D4;
+            --emerald: #10B981;
+            --crimson: #EF4444;
+
+            /* Light Theme Defaults */
+            --page-bg: #F8FAFC;
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-border: rgba(226, 232, 240, 0.85);
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #64748B;
+            --input-bg: rgba(248, 250, 252, 0.9);
+            --input-border: #CBD5E1;
+            --input-focus-border: #6366F1;
+            --input-focus-glow: rgba(99, 102, 241, 0.18);
+            --telemetry-bg: rgba(255, 255, 255, 0.65);
+            --telemetry-border: rgba(226, 232, 240, 0.8);
+            --nav-bg: rgba(255, 255, 255, 0.75);
+            --shadow-card: 0 25px 60px -15px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.8);
         }
+
         [data-theme="dark"] {
-            --glass-bg: rgba(15, 23, 42, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.12);
+            --page-bg: #070913;
+            --card-bg: rgba(13, 17, 34, 0.78);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --input-bg: rgba(15, 23, 42, 0.75);
+            --input-border: rgba(255, 255, 255, 0.14);
+            --input-focus-border: #818CF8;
+            --input-focus-glow: rgba(129, 140, 248, 0.28);
+            --telemetry-bg: rgba(15, 23, 42, 0.6);
+            --telemetry-border: rgba(255, 255, 255, 0.08);
+            --nav-bg: rgba(10, 14, 29, 0.75);
+            --shadow-card: 0 30px 70px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
         }
-        [data-theme="dark"] body {
-            background: radial-gradient(circle at 10% 20%, rgba(15, 23, 42, 0.95) 0%, rgba(11, 15, 25, 0.95) 100%) !important;
-            color: #F8FAFC !important;
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        [data-theme="dark"] .brand-title {
-            color: #F8FAFC !important;
-        }
-        [data-theme="dark"] .form-input {
-            background: rgba(30, 41, 59, 0.7) !important;
-            border-color: rgba(255, 255, 255, 0.12) !important;
-            color: #F8FAFC !important;
-        }
+
         body {
             font-family: Georgia, 'Times New Roman', Times, serif;
-            background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.9) 0%, rgba(245, 243, 255, 0.8) 50%, rgba(253, 242, 248, 0.9) 100%);
+            background-color: var(--page-bg);
+            color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ── Ambient Glowing Aurora Blobs ── */
+        .ambient-aurora {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .aurora-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.45;
+            animation: floatOrb 18s ease-in-out infinite alternate;
+        }
+
+        [data-theme="light"] .aurora-orb {
+            opacity: 0.35;
+            filter: blur(120px);
+        }
+
+        .orb-1 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, #6366F1 0%, rgba(99, 102, 241, 0) 70%);
+            top: -100px;
+            left: -100px;
+            animation-duration: 20s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #EC4899 0%, rgba(236, 72, 153, 0) 70%);
+            bottom: -50px;
+            right: -50px;
+            animation-duration: 24s;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, #06B6D4 0%, rgba(6, 182, 212, 0) 70%);
+            top: 40%;
+            left: 35%;
+            animation-duration: 28s;
+            animation-delay: -10s;
+            opacity: 0.25;
+        }
+
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(60px, 40px) scale(1.08); }
+            100% { transform: translate(-40px, 70px) scale(0.95); }
+        }
+
+        /* Micro-Dot Grid Overlay */
+        .grid-pattern {
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+            background-size: 28px 28px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ── Top Navigation Bar ── */
+        .portal-nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2.5rem;
+            backdrop-filter: blur(20px);
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-logo-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: white;
+            border: 1.5px solid var(--card-border);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem 1rem;
-            color: #1E293B;
-            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.25);
+            padding: 2px;
+            transition: transform 0.2s ease;
         }
 
-        .login-card {
+        .nav-logo-box:hover {
+            transform: scale(1.05);
+        }
 
+        .nav-logo-img {
             width: 100%;
-            max-width: 440px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 3rem 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6);
+            height: 100%;
+            object-fit: contain;
         }
-        .brand-header {
-            text-align: center;
-            margin-bottom: 2rem;
+
+        .nav-brand-title {
+            font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1.2;
         }
-        .brand-logo {
-            width: 52px;
-            height: 52px;
+
+        .nav-brand-badge {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--brand-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .nav-btn {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--brand-primary);
+            transform: translateY(-1px);
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            cursor: pointer;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: rotate(15deg) scale(1.08);
+            border-color: var(--brand-primary);
+        }
+
+        /* ── Main Hero Container (Split Layout) ── */
+        .hero-container {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            max-width: 1320px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .split-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 3.5rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* ── Left Showcase Panel ── */
+        .showcase-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            border-radius: 100px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.28);
+            color: #818CF8;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            width: fit-content;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            box-shadow: 0 0 10px #10B981;
+            animation: pulseDot 2s infinite;
+        }
+
+        @keyframes pulseDot {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px #10B981; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .showcase-title {
+            font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif;
+            font-size: 3.25rem;
+            font-weight: 900;
+            line-height: 1.12;
+            letter-spacing: -0.035em;
+            color: var(--text-primary);
+        }
+
+        .gradient-text {
             background: var(--brand-gradient);
-            border-radius: 16px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .showcase-desc {
+            font-size: 1.12rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            max-width: 540px;
+        }
+
+        /* Interactive Telemetry & Workflow Card */
+        .telemetry-card {
+            background: var(--telemetry-bg);
+            border: 1px solid var(--telemetry-border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            backdrop-filter: blur(24px);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .telemetry-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .telemetry-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--telemetry-border);
+        }
+
+        .telemetry-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .telemetry-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+        }
+
+        /* 4-Step Pipeline Stepper */
+        .pipeline-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .pipeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0.85rem 0.5rem;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--telemetry-border);
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .pipeline-step:hover {
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .step-icon {
+            font-size: 1.35rem;
+        }
+
+        .step-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .step-sub {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        /* Key Metrics Row */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+        }
+
+        .metric-box {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--telemetry-border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .metric-value {
+            font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Right Login Command Card ── */
+        .login-pane {
+            display: flex;
+            justify-content: center;
+        }
+
+        .command-card {
+            width: 100%;
+            max-width: 470px;
+            background: var(--card-bg);
+            backdrop-filter: blur(28px);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            padding: 2.75rem 2.5rem;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Subtle glowing edge */
+        .command-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 29px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(236, 72, 153, 0.2) 100%);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.75;
+            transition: opacity 0.3s ease;
+        }
+
+        .command-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Institutional Identity Banner */
+        .card-identity {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .identity-logo-wrap {
+            position: relative;
+            width: 68px;
+            height: 68px;
+            border-radius: 20px;
+            background: white;
+            border: 2px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.35);
+            padding: 4px;
+            transition: transform 0.25s ease;
+        }
+
+        .identity-logo-wrap:hover {
+            transform: scale(1.06) rotate(-2deg);
+        }
+
+        .identity-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .identity-fallback-emblem {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .identity-titles {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .identity-univ-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--brand-primary);
+        }
+
+        .identity-heading {
+            font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .identity-sub {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        /* Alert Message Box */
+        .alert-box {
+            padding: 0.85rem 1.1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            line-height: 1.45;
+            display: none;
+            animation: shakeAlert 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #F87171;
+        }
+
+        @keyframes shakeAlert {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+            40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+
+        /* Form Controls */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .input-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 0.85rem 1rem 0.85rem 2.85rem;
+            border-radius: 14px;
+            border: 1.5px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: Georgia, serif;
+            font-size: 0.96rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .text-input:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 4px var(--input-focus-glow);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .text-input:focus + .input-icon {
+            color: var(--brand-primary);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.85rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.35rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: color 0.2s ease, transform 0.15s ease;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        /* Caps Lock Alert Pill */
+        .caps-indicator {
+            display: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #F59E0B;
+            background: rgba(245, 158, 11, 0.12);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            margin-top: 0.25rem;
+        }
+
+        /* Utilities row */
+        .form-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+
+        .custom-checkbox {
+            appearance: none;
+            width: 17px;
+            height: 17px;
+            border-radius: 5px;
+            border: 1.5px solid var(--input-border);
+            background: var(--input-bg);
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .custom-checkbox:checked {
+            background: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+
+        .custom-checkbox:checked::before {
+            content: '✓';
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
+
+        .link-subtle {
+            color: var(--brand-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .link-subtle:hover {
+            color: var(--brand-secondary);
+            text-decoration: underline;
+        }
+
+        /* Submit Button */
+        .btn-command-submit {
+            width: 100%;
+            padding: 0.95rem 1.5rem;
+            border-radius: 14px;
+            background: var(--brand-gradient);
+            color: #FFFFFF;
+            border: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.45);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-command-submit:hover {
+            background: var(--brand-gradient-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.55);
+        }
+
+        .btn-command-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-command-submit:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Subtle shimmering glow over button */
+        .btn-command-submit::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: skewX(-20deg);
+            animation: btnShimmer 5s infinite;
+        }
+
+        @keyframes btnShimmer {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
+
+        /* Divider */
+        .card-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .card-divider::before,
+        .card-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--card-border);
+        }
+
+        /* Platform Master Admin Trigger Button */
+        .btn-master-trigger {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px dashed rgba(6, 182, 212, 0.4);
+            background: rgba(6, 182, 212, 0.06);
+            color: var(--cyber-cyan);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-master-trigger:hover {
+            background: rgba(6, 182, 212, 0.14);
+            border-color: var(--cyber-cyan);
+            transform: translateY(-1px);
+        }
+
+        /* Footer Registration Link */
+        .card-footer-box {
+            text-align: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .card-footer-box a {
+            color: var(--brand-primary);
+            font-weight: 700;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            margin-bottom: 1rem;
-            box-shadow: 0 12px 20px -6px rgba(79, 70, 229, 0.45);
+            gap: 0.3rem;
+            transition: all 0.2s ease;
         }
-        .brand-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #0F172A;
-            letter-spacing: -0.02em;
+
+        .card-footer-box a:hover {
+            color: var(--brand-secondary);
+            gap: 0.5rem;
         }
-        .brand-subtitle {
-            font-size: 0.875rem;
-            color: #64748B;
-            margin-top: 0.25rem;
+
+        /* ── Platform Master SuperAdmin Modal ── */
+        .master-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.88);
+            backdrop-filter: blur(20px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            animation: fadeIn 0.2s ease;
         }
-        .form-group {
-            margin-bottom: 1.25rem;
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .master-modal-card {
+            width: 100%;
+            max-width: 440px;
+            background: #0B0F1E;
+            border: 1.5px solid rgba(6, 182, 212, 0.35);
+            border-radius: 24px;
+            padding: 2.25rem;
+            box-shadow: 0 25px 60px -10px rgba(6, 182, 212, 0.25);
+            position: relative;
+            color: #FFFFFF;
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
+            gap: 1.25rem;
         }
-        .form-label {
-            font-size: 0.825rem;
-            font-weight: 600;
-            color: #334155;
-        }
-        .form-control {
-            padding: 0.8rem 1rem;
-            border: 1px solid #CBD5E1;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            background: #F8FAFC;
-            color: #0F172A;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #6366F1;
-            background: #FFFFFF;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 0.9rem;
-            background: var(--brand-gradient);
-            color: white;
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: #94A3B8;
+            font-size: 1.25rem;
             cursor: pointer;
-            transition: all 0.25s ease;
-            margin-top: 0.5rem;
-            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
         }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.5);
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #FFFFFF;
         }
-        .footer-links { font-family: 'Space Grotesk', sans-serif;
-            margin-top: 2rem;
-            text-align: center;
-            font-size: 0.875rem;
-            color: #64748B;
+
+        /* ── Responsive Adaptations ── */
+        @media (max-width: 980px) {
+            .split-grid {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+            .showcase-pane {
+                text-align: center;
+                align-items: center;
+            }
+            .showcase-title {
+                font-size: 2.5rem;
+            }
+            .showcase-desc {
+                margin: 0 auto;
+            }
+            .telemetry-card {
+                max-width: 600px;
+                width: 100%;
+            }
+            .portal-nav {
+                padding: 1rem 1.5rem;
+            }
         }
-        .footer-links a {
-            color: #4F46E5;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .alert-error {
-            padding: 0.75rem 1rem;
-            background: #FEF2F2;
-            border: 1px solid #FCA5A5;
-            color: #991B1B;
-            border-radius: 10px;
-            font-size: 0.875rem;
-            margin-bottom: 1.5rem;
-            display: none;
+
+        @media (max-width: 540px) {
+            .hero-container {
+                padding: 1.5rem 1rem;
+            }
+            .command-card {
+                padding: 2rem 1.5rem;
+                border-radius: 22px;
+            }
+            .showcase-title {
+                font-size: 2rem;
+            }
+            .pipeline-steps {
+                grid-template-columns: 1fr 1fr;
+            }
+            .metrics-row {
+                grid-template-columns: 1fr;
+            }
+            .nav-brand-title {
+                font-size: 1.05rem;
+            }
+            .nav-actions .nav-btn-text {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-<button class="theme-toggle" onclick="toggleLoginTheme()" id="loginThemeBtn" style="position:fixed; top:1.25rem; right:1.25rem; z-index:100; padding:0.5rem 0.75rem; border-radius:12px; cursor:pointer; background:var(--glass-bg); border:1px solid var(--glass-border); font-size:1.2rem;" title="Toggle Light/Dark Theme">🌙</button>
 
-<div class="login-card">
-
-    <div class="brand-header">
-        <div class="brand-logo">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-        </div>
-        <h1 class="brand-title">University Portal</h1>
-        <p class="brand-subtitle">Institutional Leadership & Subscription Management</p>
+    <!-- Ambient Aurora Gradient Lighting -->
+    <div class="ambient-aurora">
+        <div class="aurora-orb orb-1"></div>
+        <div class="aurora-orb orb-2"></div>
+        <div class="aurora-orb orb-3"></div>
     </div>
+    <div class="grid-pattern"></div>
 
-    <div id="alertBox" class="alert-error" {% if error %}style="display: block;"{% endif %}>{{ error if error else '' }}</div>
+    <!-- Top Navigation -->
+    <nav class="portal-nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo-box">
+                {% if university and university.logo_url %}
+                <img src="{{ university.logo_url }}" alt="{{ university.name }}" class="nav-logo-img" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                {% else %}
+                <img src="/static/images/smartnodues_logo.svg" alt="Smart NoDues AI" class="nav-logo-img">
+                {% endif %}
+            </div>
+            <div>
+                <div class="nav-brand-title">{{ university.name if university and university.name else 'Smart NoDues' }}</div>
+                <div class="nav-brand-badge">
+                    <span>⚡</span> Enterprise Institutional Node
+                </div>
+            </div>
+        </a>
 
-    <form id="univLoginForm" onsubmit="handleLogin(event); return false;">
-        <div class="form-group">
-            <label class="form-label" for="email">Official Institutional Email</label>
-            <input type="email" id="email" class="form-control" placeholder="registrar@university.edu" required autocomplete="email">
+        <div class="nav-actions">
+            <a href="/university/pov" class="nav-btn" title="Live Product Simulation">
+                <span>🚀</span> <span class="nav-btn-text">Live Simulator</span>
+            </a>
+            <a href="/university/register" class="nav-btn" style="background: rgba(99, 102, 241, 0.12); color: var(--brand-primary); border-color: rgba(99, 102, 241, 0.3);">
+                <span>✨</span> <span class="nav-btn-text">Onboard University</span>
+            </a>
+            <button class="theme-btn" onclick="toggleLoginTheme()" id="loginThemeBtn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+                🌙
+            </button>
         </div>
+    </nav>
 
-        <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <div style="position: relative;">
-                <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password" style="padding-right: 2.75rem;">
-                <button type="button" class="password-toggle-btn" aria-label="Show password" title="Show / Hide Password" onclick="togglePasswordVisibility('password', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 5;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </button>
-            </div>
-        </div>
+    <!-- Main Split-Screen Experience -->
+    <main class="hero-container">
+        <div class="split-grid">
 
-        <button type="submit" id="submitBtn" class="btn-submit">Sign In to University Portal</button>
-    </form>
+            <!-- Left Showcase Pane: Next-Gen Autonomous Clearance System -->
+            <div class="showcase-pane">
+                <div class="status-pill">
+                    <span class="pulse-dot"></span>
+                    <span>AI Autonomous Clearance Engine v4.2</span>
+                </div>
 
-    <div class="footer-links">
-        Don't have an institutional account yet?<br>
-        <a href="/university/register">Register Your University Here &rarr;</a>
-    </div>
-</div>
+                <h1 class="showcase-title">
+                    Accelerating Campus Clearance to <span class="gradient-text">Zero Wait Time</span>
+                </h1>
 
-<script>
-async function handleLogin(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    if (e && e.stopPropagation) e.stopPropagation();
+                <p class="showcase-desc">
+                    Empowering Deans, Registrars, and Department Heads with an intelligent, 
+                    fraud-proof clearance workflow. Eliminate lines, automate receipt audits, 
+                    and issue cryptographic hall tickets instantly.
+                </p>
 
-    const alertBox = document.getElementById('alertBox');
-    const submitBtn = document.getElementById('submitBtn');
-    alertBox.style.display = 'none';
+                <!-- Interactive Telemetry Visualizer -->
+                <div class="telemetry-card">
+                    <div class="telemetry-header">
+                        <div class="telemetry-title">
+                            <span>📡</span> Institutional Clearance Pipeline
+                        </div>
+                        <span class="telemetry-badge">● LIVE SYNCHRONIZATION</span>
+                    </div>
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+                    <!-- 4-Step Pipeline -->
+                    <div class="pipeline-steps">
+                        <div class="pipeline-step">
+                            <div class="step-icon">📝</div>
+                            <div class="step-name">Student Filing</div>
+                            <div class="step-sub">1-Click Portal</div>
+                        </div>
+                        <div class="pipeline-step" style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.08);">
+                            <div class="step-icon">🧠</div>
+                            <div class="step-name">Neural OCR</div>
+                            <div class="step-sub">99.4% Audited</div>
+                        </div>
+                        <div class="pipeline-step">
+                            <div class="step-icon">🏢</div>
+                            <div class="step-name">7 Depts</div>
+                            <div class="step-sub">Parallel Sign-off</div>
+                        </div>
+                        <div class="pipeline-step" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08);">
+                            <div class="step-icon">🎓</div>
+                            <div class="step-name">Admit Card</div>
+                            <div class="step-sub">Holographic QR</div>
+                        </div>
+                    </div>
 
-    if (!email || !password) {
-        alertBox.textContent = "Please enter both official email and password.";
-        alertBox.style.display = 'block';
-        return false;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Verifying Account...';
-
-    try {
-        const response = await fetch('/university/login', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
-
-        let data;
-        const responseText = await response.text();
-        try {
-            data = JSON.parse(responseText);
-        } catch (jsonErr) {
-            console.error("Non-JSON Server response:", responseText);
-            data = { success: false, message: "Server response error. Please try again." };
-        }
-
-        if (response.ok && data.success) {
-            window.location.href = (data.data && data.data.redirect_url) ? data.data.redirect_url : '/university/dashboard';
-        } else {
-            alertBox.textContent = data.message || "Invalid email or password. Please verify your credentials.";
-            alertBox.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Sign In to University Portal';
-        }
-    } catch (err) {
-        console.error("Login Exception:", err);
-        alertBox.textContent = "Unable to reach server. Please check your connection and try again.";
-        alertBox.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In to University Portal';
-    }
-
-    return false;
-}
-</script>
-
-<!-- PLATFORM MASTER SUPERADMIN SECRET MODAL -->
-<div id="masterAdminModalBackdrop" style="position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5, 8, 22, 0.88); backdrop-filter: blur(16px); z-index: 9999; padding: 1rem;">
-    <div style="background: #0d1127; border: 1px solid rgba(99, 102, 241, 0.4); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85); width: 100%; max-width: 440px; border-radius: 24px; padding: 2.25rem; position: relative; box-sizing: border-box;">
-        <button type="button" onclick="closeMasterAdminModal()" title="Close" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;">&times;</button>
-        
-        <div style="text-align: center; margin-bottom: 1.5rem;">
-            <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.85rem; box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);">
-                👑
-            </div>
-            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.45rem; font-weight: 700; color: #fff; margin: 0 0 0.25rem; letter-spacing: -0.02em;">
-                Master Platform Controller
-            </h3>
-            <div style="display: inline-block; font-size: 0.72rem; font-weight: 700; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(6, 182, 212, 0.12); padding: 0.25rem 0.65rem; border-radius: 100px; border: 1px solid rgba(6, 182, 212, 0.3);">
-                ⚡ Platform SuperAdmin Access
-            </div>
-        </div>
-
-        <div id="masterAdminAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; font-size: 0.82rem; margin-bottom: 1rem;"></div>
-
-        <form id="masterAdminForm" onsubmit="handleMasterAdminLogin(event)">
-            <div style="margin-bottom: 1.25rem;">
-                <label for="masterUsername" style="color: #cbd5e1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.4rem;">Master Operator ID</label>
-                <input type="text" id="masterUsername" value="PREMK" required style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; font-size: 0.9rem; box-sizing: border-box;">
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <label for="masterPassword" style="color: #cbd5e1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.4rem;">Master Security Key</label>
-                <div style="position: relative;">
-                    <input type="password" id="masterPassword" placeholder="••••••••" required style="width: 100%; padding: 0.75rem 2.75rem 0.75rem 1rem; background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; font-size: 0.9rem; box-sizing: border-box;">
-                    <button type="button" class="password-toggle-btn" aria-label="Show password" title="Show / Hide Password" onclick="togglePasswordVisibility('masterPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 0.35rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 5;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
+                    <!-- Metrics -->
+                    <div class="metrics-row">
+                        <div class="metric-box">
+                            <div class="metric-value">1.2s</div>
+                            <div class="metric-label">Avg Verification</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-value">0%</div>
+                            <div class="metric-label">Paper Queues</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-value">100%</div>
+                            <div class="metric-label">Cryptographic Trust</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <button type="submit" id="masterLoginBtn" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); cursor: pointer;">
-                ⚡ Authenticate as Master SuperAdmin
-            </button>
-        </form>
+            <!-- Right Command Center Login Pane -->
+            <div class="login-pane">
+                <div class="command-card">
+
+                    <!-- Institution Identity -->
+                    <div class="card-identity">
+                        <div class="identity-logo-wrap">
+                            {% if university and university.logo_url %}
+                            <img id="univLogoImg" src="{{ university.logo_url }}" alt="{{ university.name }}" class="identity-logo-img" onerror="this.onerror=null; this.src='/static/images/smartnodues_logo.svg';">
+                            {% else %}
+                            <div class="identity-fallback-emblem">🏛️</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="identity-titles">
+                            <div class="identity-univ-name">
+                                {{ university.name if university and university.name else 'Smart NoDues Institutional Network' }}
+                            </div>
+                            <h2 class="identity-heading">Leadership Sign In</h2>
+                            <p class="identity-sub">Authenticate with Dean or Registrar credentials</p>
+                        </div>
+                    </div>
+
+                    <!-- Alert message box -->
+                    <div id="alertBox" class="alert-box alert-error" role="alert"></div>
+
+                    <!-- Form -->
+                    <form id="univLoginForm" class="login-form" onsubmit="handleLogin(event); return false;">
+                        
+                        <!-- Email Input -->
+                        <div class="input-group">
+                            <div class="input-label-row">
+                                <label for="email" class="input-label">Official Institutional Email</label>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-icon">✉️</span>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    class="text-input" 
+                                    placeholder="registrar@university.edu" 
+                                    required 
+                                    autocomplete="email"
+                                    autofocus
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="input-group">
+                            <div class="input-label-row">
+                                <label for="password" class="input-label">Security Key / Password</label>
+                                <a href="mailto:support@smartnodues.com?subject=Institutional%20Password%20Reset%20Request" class="link-subtle" style="font-size: 0.78rem;">Forgot Key?</a>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-icon">🔒</span>
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    class="text-input" 
+                                    placeholder="Enter your security password" 
+                                    required 
+                                    autocomplete="current-password"
+                                    style="padding-right: 3rem;"
+                                    onkeyup="checkCapsLock(event)"
+                                >
+                                <button 
+                                    type="button" 
+                                    class="password-toggle-btn" 
+                                    id="togglePasswordBtn" 
+                                    aria-label="Show password" 
+                                    title="Show / Hide Password" 
+                                    onclick="togglePasswordVisibility('password', this)"
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="capsLockWarning" class="caps-indicator">⚠️ Caps Lock is ON</div>
+                        </div>
+
+                        <!-- Utilities Row -->
+                        <div class="form-meta-row">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="rememberMe" class="custom-checkbox" checked>
+                                <span>Remember terminal</span>
+                            </label>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">TLS 1.3 256-Bit</span>
+                        </div>
+
+                        <!-- Submit CTA -->
+                        <button type="submit" id="submitBtn" class="btn-command-submit">
+                            <span id="submitBtnText">Access Command Center</span>
+                            <span id="submitBtnArrow">&rarr;</span>
+                        </button>
+                    </form>
+
+                    <div class="card-divider">OR</div>
+
+                    <!-- Platform Master SuperAdmin Quick Access -->
+                    <button type="button" class="btn-master-trigger" onclick="openMasterAdminModal()" title="Platform Master SuperAdmin Operator Access (Alt + M)">
+                        <span>👑</span>
+                        <span>Platform Master Controller (PREMK)</span>
+                    </button>
+
+                    <!-- Footer registration link -->
+                    <div class="card-footer-box">
+                        <div>New university or institutional campus?</div>
+                        <a href="/university/register">
+                            <span>Register Campus Node &amp; Start 14-Day Pilot</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- PLATFORM MASTER SUPERADMIN SECRET MODAL -->
+    <div id="masterAdminModalBackdrop" class="master-modal-backdrop" onclick="handleBackdropClick(event)">
+        <div class="master-modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeMasterAdminModal()" title="Close">&times;</button>
+            
+            <div style="text-align: center; margin-bottom: 0.5rem;">
+                <div style="width: 56px; height: 56px; border-radius: 18px; background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 0.85rem; box-shadow: 0 0 30px rgba(6, 182, 212, 0.55);">
+                    👑
+                </div>
+                <h3 style="font-family: 'Cabinet Grotesk', 'Space Grotesk', sans-serif; font-size: 1.55rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">
+                    Master Platform Operator
+                </h3>
+                <div style="display: inline-block; font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 700; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(6, 182, 212, 0.12); padding: 0.25rem 0.75rem; border-radius: 100px; border: 1px solid rgba(6, 182, 212, 0.35); margin-top: 0.4rem;">
+                    ⚡ Global SaaS SuperAdmin Gateway
+                </div>
+            </div>
+
+            <div id="masterAdminAlert" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #FCA5A5; font-size: 0.84rem;"></div>
+
+            <form id="masterAdminForm" onsubmit="handleMasterAdminLogin(event)">
+                <div style="margin-bottom: 1.15rem;">
+                    <label for="masterUsername" style="font-family: 'Space Grotesk', sans-serif; color: #CBD5E1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.45rem;">Master Operator ID</label>
+                    <input 
+                        type="text" 
+                        id="masterUsername" 
+                        value="PREMK" 
+                        required 
+                        style="width: 100%; padding: 0.8rem 1rem; background: rgba(15, 23, 42, 0.95); color: #FFF; border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; outline: none;"
+                    >
+                </div>
+
+                <div style="margin-bottom: 1.4rem;">
+                    <label for="masterPassword" style="font-family: 'Space Grotesk', sans-serif; color: #CBD5E1; font-weight: 600; font-size: 0.82rem; display:block; margin-bottom:0.45rem;">Master Security Passkey</label>
+                    <div style="position: relative;">
+                        <input 
+                            type="password" 
+                            id="masterPassword" 
+                            placeholder="••••••••••••" 
+                            required 
+                            style="width: 100%; padding: 0.8rem 2.85rem 0.8rem 1rem; background: rgba(15, 23, 42, 0.95); color: #FFF; border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; outline: none;"
+                        >
+                        <button 
+                            type="button" 
+                            class="password-toggle-btn" 
+                            aria-label="Show password" 
+                            title="Show / Hide Password" 
+                            onclick="togglePasswordVisibility('masterPassword', this)"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="masterLoginBtn" 
+                    style="width: 100%; padding: 0.9rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; color: #FFF; background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%); border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4); cursor: pointer; transition: all 0.2s ease;"
+                >
+                    ⚡ Authorize Global Master Session
+                </button>
+            </form>
+        </div>
     </div>
-</div>
 
-<script>
-function openMasterAdminModal() {
-    const modal = document.getElementById('masterAdminModalBackdrop');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.getElementById('masterPassword').focus();
-    }
-}
-
-function closeMasterAdminModal() {
-    const modal = document.getElementById('masterAdminModalBackdrop');
-    if (modal) modal.style.display = 'none';
-}
-
-async function handleMasterAdminLogin(e) {
-    e.preventDefault();
-    const btn = document.getElementById('masterLoginBtn');
-    const alertBox = document.getElementById('masterAdminAlert');
-    alertBox.style.display = 'none';
-
-    const username = document.getElementById('masterUsername').value.trim();
-    const password = document.getElementById('masterPassword').value;
-
-    btn.disabled = true;
-    btn.textContent = 'Verifying Master Credentials...';
-
-    try {
-        const res = await fetch('/platform/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (data.success) {
-            btn.textContent = 'Access Granted! Launching...';
-            if (data.data && data.data.access_token) {
-                localStorage.setItem('access_token', data.data.access_token);
-            }
-            setTimeout(() => {
-                window.location.href = data.data.redirect_url || '/platform/dashboard';
-            }, 400);
+    <!-- Scripts -->
+    <script>
+    // Caps Lock Detector
+    function checkCapsLock(e) {
+        const warning = document.getElementById('capsLockWarning');
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+            warning.style.display = 'block';
         } else {
-            alertBox.textContent = data.message || 'Invalid Master SuperAdmin credentials.';
+            warning.style.display = 'none';
+        }
+    }
+
+    // Main University Login Handler
+    async function handleLogin(e) {
+        if (e && e.preventDefault) e.preventDefault();
+
+        const alertBox = document.getElementById('alertBox');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitBtnArrow = document.getElementById('submitBtnArrow');
+        
+        alertBox.style.display = 'none';
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            alertBox.textContent = "Please enter both official email and security key.";
+            alertBox.style.display = 'block';
+            return false;
+        }
+
+        submitBtn.disabled = true;
+        submitBtnText.textContent = 'Authenticating Terminal...';
+        submitBtnArrow.innerHTML = '⏳';
+
+        try {
+            const response = await fetch('/university/login', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            let data;
+            const responseText = await response.text();
+            try {
+                data = JSON.parse(responseText);
+            } catch (jsonErr) {
+                console.error("Non-JSON Server response:", responseText);
+                data = { success: false, message: "Server communication error. Please try again." };
+            }
+
+            if (response.ok && data.success) {
+                submitBtnText.textContent = 'Access Authorized! Redirecting...';
+                submitBtnArrow.innerHTML = '✓';
+                submitBtn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+
+                const targetUrl = (data.data && data.data.redirect_url) ? data.data.redirect_url : '/superadmin/dashboard';
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 350);
+            } else {
+                alertBox.textContent = data.message || "Invalid institutional credentials. Please verify official email and password.";
+                alertBox.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtnText.textContent = 'Access Command Center';
+                submitBtnArrow.innerHTML = '&rarr;';
+            }
+        } catch (err) {
+            console.error("Login Exception:", err);
+            alertBox.textContent = "Network error: Unable to reach institutional node. Please check your connectivity.";
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtnText.textContent = 'Access Command Center';
+            submitBtnArrow.innerHTML = '&rarr;';
+        }
+
+        return false;
+    }
+
+    // Platform Master SuperAdmin Modal Handlers
+    function openMasterAdminModal() {
+        const modal = document.getElementById('masterAdminModalBackdrop');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('masterPassword').focus();
+            }, 100);
+        }
+    }
+
+    function closeMasterAdminModal() {
+        const modal = document.getElementById('masterAdminModalBackdrop');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function handleBackdropClick(e) {
+        if (e.target && e.target.id === 'masterAdminModalBackdrop') {
+            closeMasterAdminModal();
+        }
+    }
+
+    // Global Shortcut: Press Alt + M to open Master SuperAdmin modal
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && (e.key === 'm' || e.key === 'M')) {
+            e.preventDefault();
+            openMasterAdminModal();
+        }
+        if (e.key === 'Escape') {
+            closeMasterAdminModal();
+        }
+    });
+
+    async function handleMasterAdminLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('masterLoginBtn');
+        const alertBox = document.getElementById('masterAdminAlert');
+        alertBox.style.display = 'none';
+
+        const username = document.getElementById('masterUsername').value.trim();
+        const password = document.getElementById('masterPassword').value;
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying Master Credentials...';
+
+        try {
+            const res = await fetch('/platform/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                btn.textContent = 'Access Granted! Initializing Node...';
+                if (data.data && data.data.access_token) {
+                    localStorage.setItem('access_token', data.data.access_token);
+                }
+                setTimeout(() => {
+                    window.location.href = data.data.redirect_url || '/superadmin/dashboard';
+                }, 400);
+            } else {
+                alertBox.textContent = data.message || 'Invalid Master SuperAdmin credentials.';
+                alertBox.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '⚡ Authorize Global Master Session';
+            }
+        } catch (err) {
+            alertBox.textContent = 'Unable to reach authentication cluster. Check connection.';
             alertBox.style.display = 'block';
             btn.disabled = false;
-            btn.textContent = '⚡ Authenticate as Master SuperAdmin';
+            btn.textContent = '⚡ Authorize Global Master Session';
         }
-    } catch (err) {
-        alertBox.textContent = 'Unable to reach server. Please check connection.';
-        alertBox.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = '⚡ Authenticate as Master SuperAdmin';
     }
-}
 
-function togglePasswordVisibility(target, triggerBtn) {
-    const input = typeof target === 'string' ? document.getElementById(target) : target;
-    const btn = triggerBtn || (typeof target === 'string' ? document.getElementById('toggle_' + target) : null);
-    if (!input) return;
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    if (btn) {
-        btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-        btn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
-        btn.innerHTML = isPassword ? `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-            </svg>
-        ` : `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-        `;
+    // Interactive Password Show/Hide Toggle
+    function togglePasswordVisibility(target, triggerBtn) {
+        const input = typeof target === 'string' ? document.getElementById(target) : target;
+        const btn = triggerBtn || (typeof target === 'string' ? document.getElementById('toggle_' + target) : null);
+        if (!input) return;
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        if (btn) {
+            btn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+            btn.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+            btn.innerHTML = isPassword ? `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+            ` : `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            `;
+        }
     }
-}
 
-// Theme Toggle Logic
-function updateLoginThemeBtn() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const btn = document.getElementById('loginThemeBtn');
-    if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
-}
-function toggleLoginTheme() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    updateLoginThemeBtn();
-}
-document.addEventListener('DOMContentLoaded', updateLoginThemeBtn);
-</script>
+    // Theme Engine: Light & Dark Mode
+    function updateLoginThemeBtn() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const btn = document.getElementById('loginThemeBtn');
+        if (btn) btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
+    }
 
+    function toggleLoginTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateLoginThemeBtn();
+    }
+
+    document.addEventListener('DOMContentLoaded', updateLoginThemeBtn);
+    </script>
 </body>
 </html>
-
