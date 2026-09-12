@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Examination Dashboard — Smart NoDues AI</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="floating-shapes">
@@ -64,7 +64,7 @@
                     <div class="stat-card"><div class="stat-icon" style="background: var(--gradient-primary); color: white;">🎫</div><div class="stat-value" id="admitCardsCount">0</div><div class="stat-label">Admit Cards Issued</div></div>
                 </div>
                 <div class="card section-content" id="section-dashboard">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Applications Ready for Admit Card</h3></div>
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 400;">Applications Ready for Admit Card</h3></div>
                     <div class="card-body">
                         <div class="table-container">
                             <table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Completed</th><th>Action</th></tr></thead>
@@ -73,7 +73,7 @@
                     </div>
                 </div>
                 <div class="card section-content" id="section-approved" style="display:none;">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Approved Applications</h3></div>
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 400;">Approved Applications</h3></div>
                     <div class="card-body">
                         <div class="table-container">
                             <table><thead><tr><th>App #</th><th>Student</th><th>Roll No</th><th>Course</th><th>Semester</th><th>Status</th></tr></thead>
@@ -82,11 +82,11 @@
                     </div>
                 </div>
                 <div class="card section-content" id="section-generate" style="display:none;">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Generate Admit Card</h3></div>
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 400;">Generate Admit Card</h3></div>
                     <div class="card-body"><p style="color:var(--text-muted);">Go to <strong>Dashboard</strong> section to generate admit cards for approved applications.</p></div>
                 </div>
                 <div class="card section-content" id="section-issued" style="display:none;">
-                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400;">Admit Cards Issued</h3></div>
+                    <div class="card-header" style="padding-bottom: 0;"><h3 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 400;">Admit Cards Issued</h3></div>
                     <div class="card-body"><p id="issuedCardsBody" style="color:var(--text-muted);">Loading...</p></div>
                 </div>
             </main>
@@ -97,7 +97,7 @@
     <div id="examDocsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1200;align-items:center;justify-content:center;padding:1rem;">
         <div class="card" style="width:100%;max-width:540px;padding:2rem;box-shadow:var(--shadow-xl);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                <h3 style="font-family:'DM Serif Display',serif;font-size:1.25rem;font-weight:400;">Examination Document Audit</h3>
+                <h3 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-size:1.25rem;font-weight:400;">Examination Document Audit</h3>
                 <button class="btn btn-ghost btn-sm" onclick="document.getElementById('examDocsModal').style.display='none'">✕</button>
             </div>
             <div class="student-review-card" id="examStudentReviewCard" style="display:none;"></div>
@@ -115,7 +115,7 @@
     <div id="admitCardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:1200;align-items:center;justify-content:center;padding:1rem;">
         <div class="card" style="width:100%;max-width:820px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-xl);">
             <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;">
-                <h3 style="font-family:'DM Serif Display',serif;font-size:1.1rem;font-weight:400;margin:0;">Admit Card Viewer</h3>
+                <h3 style="font-family:'Outfit', 'Plus Jakarta Sans', sans-serif;font-size:1.1rem;font-weight:400;margin:0;">Admit Card Viewer</h3>
                 <div style="display:flex;gap:0.5rem;align-items:center;">
                     <a id="admitCardDownloadBtn" class="btn btn-primary btn-sm" href="#" target="_blank" style="padding:0.4rem 0.9rem;">⬇️ Download</a>
                     <button class="btn btn-ghost btn-sm" onclick="closeAdmitCardModal()" style="padding:0.4rem 0.9rem;">✖ Close</button>

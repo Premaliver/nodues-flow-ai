@@ -6,9 +6,10 @@
    ============================================================ */
 
 /* ============================================================
-   FONTS
+   DESIGNER TYPOGRAPHY SYSTEM (Plus Jakarta Sans + Outfit + JetBrains Mono)
+   Award-Winning Aesthetic SaaS Typography
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
 
 /* ============================================================
    CSS CUSTOM PROPERTIES (DESIGN TOKENS)
@@ -78,10 +79,10 @@
     --gradient-danger: linear-gradient(135deg, #ef4444, #f87171);
     --gradient-info: linear-gradient(135deg, #3b82f6, #60a5fa);
 
-    /* Typography */
-    --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    /* Designer Typography Tokens */
+    --font-display: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', Consolas, monospace;
 
     /* Border Radius */
     --radius-xs: 6px;
@@ -171,9 +172,18 @@ body {
     font-family: var(--font-sans);
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    line-height: 1.7;
+    line-height: 1.6;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     transition: background-color var(--transition-base), color var(--transition-base);
     overflow-x: hidden;
+}
+
+input, button, select, textarea {
+    font-family: inherit;
+    letter-spacing: -0.01em;
 }
 
 h1,
@@ -183,9 +193,62 @@ h4,
 h5,
 h6 {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
     line-height: 1.2;
+}
+
+/* ============================================================
+   UNIVERSAL PASSWORD TOGGLE STYLES
+   ============================================================ */
+.password-field-wrapper,
+.password-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.password-field-wrapper input,
+.password-input-wrap input {
+    padding-right: 2.85rem !important;
+}
+
+.password-toggle-btn,
+.btn-password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.35rem;
+    color: var(--text-muted, #94a3b8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm, 8px);
+    z-index: 10;
+    line-height: 1;
+    transition: color var(--transition-fast, 150ms ease), background var(--transition-fast, 150ms ease), transform 150ms ease;
+}
+
+.password-toggle-btn:hover,
+.btn-password-toggle:hover {
+    color: var(--accent, #6366f1);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.password-toggle-btn:active,
+.btn-password-toggle:active {
+    transform: translateY(-50%) scale(0.92);
+}
+
+.password-toggle-btn svg,
+.btn-password-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    stroke: currentColor;
 }
 
 h1 {
@@ -1192,7 +1255,7 @@ tr:hover td {
     color: white;
     font-weight: 800;
     font-size: 1.25rem;
-    font-family: 'DM Serif Display', serif;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     position: relative;
     overflow: hidden;
@@ -2814,7 +2877,7 @@ tr:hover td {
     }
 
     .cyber-main-title {
-        font-family: 'DM Serif Display', serif;
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
         font-size: 1.85rem;
         font-weight: 400;
         color: var(--text-primary);
@@ -3114,7 +3177,7 @@ tr:hover td {
     }
 
     .cyber-success-title {
-        font-family: 'DM Serif Display', serif;
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
         font-size: 1.85rem;
         font-weight: 400;
         margin-bottom: 0.5rem;
@@ -3370,4 +3433,4 @@ html, body {
     .admit-card-pass::after {
         display: none !important;
     }
-}
+}
