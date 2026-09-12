@@ -85,8 +85,11 @@
 
     /* Modern & Minimalist Designer Typography Tokens */
     --font-display: 'Cabinet Grotesk', 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-tech: 'Space Grotesk', 'Cabinet Grotesk', sans-serif;
-    --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: var(--font-display);
+    --font-sans: Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-body: var(--font-sans);
+    --font-footer: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-tech: 'Space Grotesk', sans-serif;
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', Consolas, monospace;
 
     /* Border Radius */
@@ -174,11 +177,11 @@ html {
 }
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    line-height: 1.6;
-    letter-spacing: -0.01em;
+    line-height: 1.68;
+    letter-spacing: 0.005em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -186,9 +189,12 @@ body {
     overflow-x: hidden;
 }
 
+p, span, li, td, th, label, .card, .form-label, .form-input, .form-control, input, select, textarea {
+    font-family: var(--font-body);
+}
+
 input, button, select, textarea {
-    font-family: var(--font-sans);
-    letter-spacing: -0.005em;
+    letter-spacing: 0.005em;
 }
 
 h1,
@@ -197,7 +203,7 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-heading);
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1.22;
@@ -206,15 +212,37 @@ h6 {
 .brand-text,
 .card-header h3,
 .modal-box h2,
-.banner-title {
-    font-family: var(--font-display);
+.banner-title,
+.display-heading,
+.super-topbar .page-title {
+    font-family: var(--font-heading);
+}
+
+footer,
+.footer,
+.saas-footer,
+.portal-footer,
+.login-footer,
+.footer-links,
+.card-footer,
+.sidebar-footer,
+.super-sidebar-footer,
+.sign-footer,
+.nav-links,
+.badge,
+.step-num,
+.stat-label,
+button,
+.btn,
+.btn-submit {
+    font-family: var(--font-footer);
 }
 
 .stat-value,
 .super-stat .stat-value,
-.badge,
-.step-num {
+.metric-value {
     font-family: var(--font-tech);
+    letter-spacing: -0.02em;
 }
 
 /* ============================================================
